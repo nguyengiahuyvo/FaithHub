@@ -1,32 +1,38 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth-context";
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+
+  async function handleSignOut() {
+    await signOut(auth);
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.heroCard}>
         <Text style={styles.eyebrow}>FaithHub</Text>
-        <Text style={styles.title}>Home</Text>
+        <Text style={styles.title}>
+          Welcome{user?.displayName ? `, ${user.displayName}` : ""}
+        </Text>
         <Text style={styles.body}>
-          You are inside the main app now. Replace this screen with your
-          dashboard, latest content, or user-specific activity.
+          {user?.email}
         </Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Suggested next build</Text>
+        <Text style={styles.sectionTitle}>Your dashboard</Text>
         <Text style={styles.body}>
-          Connect the auth form to a real backend and gate this tab group behind
-          authenticated state.
+          You are signed in. This is where your reading plans, saved prayers,
+          and community updates will appear.
         </Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Current routing</Text>
-        <Text style={styles.body}>
-          The app opens on a standalone login screen, and the tabs appear only
-          after entering the main app flow.
-        </Text>
-      </View>
+      <Pressable onPress={handleSignOut} style={styles.signOutButton}>
+        <Text style={styles.signOutText}>Sign Out</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -72,5 +78,19 @@ const styles = StyleSheet.create({
     color: "#4B5563",
     fontSize: 16,
     lineHeight: 24,
+  },
+  signOutButton: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#D1D5DB",
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 14,
+    marginTop: 8,
+  },
+  signOutText: {
+    color: "#DC2626",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

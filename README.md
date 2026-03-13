@@ -21,6 +21,73 @@ Before you begin, make sure you have the following installed:
 
 ---
 
+## Costs & Pricing Overview
+
+Before you start building, understand what's free and what costs money:
+
+### One-time fees
+
+| Item | Cost | Notes |
+|------|------|-------|
+| Google Play Console | **$25** (one-time) | Required to publish on Play Store |
+| Apple Developer Program | **$99/year** | Only needed if you also want to publish on the App Store |
+
+### EAS Build (Expo Cloud Builds)
+
+EAS Build compiles your app in the cloud. Expo offers a **free tier** but with limits:
+
+| Plan | Price | Builds per month | Build priority | Notes |
+|------|-------|-------------------|----------------|-------|
+| **Free** | $0 | **30 builds/month** | Low (queued) | Builds may wait 5-30+ min in queue before starting |
+| **Production** | $99/month | 1,000 builds/month | Normal | Faster queue times |
+| **Enterprise** | Custom | Unlimited | High | Priority builds, dedicated support |
+
+> **Tip:** On the free plan, each build counts against your 30/month limit regardless of profile (development, preview, or production). Plan your builds wisely - don't trigger unnecessary builds.
+
+### Free alternative: Build locally (no EAS cost)
+
+You can build **completely free** on your own machine without using EAS cloud builds:
+
+```bash
+# Generate the native Android project locally
+npx expo prebuild --platform android
+
+# Build the APK/AAB using Gradle (requires Android SDK installed)
+cd android && ./gradlew assembleRelease    # APK
+cd android && ./gradlew bundleRelease      # AAB for Play Store
+```
+
+**Requirements for local builds:**
+- **Android Studio** installed with Android SDK
+- **Java JDK 17** installed
+- More setup effort, but unlimited free builds
+- You manage your own signing keystore
+
+### EAS Submit
+
+| Feature | Cost |
+|---------|------|
+| EAS Submit (upload to Play Store) | **Free** (included in all plans) |
+
+### Firebase (Backend)
+
+| Plan | Cost | Limits |
+|------|------|--------|
+| **Spark (Free)** | $0 | 50K reads/day, 20K writes/day, 1GB storage, 50K auth users |
+| **Blaze (Pay as you go)** | Usage-based | Same free tier included, then pay per operation |
+
+> For a small community app like FaithHub, the **free Spark plan** is more than enough.
+
+### Summary: Minimum cost to publish on Play Store
+
+| Method | Total cost |
+|--------|-----------|
+| EAS Cloud Build (free plan) + Play Store | **$25** (just the Play Console fee) |
+| Local build + Play Store | **$25** (just the Play Console fee) |
+| EAS Cloud Build + App Store (iOS) | **$25 + $99/year** = $124 first year |
+
+---
+
 ## 1. Local Development Setup
 
 ### 1.1 Clone and install
@@ -112,9 +179,11 @@ This creates an `eas.json` file in your project root. Replace its contents with 
 ```
 
 **Build profiles explained:**
-- **development** - Debug build with dev tools, for local testing
-- **preview** - Release APK for sharing with testers (no Play Store needed)
-- **production** - Optimized AAB for Play Store upload
+- **development** - Debug build with dev tools, for local testing (uses 1 of your 30 free builds/month)
+- **preview** - Release APK for sharing with testers, no Play Store needed (uses 1 of your 30 free builds/month)
+- **production** - Optimized AAB for Play Store upload (uses 1 of your 30 free builds/month)
+
+> Each EAS cloud build counts against your monthly limit. See [Costs & Pricing Overview](#costs--pricing-overview) for details and free local build alternatives.
 
 ### 2.3 Add your Android package name
 

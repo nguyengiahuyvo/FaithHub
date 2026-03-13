@@ -46,22 +46,133 @@ EAS Build compiles your app in the cloud. Expo offers a **free tier** but with l
 
 ### Free alternative: Build locally (no EAS cost)
 
-You can build **completely free** on your own machine without using EAS cloud builds:
+You can build **completely free** on your own machine without using EAS cloud builds. Follow these steps:
+
+#### Requirements
+
+Before you start, install the following:
+
+1. **Android Studio** - [Download](https://developer.android.com/studio)
+   - During installation, make sure to install the **Android SDK**
+   - After installation, open Android Studio > **Settings > Languages & Frameworks > Android SDK**
+   - Note the **Android SDK Location** (e.g., `C:\Users\<you>\AppData\Local\Android\Sdk`)
+   - Install **SDK Platform** for Android 15 (API 35) or the latest available
+
+2. **Java JDK 17** - [Download](https://adoptium.net/temurin/releases/?version=17)
+   - After installation, verify: `java -version` should show version 17
+
+3. **Set environment variables** (Windows):
+   - Add `ANDROID_HOME` pointing to your SDK location
+   - Add `JAVA_HOME` pointing to your JDK 17 installation
+   - Add `%ANDROID_HOME%\platform-tools` to your `PATH`
+
+   On Windows, open PowerShell as admin:
+   ```powershell
+   [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", "C:\Users\<you>\AppData\Local\Android\Sdk", "User")
+   [System.Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Eclipse Adoptium\jdk-17.0.x-hotspot", "User")
+   ```
+   Restart your terminal after setting these.
+
+#### Step 1: Generate the native Android project
 
 ```bash
-# Generate the native Android project locally
 npx expo prebuild --platform android
-
-# Build the APK/AAB using Gradle (requires Android SDK installed)
-cd android && ./gradlew assembleRelease    # APK
-cd android && ./gradlew bundleRelease      # AAB for Play Store
 ```
 
-**Requirements for local builds:**
-- **Android Studio** installed with Android SDK
-- **Java JDK 17** installed
-- More setup effort, but unlimited free builds
-- You manage your own signing keystore
+This creates an `android/` folder in your project with the full native Android project (Gradle files, manifests, etc.). You only need to run this once, or again if you change native config in `app.json`.
+
+#### Step 2: Build a debug APK (for testing)
+
+```bash
+cd android
+./gradlew assembleDebug
+```
+
+The APK will be at:
+```
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Transfer this file to your phone and install it to test.
+
+#### Step 3: Create a signing keystore (one-time, for release builds)
+
+Before building a release version, you need a signing key. Run this once:
+
+```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore faithhub-release.keystore -alias faithhub -keyalg RSA -keysize 2048 -validity 10000
+```
+
+You'll be asked to set a password and enter your name/organization. **Save this keystore file and password somewhere safe** - you need the same key for all future updates on the Play Store.
+
+Move the keystore to the android app folder:
+```bash
+mv faithhub-release.keystore android/app/
+```
+
+#### Step 4: Configure signing in Gradle
+
+Edit `android/app/build.gradle` and add the signing config. Find the `android {` block and add:
+
+```gradle
+android {
+    ...
+    signingConfigs {
+        release {
+            storeFile file('faithhub-release.keystore')
+            storePassword 'YOUR_KEYSTORE_PASSWORD'
+            keyAlias 'faithhub'
+            keyPassword 'YOUR_KEY_PASSWORD'
+        }
+    }
+    buildTypes {
+        release {
+            ...
+            signingConfig signingConfigs.release
+        }
+    }
+}
+```
+
+> **Security tip:** Don't commit passwords to git. Instead, use environment variables or a `local.properties` file (already in `.gitignore`).
+
+#### Step 5: Build the release AAB (for Play Store)
+
+```bash
+cd android
+./gradlew bundleRelease
+```
+
+The signed AAB will be at:
+```
+android/app/build/outputs/bundle/release/app-release.aab
+```
+
+This is the file you upload to Google Play Console.
+
+#### Step 6: (Optional) Build a release APK for direct sharing
+
+If you want to share a release APK directly (without the Play Store):
+
+```bash
+cd android
+./gradlew assembleRelease
+```
+
+The APK will be at:
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+#### Common local build errors
+
+| Error | Solution |
+|-------|----------|
+| `SDK location not found` | Set `ANDROID_HOME` env variable or create `android/local.properties` with `sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk` |
+| `Could not determine java version` | Install JDK 17 and set `JAVA_HOME` |
+| `Execution failed for task ':app:mergeReleaseResources'` | Run `cd android && ./gradlew clean` then rebuild |
+| `Keystore was tampered with, or password was incorrect` | Double-check your keystore password |
+| `./gradlew: Permission denied` | Run `chmod +x android/gradlew` (macOS/Linux) |
 
 ### EAS Submit
 

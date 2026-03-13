@@ -1,10 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { useOrg } from "@/lib/org-context";
 
 export default function TabLayout() {
   const { org } = useOrg();
+  const { lang } = useLanguage();
   const hasOrg = !!org;
 
   return (
@@ -23,7 +26,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t("tab_home", lang),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -32,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tasks"
         options={{
-          title: "Tasks",
+          title: t("tab_tasks", lang),
           href: hasOrg ? "/(tabs)/tasks" : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkbox-outline" size={size} color={color} />
@@ -42,7 +45,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="calendar"
         options={{
-          title: "Calendar",
+          title: t("tab_calendar", lang),
           href: hasOrg ? "/(tabs)/calendar" : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
@@ -52,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("tab_profile", lang),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-circle" size={size} color={color} />
           ),

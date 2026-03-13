@@ -14,6 +14,8 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
+import { useLanguage } from "@/lib/language-context";
+import { t, languageLabels, type Language } from "@/lib/i18n";
 
 type ModalType = "confirm" | "error" | null;
 
@@ -22,11 +24,13 @@ function SignOutModal({
   onDismiss,
   onConfirm,
   loading,
+  lang,
 }: {
   type: ModalType;
   onDismiss: () => void;
   onConfirm: () => void;
   loading: boolean;
+  lang: Language;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
@@ -84,17 +88,17 @@ function SignOutModal({
           </View>
 
           <Text style={modalStyles.title}>
-            {isError ? "Sign-out failed" : "Sign Out"}
+            {isError ? t("profile_signout_failed", lang) : t("profile_signout_title", lang)}
           </Text>
           <Text style={modalStyles.message}>
             {isError
-              ? "Something went wrong. Please try again."
-              : "Are you sure you want to sign out of your account?"}
+              ? t("profile_signout_error", lang)
+              : t("profile_signout_msg", lang)}
           </Text>
 
           {isError ? (
             <Pressable onPress={handleDismiss} style={modalStyles.primaryButton}>
-              <Text style={modalStyles.primaryButtonText}>Try Again</Text>
+              <Text style={modalStyles.primaryButtonText}>{t("try_again", lang)}</Text>
             </Pressable>
           ) : (
             <View style={modalStyles.buttonRow}>
@@ -103,7 +107,7 @@ function SignOutModal({
                 disabled={loading}
                 style={modalStyles.cancelButton}
               >
-                <Text style={modalStyles.cancelButtonText}>Cancel</Text>
+                <Text style={modalStyles.cancelButtonText}>{t("cancel", lang)}</Text>
               </Pressable>
               <Pressable
                 onPress={onConfirm}
@@ -116,7 +120,7 @@ function SignOutModal({
                 {loading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={modalStyles.confirmButtonText}>Sign Out</Text>
+                  <Text style={modalStyles.confirmButtonText}>{t("profile_signout", lang)}</Text>
                 )}
               </Pressable>
             </View>
@@ -218,6 +222,7 @@ const modalStyles = StyleSheet.create({
 export default function ProfileScreen() {
   const { user } = useAuth();
   const { org, leaveOrg } = useOrg();
+  const { lang, setLang } = useLanguage();
   const [modalType, setModalType] = useState<ModalType>(null);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -244,19 +249,19 @@ export default function ProfileScreen() {
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <Text style={styles.name}>
-          {user?.displayName || "FaithHub Member"}
+          {user?.displayName || t("profile_member_fallback", lang)}
         </Text>
         <Text style={styles.email}>{user?.email}</Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Account</Text>
+        <Text style={styles.sectionLabel}>{t("profile_account", lang)}</Text>
 
         <View style={styles.row}>
           <Ionicons name="person-outline" size={20} color="#5B7553" />
-          <Text style={styles.rowLabel}>Display name</Text>
+          <Text style={styles.rowLabel}>{t("profile_display_name", lang)}</Text>
           <Text style={styles.rowValue}>
-            {user?.displayName || "Not set"}
+            {user?.displayName || t("profile_not_set", lang)}
           </Text>
         </View>
 
@@ -264,7 +269,7 @@ export default function ProfileScreen() {
 
         <View style={styles.row}>
           <Ionicons name="mail-outline" size={20} color="#5B7553" />
-          <Text style={styles.rowLabel}>Email</Text>
+          <Text style={styles.rowLabel}>{t("profile_email", lang)}</Text>
           <Text style={styles.rowValue} numberOfLines={1}>
             {user?.email}
           </Text>
@@ -274,7 +279,7 @@ export default function ProfileScreen() {
 
         <View style={styles.row}>
           <Ionicons name="shield-checkmark-outline" size={20} color="#5B7553" />
-          <Text style={styles.rowLabel}>Account ID</Text>
+          <Text style={styles.rowLabel}>{t("profile_account_id", lang)}</Text>
           <Text style={styles.rowValue} numberOfLines={1}>
             {user?.uid.slice(0, 12)}...
           </Text>
@@ -283,7 +288,7 @@ export default function ProfileScreen() {
 
       {org && (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Organization</Text>
+          <Text style={styles.sectionLabel}>{t("profile_org", lang)}</Text>
 
           <View style={styles.row}>
             <Ionicons name="business-outline" size={20} color="#5B7553" />
@@ -296,18 +301,46 @@ export default function ProfileScreen() {
           <Pressable onPress={leaveOrg} style={styles.row}>
             <Ionicons name="exit-outline" size={20} color="#DC2626" />
             <Text style={[styles.rowLabel, { color: "#DC2626" }]}>
-              Leave organization
+              {t("profile_leave_org", lang)}
             </Text>
           </Pressable>
         </View>
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Preferences</Text>
+        <Text style={styles.sectionLabel}>{t("profile_preferences", lang)}</Text>
+
+        <View style={styles.row}>
+          <Ionicons name="language-outline" size={20} color="#5B7553" />
+          <Text style={styles.rowLabel}>{t("profile_language", lang)}</Text>
+        </View>
+        <View style={styles.langRow}>
+          {(["en", "de", "vi"] as Language[]).map((l) => (
+            <Pressable
+              key={l}
+              onPress={() => setLang(l)}
+              style={[
+                styles.langChip,
+                lang === l && styles.langChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.langChipText,
+                  lang === l && styles.langChipTextActive,
+                ]}
+              >
+                {languageLabels[l]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.separator} />
 
         <View style={styles.row}>
           <Ionicons name="notifications-outline" size={20} color="#5B7553" />
-          <Text style={styles.rowLabel}>Notifications</Text>
+          <Text style={styles.rowLabel}>{t("profile_notifications", lang)}</Text>
           <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
         </View>
 
@@ -315,7 +348,7 @@ export default function ProfileScreen() {
 
         <View style={styles.row}>
           <Ionicons name="moon-outline" size={20} color="#5B7553" />
-          <Text style={styles.rowLabel}>Appearance</Text>
+          <Text style={styles.rowLabel}>{t("profile_appearance", lang)}</Text>
           <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
         </View>
       </View>
@@ -325,7 +358,7 @@ export default function ProfileScreen() {
         style={styles.signOutButton}
       >
         <Ionicons name="log-out-outline" size={20} color="#DC2626" />
-        <Text style={styles.signOutText}>Sign Out</Text>
+        <Text style={styles.signOutText}>{t("profile_signout", lang)}</Text>
       </Pressable>
 
       <Text style={styles.version}>FaithHub v1.0.0</Text>
@@ -335,6 +368,7 @@ export default function ProfileScreen() {
         onDismiss={() => setModalType(null)}
         onConfirm={confirmSignOut}
         loading={signingOut}
+        lang={lang}
       />
     </ScrollView>
   );
@@ -411,6 +445,29 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "rgba(0,0,0,0.04)",
     marginVertical: 8,
+  },
+  langRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 4,
+  },
+  langChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.04)",
+  },
+  langChipActive: {
+    backgroundColor: "#5B7553",
+  },
+  langChipText: {
+    color: "#6B7264",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  langChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
   signOutButton: {
     flexDirection: "row",

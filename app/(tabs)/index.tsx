@@ -15,14 +15,20 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 type MemberInfo = { displayName: string | null; email: string; role: string };
 
 function ErrorModal({
+  title,
   message,
+  buttonText,
   onDismiss,
 }: {
+  title: string;
   message: string | null;
+  buttonText: string;
   onDismiss: () => void;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -68,10 +74,10 @@ function ErrorModal({
           <View style={modalStyles.iconCircle}>
             <Ionicons name="alert-circle" size={32} color="#DC2626" />
           </View>
-          <Text style={modalStyles.title}>Couldn't join</Text>
+          <Text style={modalStyles.title}>{title}</Text>
           <Text style={modalStyles.message}>{message}</Text>
           <Pressable onPress={handleDismiss} style={modalStyles.button}>
-            <Text style={modalStyles.buttonText}>Try Again</Text>
+            <Text style={modalStyles.buttonText}>{buttonText}</Text>
           </Pressable>
         </Animated.View>
       </Animated.View>
@@ -139,20 +145,21 @@ const modalStyles = StyleSheet.create({
 
 function JoinOrgView() {
   const { joinOrg } = useOrg();
+  const { lang } = useLanguage();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleJoin() {
     if (!code.trim()) {
-      setError("Please enter an organization code.");
+      setError(t("join_error_empty", lang));
       return;
     }
     setLoading(true);
     try {
       await joinOrg(code);
     } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+      setError(err.message || t("firebase_default", lang));
     } finally {
       setLoading(false);
     }
@@ -161,21 +168,18 @@ function JoinOrgView() {
   return (
     <View style={{ gap: 16 }}>
       <View style={styles.heroCard}>
-        <Text style={styles.eyebrow}>FaithHub</Text>
-        <Text style={styles.title}>Join your organization</Text>
-        <Text style={styles.body}>
-          Enter the code shared by your church or group leader to connect with
-          your community.
-        </Text>
+        <Text style={styles.eyebrow}>{t("auth_brand", lang)}</Text>
+        <Text style={styles.title}>{t("join_title", lang)}</Text>
+        <Text style={styles.body}>{t("join_desc", lang)}</Text>
       </View>
 
       <View style={styles.card}>
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Organization code</Text>
+          <Text style={styles.label}>{t("join_label", lang)}</Text>
           <TextInput
-            autoCapitalize="characters"
+            autoCapitalize="none"
             onChangeText={setCode}
-            placeholder="e.g. GRACE-2024"
+            placeholder={t("join_placeholder", lang)}
             placeholderTextColor="#A3A89E"
             style={styles.input}
             value={code}
@@ -190,12 +194,17 @@ function JoinOrgView() {
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.joinButtonText}>Join Organization</Text>
+            <Text style={styles.joinButtonText}>{t("join_button", lang)}</Text>
           )}
         </Pressable>
       </View>
 
-      <ErrorModal message={error} onDismiss={() => setError(null)} />
+      <ErrorModal
+        title={t("join_error_title", lang)}
+        message={error}
+        buttonText={t("try_again", lang)}
+        onDismiss={() => setError(null)}
+      />
     </View>
   );
 }
@@ -203,6 +212,7 @@ function JoinOrgView() {
 function OrgDashboard() {
   const { user } = useAuth();
   const { org } = useOrg();
+  const { lang } = useLanguage();
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
 
@@ -242,22 +252,21 @@ function OrgDashboard() {
       <View style={styles.heroCard}>
         <Text style={styles.eyebrow}>{org?.orgName}</Text>
         <Text style={styles.title}>
-          Welcome{user?.displayName ? `, ${user.displayName}` : ""}
+          {t("home_welcome", lang)}
+          {user?.displayName ? `, ${user.displayName}` : ""}
         </Text>
-        <Text style={styles.body}>
-          Manage tasks and events with your community from the tabs below.
-        </Text>
+        <Text style={styles.body}>{t("home_desc", lang)}</Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Members</Text>
+        <Text style={styles.sectionTitle}>{t("home_members", lang)}</Text>
         {loadingMembers ? (
           <ActivityIndicator
             color="#5B7553"
             style={{ marginVertical: 12 }}
           />
         ) : members.length === 0 ? (
-          <Text style={styles.body}>No members yet.</Text>
+          <Text style={styles.body}>{t("home_no_members", lang)}</Text>
         ) : (
           members.map((m, i) => (
             <View key={i} style={styles.memberRow}>
@@ -268,7 +277,7 @@ function OrgDashboard() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.memberName}>
-                  {m.displayName || "Member"}
+                  {m.displayName || t("home_member_fallback", lang)}
                 </Text>
                 <Text style={styles.memberEmail}>{m.email}</Text>
               </View>

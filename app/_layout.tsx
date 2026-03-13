@@ -10,6 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { LanguageProvider } from "@/lib/language-context";
 import { OrgProvider } from "@/lib/org-context";
 
 function RootNavigator() {
@@ -49,12 +50,14 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <OrgProvider>
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </OrgProvider>
+      <LanguageProvider>
+        <OrgProvider>
+          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </OrgProvider>
+      </LanguageProvider>
     </AuthProvider>
   );
 }

@@ -21,6 +21,8 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
+import { useLanguage } from "@/lib/language-context";
+import { t, tArray } from "@/lib/i18n";
 
 type CalEvent = {
   id: string;
@@ -30,23 +32,6 @@ type CalEvent = {
   time: string; // HH:MM
   createdByName: string | null;
 };
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -59,6 +44,9 @@ function getFirstDayOfMonth(year: number, month: number) {
 export default function CalendarScreen() {
   const { user } = useAuth();
   const { org } = useOrg();
+  const { lang } = useLanguage();
+  const MONTHS = tArray("cal_months", lang);
+  const DAYS = tArray("cal_days", lang);
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -132,7 +120,7 @@ export default function CalendarScreen() {
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Calendar</Text>
+          <Text style={styles.title}>{t("cal_title", lang)}</Text>
           <Pressable
             onPress={() => setShowCreate(true)}
             style={styles.addButton}
@@ -217,7 +205,7 @@ export default function CalendarScreen() {
             <Text style={styles.dateLabel}>{selectedDate}</Text>
             {eventsForDate.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyText}>No events</Text>
+                <Text style={styles.emptyText}>{t("cal_no_events", lang)}</Text>
               </View>
             ) : (
               <View style={{ gap: 10 }}>
@@ -225,7 +213,7 @@ export default function CalendarScreen() {
                   <View key={ev.id} style={styles.eventCard}>
                     <View style={styles.eventTimeBadge}>
                       <Text style={styles.eventTime}>
-                        {ev.time || "All day"}
+                        {ev.time || t("cal_all_day", lang)}
                       </Text>
                     </View>
                     <View style={{ flex: 1 }}>
@@ -235,7 +223,7 @@ export default function CalendarScreen() {
                       ) : null}
                       {ev.createdByName ? (
                         <Text style={styles.eventMeta}>
-                          by {ev.createdByName}
+                          {t("tasks_by", lang)} {ev.createdByName}
                         </Text>
                       ) : null}
                     </View>
@@ -253,6 +241,7 @@ export default function CalendarScreen() {
         userId={user?.uid ?? ""}
         userName={user?.displayName ?? null}
         defaultDate={selectedDate}
+        lang={lang}
         onDismiss={() => setShowCreate(false)}
       />
     </View>
@@ -265,6 +254,7 @@ function CreateEventModal({
   userId,
   userName,
   defaultDate,
+  lang,
   onDismiss,
 }: {
   visible: boolean;
@@ -272,6 +262,7 @@ function CreateEventModal({
   userId: string;
   userName: string | null;
   defaultDate: string;
+  lang: "en" | "de" | "vi";
   onDismiss: () => void;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -348,14 +339,14 @@ function CreateEventModal({
         <Animated.View
           style={[mStyles.card, { opacity, transform: [{ scale }] }]}
         >
-          <Text style={mStyles.modalTitle}>New Event</Text>
+          <Text style={mStyles.modalTitle}>{t("cal_new", lang)}</Text>
 
           <View style={mStyles.field}>
-            <Text style={mStyles.label}>Title</Text>
+            <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Event name"
+              placeholder={t("cal_event_name", lang)}
               placeholderTextColor="#A3A89E"
               style={mStyles.input}
             />
@@ -363,7 +354,7 @@ function CreateEventModal({
 
           <View style={mStyles.fieldRow}>
             <View style={[mStyles.field, { flex: 1 }]}>
-              <Text style={mStyles.label}>Date</Text>
+              <Text style={mStyles.label}>{t("cal_date", lang)}</Text>
               <TextInput
                 value={date}
                 onChangeText={setDate}
@@ -373,11 +364,11 @@ function CreateEventModal({
               />
             </View>
             <View style={[mStyles.field, { flex: 1 }]}>
-              <Text style={mStyles.label}>Time</Text>
+              <Text style={mStyles.label}>{t("cal_time", lang)}</Text>
               <TextInput
                 value={time}
                 onChangeText={setTime}
-                placeholder="e.g. 14:00"
+                placeholder={t("cal_time_placeholder", lang)}
                 placeholderTextColor="#A3A89E"
                 style={mStyles.input}
               />
@@ -385,11 +376,11 @@ function CreateEventModal({
           </View>
 
           <View style={mStyles.field}>
-            <Text style={mStyles.label}>Description (optional)</Text>
+            <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
-              placeholder="Add details..."
+              placeholder={t("tasks_desc_placeholder", lang)}
               placeholderTextColor="#A3A89E"
               style={[
                 mStyles.input,
@@ -401,7 +392,7 @@ function CreateEventModal({
 
           <View style={mStyles.buttonRow}>
             <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
-              <Text style={mStyles.cancelText}>Cancel</Text>
+              <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
             </Pressable>
             <Pressable
               onPress={handleCreate}
@@ -414,7 +405,7 @@ function CreateEventModal({
               {saving ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={mStyles.createText}>Create</Text>
+                <Text style={mStyles.createText}>{t("create", lang)}</Text>
               )}
             </Pressable>
           </View>

@@ -22,6 +22,8 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 type Task = {
   id: string;
@@ -35,6 +37,7 @@ type Task = {
 export default function TasksScreen() {
   const { user } = useAuth();
   const { org } = useOrg();
+  const { lang } = useLanguage();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -75,7 +78,7 @@ export default function TasksScreen() {
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Tasks</Text>
+          <Text style={styles.title}>{t("tasks_title", lang)}</Text>
           <Pressable
             onPress={() => setShowCreate(true)}
             style={styles.addButton}
@@ -93,9 +96,9 @@ export default function TasksScreen() {
         ) : tasks.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="checkbox-outline" size={40} color="#A3A89E" />
-            <Text style={styles.emptyText}>No tasks yet</Text>
+            <Text style={styles.emptyText}>{t("tasks_empty", lang)}</Text>
             <Text style={styles.emptySubtext}>
-              Tap + to create your first task
+              {t("tasks_empty_hint", lang)}
             </Text>
           </View>
         ) : (
@@ -138,7 +141,7 @@ export default function TasksScreen() {
                     ) : null}
                     {task.createdByName ? (
                       <Text style={styles.taskMeta}>
-                        by {task.createdByName}
+                        {t("tasks_by", lang)} {task.createdByName}
                       </Text>
                     ) : null}
                   </View>
@@ -153,6 +156,7 @@ export default function TasksScreen() {
         orgId={org.orgId}
         userId={user?.uid ?? ""}
         userName={user?.displayName ?? null}
+        lang={lang}
         onDismiss={() => setShowCreate(false)}
       />
     </View>
@@ -164,12 +168,14 @@ function CreateTaskModal({
   orgId,
   userId,
   userName,
+  lang,
   onDismiss,
 }: {
   visible: boolean;
   orgId: string;
   userId: string;
   userName: string | null;
+  lang: "en" | "de" | "vi";
   onDismiss: () => void;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -240,25 +246,25 @@ function CreateTaskModal({
         <Animated.View
           style={[mStyles.card, { opacity, transform: [{ scale }] }]}
         >
-          <Text style={mStyles.modalTitle}>New Task</Text>
+          <Text style={mStyles.modalTitle}>{t("tasks_new", lang)}</Text>
 
           <View style={mStyles.field}>
-            <Text style={mStyles.label}>Title</Text>
+            <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="What needs to be done?"
+              placeholder={t("tasks_title_placeholder", lang)}
               placeholderTextColor="#A3A89E"
               style={mStyles.input}
             />
           </View>
 
           <View style={mStyles.field}>
-            <Text style={mStyles.label}>Description (optional)</Text>
+            <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
-              placeholder="Add details..."
+              placeholder={t("tasks_desc_placeholder", lang)}
               placeholderTextColor="#A3A89E"
               style={[mStyles.input, { minHeight: 80, textAlignVertical: "top" }]}
               multiline
@@ -267,7 +273,7 @@ function CreateTaskModal({
 
           <View style={mStyles.buttonRow}>
             <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
-              <Text style={mStyles.cancelText}>Cancel</Text>
+              <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
             </Pressable>
             <Pressable
               onPress={handleCreate}
@@ -280,7 +286,7 @@ function CreateTaskModal({
               {saving ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={mStyles.createText}>Create</Text>
+                <Text style={mStyles.createText}>{t("create", lang)}</Text>
               )}
             </Pressable>
           </View>

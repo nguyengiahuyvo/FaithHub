@@ -1,11 +1,223 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 
+type ModalType = "confirm" | "error" | null;
+
+function SignOutModal({
+  type,
+  onDismiss,
+  onConfirm,
+  loading,
+}: {
+  type: ModalType;
+  onDismiss: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (type) {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [type, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      scale.setValue(0.9);
+      onDismiss();
+    });
+  }
+
+  if (!type) return null;
+
+  const isError = type === "error";
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[modalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View
+            style={[
+              modalStyles.iconCircle,
+              isError && { backgroundColor: "#FEF2F2" },
+            ]}
+          >
+            <Ionicons
+              name={isError ? "alert-circle" : "log-out-outline"}
+              size={32}
+              color={isError ? "#DC2626" : "#DC2626"}
+            />
+          </View>
+
+          <Text style={modalStyles.title}>
+            {isError ? "Sign-out failed" : "Sign Out"}
+          </Text>
+          <Text style={modalStyles.message}>
+            {isError
+              ? "Something went wrong. Please try again."
+              : "Are you sure you want to sign out of your account?"}
+          </Text>
+
+          {isError ? (
+            <Pressable onPress={handleDismiss} style={modalStyles.primaryButton}>
+              <Text style={modalStyles.primaryButtonText}>Try Again</Text>
+            </Pressable>
+          ) : (
+            <View style={modalStyles.buttonRow}>
+              <Pressable
+                onPress={handleDismiss}
+                disabled={loading}
+                style={modalStyles.cancelButton}
+              >
+                <Text style={modalStyles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={onConfirm}
+                disabled={loading}
+                style={[
+                  modalStyles.confirmButton,
+                  loading && { opacity: 0.7 },
+                ]}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={modalStyles.confirmButtonText}>Sign Out</Text>
+                )}
+              </Pressable>
+            </View>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 28,
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FEF2F2",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  title: {
+    color: "#1F2A1F",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  message: {
+    color: "#5C625C",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+    marginTop: 8,
+  },
+  cancelButton: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  cancelButtonText: {
+    color: "#4B5563",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  confirmButton: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#DC2626",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  confirmButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  primaryButton: {
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: "#1F3B2E",
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginTop: 8,
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
+
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const [modalType, setModalType] = useState<ModalType>(null);
+  const [signingOut, setSigningOut] = useState(false);
 
   const initials = (user?.displayName ?? user?.email ?? "?")
     .split(/[\s@]/)
@@ -13,8 +225,14 @@ export default function ProfileScreen() {
     .map((s) => s[0]?.toUpperCase() ?? "")
     .join("");
 
-  async function handleSignOut() {
-    await signOut(auth);
+  async function confirmSignOut() {
+    setSigningOut(true);
+    try {
+      await signOut(auth);
+    } catch {
+      setSigningOut(false);
+      setModalType("error");
+    }
   }
 
   return (
@@ -33,7 +251,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionLabel}>Account</Text>
 
         <View style={styles.row}>
-          <Ionicons name="person-outline" size={20} color="#4B5563" />
+          <Ionicons name="person-outline" size={20} color="#5B7553" />
           <Text style={styles.rowLabel}>Display name</Text>
           <Text style={styles.rowValue}>
             {user?.displayName || "Not set"}
@@ -43,7 +261,7 @@ export default function ProfileScreen() {
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Ionicons name="mail-outline" size={20} color="#4B5563" />
+          <Ionicons name="mail-outline" size={20} color="#5B7553" />
           <Text style={styles.rowLabel}>Email</Text>
           <Text style={styles.rowValue} numberOfLines={1}>
             {user?.email}
@@ -53,7 +271,7 @@ export default function ProfileScreen() {
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Ionicons name="shield-checkmark-outline" size={20} color="#4B5563" />
+          <Ionicons name="shield-checkmark-outline" size={20} color="#5B7553" />
           <Text style={styles.rowLabel}>Account ID</Text>
           <Text style={styles.rowValue} numberOfLines={1}>
             {user?.uid.slice(0, 12)}...
@@ -65,7 +283,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionLabel}>Preferences</Text>
 
         <View style={styles.row}>
-          <Ionicons name="notifications-outline" size={20} color="#4B5563" />
+          <Ionicons name="notifications-outline" size={20} color="#5B7553" />
           <Text style={styles.rowLabel}>Notifications</Text>
           <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
         </View>
@@ -73,18 +291,28 @@ export default function ProfileScreen() {
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Ionicons name="moon-outline" size={20} color="#4B5563" />
+          <Ionicons name="moon-outline" size={20} color="#5B7553" />
           <Text style={styles.rowLabel}>Appearance</Text>
           <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
         </View>
       </View>
 
-      <Pressable onPress={handleSignOut} style={styles.signOutButton}>
+      <Pressable
+        onPress={() => setModalType("confirm")}
+        style={styles.signOutButton}
+      >
         <Ionicons name="log-out-outline" size={20} color="#DC2626" />
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
 
       <Text style={styles.version}>FaithHub v1.0.0</Text>
+
+      <SignOutModal
+        type={modalType}
+        onDismiss={() => setModalType(null)}
+        onConfirm={confirmSignOut}
+        loading={signingOut}
+      />
     </ScrollView>
   );
 }
@@ -104,7 +332,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#1F3B2E",
+    backgroundColor: "#5B7553",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
@@ -115,23 +343,23 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   name: {
-    color: "#111827",
+    color: "#2C3E2C",
     fontSize: 22,
     fontWeight: "700",
   },
   email: {
-    color: "#6B7280",
+    color: "#8A8F84",
     fontSize: 15,
   },
   section: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(255,255,255,0.6)",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "rgba(0,0,0,0.06)",
     padding: 16,
   },
   sectionLabel: {
-    color: "#9CA3AF",
+    color: "#A3A89E",
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: 0.8,
@@ -146,19 +374,19 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     flex: 1,
-    color: "#111827",
+    color: "#2C3E2C",
     fontSize: 15,
     fontWeight: "500",
   },
   rowValue: {
-    color: "#6B7280",
+    color: "#8A8F84",
     fontSize: 14,
     maxWidth: 160,
     textAlign: "right",
   },
   separator: {
     height: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "rgba(0,0,0,0.04)",
     marginVertical: 8,
   },
   signOutButton: {
@@ -166,7 +394,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(255,255,255,0.6)",
     borderColor: "#FECACA",
     borderRadius: 18,
     borderWidth: 1,
@@ -178,7 +406,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   version: {
-    color: "#9CA3AF",
+    color: "#A3A89E",
     fontSize: 13,
     textAlign: "center",
   },

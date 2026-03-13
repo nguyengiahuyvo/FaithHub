@@ -32,6 +32,7 @@ export default function TabTwoScreen() {
 const styles = StyleSheet.create({
   content: {
     padding: 24,
+    paddingTop: 60,
     gap: 16,
   },
   header: {
@@ -39,26 +40,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    color: "#111827",
-    fontSize: 32,
+    color: "#2C3E2C",
+    fontSize: 30,
     fontWeight: "700",
   },
   card: {
-    backgroundColor: "#F9FAFB",
-    borderColor: "#E5E7EB",
+    backgroundColor: "rgba(255,255,255,0.55)",
+    borderColor: "rgba(0,0,0,0.06)",
     borderRadius: 16,
     borderWidth: 1,
     padding: 20,
     gap: 8,
   },
   cardTitle: {
-    color: "#111827",
-    fontSize: 18,
+    color: "#2C3E2C",
+    fontSize: 17,
     fontWeight: "600",
   },
   body: {
-    color: "#4B5563",
-    fontSize: 16,
-    lineHeight: 24,
+    color: "#6B7264",
+    fontSize: 15,
+    lineHeight: 23,
   },
 });

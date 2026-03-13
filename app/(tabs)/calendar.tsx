@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -335,11 +336,12 @@ function CreateEventModal({
 
   return (
     <Modal transparent visible animationType="none">
-      <Animated.View style={[mStyles.backdrop, { opacity }]}>
-        <Animated.View
-          style={[mStyles.card, { opacity, transform: [{ scale }] }]}
-        >
-          <Text style={mStyles.modalTitle}>{t("cal_new", lang)}</Text>
+      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss} activeOpacity={1}>
+        <Animated.View style={[mStyles.backdrop, { opacity }]}>
+          <Animated.View
+            style={[mStyles.card, { opacity, transform: [{ scale }] }]}
+          >
+            <Text style={mStyles.modalTitle}>{t("cal_new", lang)}</Text>
 
           <View style={mStyles.field}>
             <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
@@ -409,8 +411,9 @@ function CreateEventModal({
               )}
             </Pressable>
           </View>
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
+      </Pressable>
     </Modal>
   );
 }

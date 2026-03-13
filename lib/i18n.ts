@@ -209,6 +209,18 @@ const translations = {
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },
   try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
+  delete: { en: "Delete", de: "Löschen", vi: "Xóa" },
+  delete_title: { en: "Delete?", de: "Löschen?", vi: "Xóa?" },
+  delete_task_msg: {
+    en: "Are you sure you want to delete this task? This cannot be undone.",
+    de: "Möchtest du diese Aufgabe wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+    vi: "Bạn có chắc chắn muốn xóa công việc này không? Không thể hoàn tác.",
+  },
+  delete_event_msg: {
+    en: "Are you sure you want to delete this event? This cannot be undone.",
+    de: "Möchtest du dieses Ereignis wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+    vi: "Bạn có chắc chắn muốn xóa sự kiện này không? Không thể hoàn tác.",
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

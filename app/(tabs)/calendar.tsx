@@ -18,6 +18,7 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   serverTimestamp,
@@ -40,6 +41,7 @@ type CalEvent = {
   description: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:MM
+  createdBy: string;
   createdByName: string | null;
   attendees: Attendee[];
 };
@@ -61,6 +63,7 @@ export default function CalendarScreen() {
   const [events, setEvents] = useState<CalEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -81,6 +84,7 @@ export default function CalendarScreen() {
             description: d.data().description || "",
             date: d.data().date,
             time: d.data().time || "",
+            createdBy: d.data().createdBy || "",
             createdByName: d.data().createdByName || null,
             attendees: d.data().attendees || [],
           }))
@@ -137,6 +141,12 @@ export default function CalendarScreen() {
     } else {
       await updateDoc(ref, { attendees: arrayUnion(me) });
     }
+  }
+
+  async function handleDeleteEvent() {
+    if (!org || !deleteTarget) return;
+    await deleteDoc(doc(db, "organizations", org.orgId, "events", deleteTarget));
+    setDeleteTarget(null);
   }
 
   if (!org) return null;
@@ -307,6 +317,14 @@ export default function CalendarScreen() {
                           </Text>
                         </Pressable>
                       </View>
+                      {ev.createdBy === user?.uid && (
+                        <Pressable
+                          onPress={() => setDeleteTarget(ev.id)}
+                          style={styles.eventDeleteBtn}
+                        >
+                          <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                        </Pressable>
+                      )}
                     </View>
                   );
                 })}
@@ -324,6 +342,16 @@ export default function CalendarScreen() {
         defaultDate={selectedDate}
         lang={lang}
         onDismiss={() => setShowCreate(false)}
+      />
+
+      <DeleteConfirmModal
+        visible={!!deleteTarget}
+        title={t("delete_title", lang)}
+        message={t("delete_event_msg", lang)}
+        confirmText={t("delete", lang)}
+        cancelText={t("cancel", lang)}
+        onConfirm={handleDeleteEvent}
+        onDismiss={() => setDeleteTarget(null)}
       />
     </View>
   );
@@ -497,6 +525,117 @@ function CreateEventModal({
     </Modal>
   );
 }
+
+function DeleteConfirmModal({
+  visible,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  onConfirm,
+  onDismiss,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => onDismiss());
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[mStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[mStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={delStyles.iconCircle}>
+            <Ionicons name="trash-outline" size={28} color="#DC2626" />
+          </View>
+          <Text style={delStyles.title}>{title}</Text>
+          <Text style={delStyles.message}>{message}</Text>
+          <View style={mStyles.buttonRow}>
+            <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
+              <Text style={mStyles.cancelText}>{cancelText}</Text>
+            </Pressable>
+            <Pressable onPress={onConfirm} style={delStyles.deleteBtn}>
+              <Text style={delStyles.deleteBtnText}>{confirmText}</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const delStyles = StyleSheet.create({
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FEF2F2",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  title: {
+    color: "#1F2A1F",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  message: {
+    color: "#5C625C",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  deleteBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#DC2626",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  deleteBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
 
 const mStyles = StyleSheet.create({
   backdrop: {
@@ -765,5 +904,9 @@ const styles = StyleSheet.create({
   },
   attendBtnTextActive: {
     color: "#FFFFFF",
+  },
+  eventDeleteBtn: {
+    padding: 6,
+    alignSelf: "flex-start",
   },
 });

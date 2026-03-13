@@ -15,6 +15,7 @@ import {
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   serverTimestamp,
@@ -42,6 +43,7 @@ export default function TasksScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (!org) return;
@@ -71,6 +73,12 @@ export default function TasksScreen() {
     await updateDoc(ref, {
       status: currentStatus === "done" ? "todo" : "done",
     });
+  }
+
+  async function handleDeleteTask() {
+    if (!org || !deleteTarget) return;
+    await deleteDoc(doc(db, "organizations", org.orgId, "tasks", deleteTarget));
+    setDeleteTarget(null);
   }
 
   if (!org) return null;
@@ -146,6 +154,17 @@ export default function TasksScreen() {
                       </Text>
                     ) : null}
                   </View>
+                  {task.createdBy === user?.uid && (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(task.id);
+                      }}
+                      style={styles.deleteBtn}
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                    </Pressable>
+                  )}
                 </Pressable>
               ))}
           </View>
@@ -159,6 +178,16 @@ export default function TasksScreen() {
         userName={user?.displayName ?? null}
         lang={lang}
         onDismiss={() => setShowCreate(false)}
+      />
+
+      <DeleteConfirmModal
+        visible={!!deleteTarget}
+        title={t("delete_title", lang)}
+        message={t("delete_task_msg", lang)}
+        confirmText={t("delete", lang)}
+        cancelText={t("cancel", lang)}
+        onConfirm={handleDeleteTask}
+        onDismiss={() => setDeleteTarget(null)}
       />
     </View>
   );
@@ -298,6 +327,117 @@ function CreateTaskModal({
     </Modal>
   );
 }
+
+function DeleteConfirmModal({
+  visible,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  onConfirm,
+  onDismiss,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => onDismiss());
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[mStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[mStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={dStyles.iconCircle}>
+            <Ionicons name="trash-outline" size={28} color="#DC2626" />
+          </View>
+          <Text style={dStyles.title}>{title}</Text>
+          <Text style={dStyles.message}>{message}</Text>
+          <View style={mStyles.buttonRow}>
+            <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
+              <Text style={mStyles.cancelText}>{cancelText}</Text>
+            </Pressable>
+            <Pressable onPress={onConfirm} style={dStyles.deleteBtn}>
+              <Text style={dStyles.deleteBtnText}>{confirmText}</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const dStyles = StyleSheet.create({
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FEF2F2",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  title: {
+    color: "#1F2A1F",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  message: {
+    color: "#5C625C",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  deleteBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#DC2626",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  deleteBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
 
 const mStyles = StyleSheet.create({
   backdrop: {
@@ -446,5 +586,8 @@ const styles = StyleSheet.create({
     color: "#A3A89E",
     fontSize: 12,
     marginTop: 4,
+  },
+  deleteBtn: {
+    padding: 6,
   },
 });

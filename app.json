@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/icon/android/res/mipmap-xxxhdpi/ic_launcher_monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nguyengiahuy.vo.FaithHub"
     },
     "web": {
       "output": "static",

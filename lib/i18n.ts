@@ -163,6 +163,10 @@ const translations = {
   cal_time_placeholder: { en: "e.g. 14:00", de: "z.B. 14:00", vi: "VD: 14:00" },
   cal_no_events: { en: "No events", de: "Keine Ereignisse", vi: "Không có sự kiện" },
   cal_all_day: { en: "All day", de: "Ganztägig", vi: "Cả ngày" },
+  cal_attend: { en: "Attend", de: "Teilnehmen", vi: "Tham gia" },
+  cal_attending: { en: "Attending", de: "Teilnahme", vi: "Đã tham gia" },
+  cal_attendees: { en: "attendees", de: "Teilnehmer", vi: "người tham gia" },
+  cal_attendee: { en: "attendee", de: "Teilnehmer", vi: "người tham gia" },
   cal_months: {
     en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],

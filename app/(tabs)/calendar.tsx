@@ -15,15 +15,24 @@ import {
 } from "react-native";
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
+  doc,
   onSnapshot,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t, tArray } from "@/lib/i18n";
+
+type Attendee = {
+  uid: string;
+  displayName: string | null;
+};
 
 type CalEvent = {
   id: string;
@@ -32,6 +41,7 @@ type CalEvent = {
   date: string; // YYYY-MM-DD
   time: string; // HH:MM
   createdByName: string | null;
+  attendees: Attendee[];
 };
 
 function getDaysInMonth(year: number, month: number) {
@@ -72,6 +82,7 @@ export default function CalendarScreen() {
             date: d.data().date,
             time: d.data().time || "",
             createdByName: d.data().createdByName || null,
+            attendees: d.data().attendees || [],
           }))
         );
         setLoading(false);
@@ -113,6 +124,19 @@ export default function CalendarScreen() {
   function eventCountForDay(day: number) {
     const ds = dateStr(day);
     return events.filter((e) => e.date === ds).length;
+  }
+
+  async function toggleAttend(eventId: string, attendees: Attendee[]) {
+    if (!org || !user) return;
+    const ref = doc(db, "organizations", org.orgId, "events", eventId);
+    const already = attendees.some((a) => a.uid === user.uid);
+    const me: Attendee = { uid: user.uid, displayName: user.displayName };
+    if (already) {
+      const existing = attendees.find((a) => a.uid === user.uid)!;
+      await updateDoc(ref, { attendees: arrayRemove(existing) });
+    } else {
+      await updateDoc(ref, { attendees: arrayUnion(me) });
+    }
   }
 
   if (!org) return null;
@@ -210,26 +234,82 @@ export default function CalendarScreen() {
               </View>
             ) : (
               <View style={{ gap: 10 }}>
-                {eventsForDate.map((ev) => (
-                  <View key={ev.id} style={styles.eventCard}>
-                    <View style={styles.eventTimeBadge}>
-                      <Text style={styles.eventTime}>
-                        {ev.time || t("cal_all_day", lang)}
-                      </Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.eventTitle}>{ev.title}</Text>
-                      {ev.description ? (
-                        <Text style={styles.eventDesc}>{ev.description}</Text>
-                      ) : null}
-                      {ev.createdByName ? (
-                        <Text style={styles.eventMeta}>
-                          {t("tasks_by", lang)} {ev.createdByName}
+                {eventsForDate.map((ev) => {
+                  const isAttending = ev.attendees.some(
+                    (a) => a.uid === user?.uid
+                  );
+                  const count = ev.attendees.length;
+                  return (
+                    <View key={ev.id} style={styles.eventCard}>
+                      <View style={styles.eventTimeBadge}>
+                        <Text style={styles.eventTime}>
+                          {ev.time || t("cal_all_day", lang)}
                         </Text>
-                      ) : null}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.eventTitle}>{ev.title}</Text>
+                        {ev.description ? (
+                          <Text style={styles.eventDesc}>
+                            {ev.description}
+                          </Text>
+                        ) : null}
+                        {ev.createdByName ? (
+                          <Text style={styles.eventMeta}>
+                            {t("tasks_by", lang)} {ev.createdByName}
+                          </Text>
+                        ) : null}
+
+                        {/* Attendees */}
+                        {count > 0 && (
+                          <View style={styles.attendeeRow}>
+                            {ev.attendees.slice(0, 5).map((a) => (
+                              <View key={a.uid} style={styles.attendeeBubble}>
+                                <Text style={styles.attendeeBubbleText}>
+                                  {(a.displayName || "?")[0]?.toUpperCase()}
+                                </Text>
+                              </View>
+                            ))}
+                            <Text style={styles.attendeeCount}>
+                              {count}{" "}
+                              {count === 1
+                                ? t("cal_attendee", lang)
+                                : t("cal_attendees", lang)}
+                            </Text>
+                          </View>
+                        )}
+
+                        {/* Attend button */}
+                        <Pressable
+                          onPress={() => toggleAttend(ev.id, ev.attendees)}
+                          style={[
+                            styles.attendBtn,
+                            isAttending && styles.attendBtnActive,
+                          ]}
+                        >
+                          <Ionicons
+                            name={
+                              isAttending
+                                ? "checkmark-circle"
+                                : "hand-right-outline"
+                            }
+                            size={16}
+                            color={isAttending ? "#FFFFFF" : "#5B7553"}
+                          />
+                          <Text
+                            style={[
+                              styles.attendBtnText,
+                              isAttending && styles.attendBtnTextActive,
+                            ]}
+                          >
+                            {isAttending
+                              ? t("cal_attending", lang)
+                              : t("cal_attend", lang)}
+                          </Text>
+                        </Pressable>
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             )}
           </>
@@ -336,7 +416,7 @@ function CreateEventModal({
 
   return (
     <Modal transparent visible animationType="none">
-      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss} activeOpacity={1}>
+      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
         <Animated.View style={[mStyles.backdrop, { opacity }]}>
           <Animated.View
             style={[mStyles.card, { opacity, transform: [{ scale }] }]}
@@ -636,5 +716,54 @@ const styles = StyleSheet.create({
     color: "#A3A89E",
     fontSize: 12,
     marginTop: 4,
+  },
+  attendeeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 10,
+  },
+  attendeeBubble: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: -4,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  attendeeBubbleText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  attendeeCount: {
+    color: "#8A8F84",
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  attendBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "rgba(91,117,83,0.1)",
+  },
+  attendBtnActive: {
+    backgroundColor: "#5B7553",
+  },
+  attendBtnText: {
+    color: "#5B7553",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  attendBtnTextActive: {
+    color: "#FFFFFF",
   },
 });

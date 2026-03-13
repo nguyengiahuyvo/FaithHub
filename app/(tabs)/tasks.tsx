@@ -243,7 +243,7 @@ function CreateTaskModal({
 
   return (
     <Modal transparent visible animationType="none">
-      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss} activeOpacity={1}>
+      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
         <Animated.View style={[mStyles.backdrop, { opacity }]}>
           <Animated.View
             style={[mStyles.card, { opacity, transform: [{ scale }] }]}

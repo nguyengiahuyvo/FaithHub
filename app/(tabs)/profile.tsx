@@ -13,6 +13,7 @@ import {
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { useOrg } from "@/lib/org-context";
 
 type ModalType = "confirm" | "error" | null;
 
@@ -216,6 +217,7 @@ const modalStyles = StyleSheet.create({
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const { org, leaveOrg } = useOrg();
   const [modalType, setModalType] = useState<ModalType>(null);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -278,6 +280,27 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </View>
+
+      {org && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Organization</Text>
+
+          <View style={styles.row}>
+            <Ionicons name="business-outline" size={20} color="#5B7553" />
+            <Text style={styles.rowLabel}>{org.orgName}</Text>
+            <Text style={styles.rowValue}>{org.role}</Text>
+          </View>
+
+          <View style={styles.separator} />
+
+          <Pressable onPress={leaveOrg} style={styles.row}>
+            <Ionicons name="exit-outline" size={20} color="#DC2626" />
+            <Text style={[styles.rowLabel, { color: "#DC2626" }]}>
+              Leave organization
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Preferences</Text>

@@ -1,50 +1,350 @@
-# Welcome to your Expo app 👋
+# FaithHub
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile community app for churches, prayer groups, and faith-based organizations. Built with React Native (Expo), TypeScript, and Firebase.
 
-## Get started
+---
 
-1. Install dependencies
+## Prerequisites
 
-   ```bash
-   npm install
-   ```
+Before you begin, make sure you have the following installed:
 
-2. Start the app
+- **Node.js** (v18 or later) - [Download](https://nodejs.org/)
+- **npm** (comes with Node.js)
+- **Expo CLI** - installed automatically via npx
+- **EAS CLI** - for building and submitting to stores
+  ```bash
+  npm install -g eas-cli
+  ```
+- **Git** - [Download](https://git-scm.com/)
+- A **Google Play Console** account ($25 one-time fee) - [Register](https://play.google.com/console/signup)
+- An **Expo account** (free) - [Sign up](https://expo.dev/signup)
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 1. Local Development Setup
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1.1 Clone and install
 
 ```bash
-npm run reset-project
+git clone <your-repo-url>
+cd FaithHub
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 1.2 Start the development server
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+This will open the Expo dev tools. You can run the app on:
+- **Physical device**: Scan the QR code with Expo Go (Android) or Camera app (iOS)
+- **Android emulator**: Press `a` in the terminal
+- **iOS simulator** (macOS only): Press `i` in the terminal
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 1.3 Useful dev commands
 
-## Join the community
+```bash
+npx expo start --clear    # Start with cache cleared
+npx expo start --android  # Start directly on Android
+npx expo start --ios      # Start directly on iOS
+npx expo lint              # Run linter
+```
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 2. Configure EAS (Expo Application Services)
+
+EAS is Expo's cloud build service. It compiles your app into an APK/AAB (Android) or IPA (iOS) without needing Android Studio or Xcode locally.
+
+### 2.1 Log in to your Expo account
+
+```bash
+eas login
+```
+
+Enter your Expo account credentials.
+
+### 2.2 Initialize EAS in your project
+
+```bash
+eas build:configure
+```
+
+This creates an `eas.json` file in your project root. Replace its contents with the following configuration:
+
+```json
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}
+```
+
+**Build profiles explained:**
+- **development** - Debug build with dev tools, for local testing
+- **preview** - Release APK for sharing with testers (no Play Store needed)
+- **production** - Optimized AAB for Play Store upload
+
+### 2.3 Add your Android package name
+
+Add the `package` field to `app.json` under the `android` section:
+
+```json
+"android": {
+  "package": "com.yourname.faithhub",
+  ...
+}
+```
+
+Replace `com.yourname.faithhub` with your own unique package name (e.g., `com.faithhub.app`).
+
+---
+
+## 3. Build the App
+
+### 3.1 Preview build (for testing)
+
+Generate an APK you can install directly on any Android device:
+
+```bash
+eas build --platform android --profile preview
+```
+
+Once complete, EAS provides a download link. Send the APK to your device and install it.
+
+### 3.2 Production build (for Play Store)
+
+Generate a signed AAB (Android App Bundle) for the Play Store:
+
+```bash
+eas build --platform android --profile production
+```
+
+This will:
+1. Compile your app in the cloud
+2. Automatically sign it with a keystore (EAS manages this for you)
+3. Provide a download link for the `.aab` file
+
+The build takes approximately 10-15 minutes. You can monitor progress at [expo.dev](https://expo.dev).
+
+---
+
+## 4. Set Up Google Play Console
+
+### 4.1 Create your app listing
+
+1. Go to [Google Play Console](https://play.google.com/console)
+2. Click **Create app**
+3. Fill in:
+   - **App name**: FaithHub
+   - **Default language**: English (US)
+   - **App or game**: App
+   - **Free or paid**: Free
+4. Accept the declarations and click **Create app**
+
+### 4.2 Complete the store listing
+
+Navigate to **Grow > Store listing** and fill in:
+
+- **Short description** (max 80 chars): Your faith community in one app - tasks, events, and members.
+- **Full description**: Write a longer description of your app features
+- **App icon**: Upload your 512x512 icon (use `assets/images/icon/android/play_store_512.png`)
+- **Feature graphic**: Create a 1024x500 banner image
+- **Screenshots**: Take at least 2 phone screenshots of your app (use the preview build)
+
+### 4.3 Complete the required declarations
+
+Before you can publish, Google requires you to fill out several sections under **Policy > App content**:
+
+1. **Privacy policy** - Provide a URL to your privacy policy
+2. **Ads** - Select "No, my app does not contain ads"
+3. **App access** - Provide login credentials if the app requires sign-in
+4. **Content ratings** - Complete the IARC questionnaire
+5. **Target audience** - Select your target age group
+6. **News apps** - Select "No"
+7. **Data safety** - Declare what data your app collects (email, name, usage data)
+
+### 4.4 Set up internal testing track
+
+1. Go to **Testing > Internal testing**
+2. Click **Create new release**
+3. Upload the `.aab` file you downloaded from EAS (from step 3.2)
+4. Add a release name (e.g., "1.0.0") and release notes
+5. Click **Review release** then **Start rollout**
+
+### 4.5 Add testers
+
+1. In **Internal testing**, go to the **Testers** tab
+2. Create a new email list
+3. Add tester email addresses
+4. Share the opt-in link with your testers
+
+---
+
+## 5. Upload to Play Store (Automated)
+
+Instead of uploading the AAB manually, you can use EAS Submit to automate the process.
+
+### 5.1 Create a Google Service Account
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Select your project (or create one linked to your Play Console)
+3. Navigate to **IAM & Admin > Service Accounts**
+4. Click **Create Service Account**
+   - Name: `eas-submit`
+   - Role: Skip (we'll configure in Play Console)
+5. Click **Done**, then click on the new service account
+6. Go to **Keys > Add Key > Create new key > JSON**
+7. Download the JSON file and save it as `google-service-account.json` in your project root
+
+> **IMPORTANT**: Add `google-service-account.json` to your `.gitignore` file so it is never committed to version control!
+
+```bash
+echo "google-service-account.json" >> .gitignore
+```
+
+### 5.2 Link the service account to Play Console
+
+1. Go to [Google Play Console](https://play.google.com/console) > **Settings > API access**
+2. Link your Google Cloud project
+3. Under **Service accounts**, find `eas-submit` and click **Manage Play Console permissions**
+4. Grant these permissions:
+   - **App access > Admin** (for your app only)
+   - Or at minimum: **Release management**, **Store presence**
+5. Click **Invite user** and then **Send invite**
+
+### 5.3 Submit the build
+
+```bash
+eas submit --platform android --profile production
+```
+
+This uploads your latest production build directly to the Play Store's internal testing track.
+
+To build and submit in one command:
+
+```bash
+eas build --platform android --profile production --auto-submit
+```
+
+---
+
+## 6. Release to Production
+
+Once you've tested your app via internal testing and everything works:
+
+1. Go to **Google Play Console > Production**
+2. Click **Create new release**
+3. **Promote from internal testing** (or upload the AAB again)
+4. Add release notes
+5. Click **Review release**
+6. Click **Start rollout to Production**
+
+Google will review your app (this can take a few hours to several days for the first submission).
+
+---
+
+## 7. Updating Your App
+
+For future updates:
+
+### 7.1 Bump the version
+
+Update the version in `app.json`:
+
+```json
+"version": "1.1.0"
+```
+
+The `versionCode` (Android build number) auto-increments via EAS thanks to the `"autoIncrement": true` setting.
+
+### 7.2 Build and submit
+
+```bash
+eas build --platform android --profile production --auto-submit
+```
+
+### 7.3 Roll out the update
+
+Go to Play Console, create a new production release, and roll it out.
+
+---
+
+## Project Structure
+
+```
+FaithHub/
+  app/
+    _layout.tsx          # Root layout with auth routing & splash screen
+    login.tsx            # Login / Sign-up screen
+    (tabs)/
+      _layout.tsx        # Tab navigation layout
+      index.tsx          # Home / Organization dashboard
+      tasks.tsx          # Task management
+      calendar.tsx       # Calendar & events
+      profile.tsx        # User profile & settings
+  lib/
+    firebase.ts          # Firebase configuration
+    auth-context.tsx     # Authentication state provider
+    org-context.tsx      # Organization state provider
+    language-context.tsx # i18n language provider
+    i18n.ts              # Translations (EN, DE, VI)
+  assets/
+    images/icon/         # App icons (iOS & Android)
+  app.json               # Expo app configuration
+  eas.json               # EAS build configuration
+```
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Build fails with "keystore" error | Run `eas credentials` to manage your Android keystore |
+| App crashes on startup | Check Firebase config in `lib/firebase.ts` |
+| Icons not showing | Run `npx expo start --clear` to clear cache |
+| EAS build is slow | First builds are slower; subsequent builds use cache |
+| "Package name already taken" | Change the `android.package` in `app.json` |
+| Play Store rejects AAB | Ensure all declarations in App Content are completed |
+
+---
+
+## Useful Links
+
+- [Expo Docs](https://docs.expo.dev/)
+- [EAS Build Docs](https://docs.expo.dev/build/introduction/)
+- [EAS Submit Docs](https://docs.expo.dev/submit/android/)
+- [Google Play Console Help](https://support.google.com/googleplay/android-developer/)
+- [Firebase Console](https://console.firebase.google.com/)

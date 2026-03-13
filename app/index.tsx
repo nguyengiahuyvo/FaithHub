@@ -1,15 +1,27 @@
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
+import {
+  OAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 type AuthMode = "login" | "signup";
 
@@ -20,6 +32,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const copy =
     mode === "login"
@@ -39,6 +52,82 @@ export default function AuthScreen() {
           secondaryLabel: "Already have an account?",
           secondaryAction: "Log in instead",
         };
+
+  async function handleAppleSignIn() {
+    try {
+      const nonce = Math.random().toString(36).substring(2, 10);
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        nonce
+      );
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+
+      const oauthCredential = new OAuthProvider("apple.com").credential({
+        idToken: credential.identityToken!,
+        rawNonce: nonce,
+      });
+
+      await signInWithCredential(auth, oauthCredential);
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      if (error.code !== "ERR_REQUEST_CANCELED") {
+        Alert.alert(
+          "Apple Sign-In failed",
+          error.message || "Please try again."
+        );
+      }
+    }
+  }
+
+  async function handleSubmit() {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Missing fields", "Please fill in email and password.");
+      return;
+    }
+
+    if (mode === "signup") {
+      if (password !== confirmPassword) {
+        Alert.alert("Password mismatch", "Passwords do not match.");
+        return;
+      }
+      if (password.length < 6) {
+        Alert.alert(
+          "Weak password",
+          "Password must be at least 6 characters."
+        );
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        const { user } = await createUserWithEmailAndPassword(
+          auth,
+          email.trim(),
+          password
+        );
+        if (fullName.trim()) {
+          await updateProfile(user, { displayName: fullName.trim() });
+        }
+      } else {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      }
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      const message = firebaseErrorMessage(error.code);
+      Alert.alert("Authentication error", message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <View style={styles.screen}>
@@ -168,11 +257,36 @@ export default function AuthScreen() {
             ) : null}
 
             <Pressable
-              onPress={() => router.replace("/(tabs)")}
-              style={styles.primaryButton}
+              onPress={handleSubmit}
+              disabled={loading}
+              style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
             >
-              <Text style={styles.primaryButtonText}>{copy.primaryAction}</Text>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>
+                  {copy.primaryAction}
+                </Text>
+              )}
             </Pressable>
+
+            {Platform.OS === "ios" && (
+              <>
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={18}
+                  style={styles.appleButton}
+                  onPress={handleAppleSignIn}
+                />
+              </>
+            )}
 
             <Pressable
               onPress={() => setMode(mode === "login" ? "signup" : "login")}
@@ -195,6 +309,29 @@ export default function AuthScreen() {
       </KeyboardAvoidingView>
     </View>
   );
+}
+
+function firebaseErrorMessage(code: string): string {
+  switch (code) {
+    case "auth/invalid-email":
+      return "The email address is invalid.";
+    case "auth/user-disabled":
+      return "This account has been disabled.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Invalid email or password.";
+    case "auth/email-already-in-use":
+      return "An account with this email already exists.";
+    case "auth/weak-password":
+      return "Password must be at least 6 characters.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Please try again later.";
+    case "auth/network-request-failed":
+      return "Network error. Please check your connection.";
+    default:
+      return "Something went wrong. Please try again.";
+  }
 }
 
 const styles = StyleSheet.create({
@@ -329,6 +466,27 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     marginTop: 8,
     paddingVertical: 16,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#D8D0C4",
+  },
+  dividerText: {
+    color: "#7B7F85",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  appleButton: {
+    height: 52,
   },
   primaryButtonText: {
     color: "#FFFFFF",

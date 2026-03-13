@@ -1,7 +1,7 @@
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
 } from "@react-navigation/native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -45,7 +45,7 @@ function SplashScreen() {
         <View style={splashStyles.iconCircle}>
           <Text style={splashStyles.icon}>+</Text>
         </View>
-        <Text style={splashStyles.title}>FaithHub</Text>
+        <Text style={splashStyles.title}>✞ ​FaithHub</Text>
         <Text style={splashStyles.subtitle}>Your community. Your faith.</Text>
       </Animated.View>
     </View>
@@ -133,7 +133,9 @@ export default function RootLayout() {
     <AuthProvider>
       <LanguageProvider>
         <OrgProvider>
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
             <RootNavigator />
             <StatusBar style="auto" />
           </ThemeProvider>

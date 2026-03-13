@@ -1,11 +1,13 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
+  Animated,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -25,6 +27,132 @@ import { auth } from "@/lib/firebase";
 
 type AuthMode = "login" | "signup";
 
+type ErrorInfo = {
+  title: string;
+  message: string;
+} | null;
+
+function ErrorModal({
+  error,
+  onDismiss,
+}: {
+  error: ErrorInfo;
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (error) {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [error]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      scale.setValue(0.9);
+      onDismiss();
+    });
+  }
+
+  if (!error) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[modalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={modalStyles.iconCircle}>
+            <Ionicons name="alert-circle" size={32} color="#DC2626" />
+          </View>
+
+          <Text style={modalStyles.title}>{error.title}</Text>
+          <Text style={modalStyles.message}>{error.message}</Text>
+
+          <Pressable onPress={handleDismiss} style={modalStyles.button}>
+            <Text style={modalStyles.buttonText}>Try Again</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 28,
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FEF2F2",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  title: {
+    color: "#1F2A1F",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  message: {
+    color: "#5C625C",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  button: {
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: "#1F3B2E",
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginTop: 8,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
+
 export default function AuthScreen() {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("login");
@@ -33,6 +161,7 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<ErrorInfo>(null);
 
   const copy =
     mode === "login"
@@ -52,6 +181,10 @@ export default function AuthScreen() {
           secondaryLabel: "Already have an account?",
           secondaryAction: "Log in instead",
         };
+
+  function showError(title: string, message: string) {
+    setError({ title, message });
+  }
 
   async function handleAppleSignIn() {
     try {
@@ -78,30 +211,24 @@ export default function AuthScreen() {
       router.replace("/(tabs)");
     } catch (error: any) {
       if (error.code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert(
-          "Apple Sign-In failed",
-          error.message || "Please try again."
-        );
+        showError("Apple Sign-In failed", error.message || "Please try again.");
       }
     }
   }
 
   async function handleSubmit() {
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Missing fields", "Please fill in email and password.");
+      showError("Missing fields", "Please fill in your email and password to continue.");
       return;
     }
 
     if (mode === "signup") {
       if (password !== confirmPassword) {
-        Alert.alert("Password mismatch", "Passwords do not match.");
+        showError("Passwords don't match", "The passwords you entered don't match. Please try again.");
         return;
       }
       if (password.length < 6) {
-        Alert.alert(
-          "Weak password",
-          "Password must be at least 6 characters."
-        );
+        showError("Password too short", "Your password must be at least 6 characters long.");
         return;
       }
     }
@@ -123,7 +250,10 @@ export default function AuthScreen() {
       router.replace("/(tabs)");
     } catch (error: any) {
       const message = firebaseErrorMessage(error.code);
-      Alert.alert("Authentication error", message);
+      showError(
+        mode === "login" ? "Login failed" : "Sign-up failed",
+        message
+      );
     } finally {
       setLoading(false);
     }
@@ -307,6 +437,8 @@ export default function AuthScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ErrorModal error={error} onDismiss={() => setError(null)} />
     </View>
   );
 }
@@ -314,21 +446,21 @@ export default function AuthScreen() {
 function firebaseErrorMessage(code: string): string {
   switch (code) {
     case "auth/invalid-email":
-      return "The email address is invalid.";
+      return "The email address you entered isn't valid. Please check and try again.";
     case "auth/user-disabled":
-      return "This account has been disabled.";
+      return "This account has been disabled. Please contact support for help.";
     case "auth/user-not-found":
     case "auth/wrong-password":
     case "auth/invalid-credential":
-      return "Invalid email or password.";
+      return "The email or password you entered is incorrect. Please try again.";
     case "auth/email-already-in-use":
-      return "An account with this email already exists.";
+      return "An account with this email already exists. Try logging in instead.";
     case "auth/weak-password":
-      return "Password must be at least 6 characters.";
+      return "Your password must be at least 6 characters long.";
     case "auth/too-many-requests":
-      return "Too many attempts. Please try again later.";
+      return "Too many attempts. Please wait a moment and try again.";
     case "auth/network-request-failed":
-      return "Network error. Please check your connection.";
+      return "Unable to connect. Please check your internet connection.";
     default:
       return "Something went wrong. Please try again.";
   }

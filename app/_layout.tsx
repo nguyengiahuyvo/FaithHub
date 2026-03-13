@@ -21,13 +21,12 @@ function RootNavigator() {
   useEffect(() => {
     if (isLoading) return;
 
-    const firstSegment = segments[0] as string | undefined;
-    const inAuthScreen = firstSegment === undefined || firstSegment === "index";
+    const inTabsGroup = segments[0] === "(tabs)";
 
-    if (!user && !inAuthScreen) {
-      // Not signed in → redirect to auth
-      router.replace("/");
-    } else if (user && inAuthScreen) {
+    if (!user && inTabsGroup) {
+      // Not signed in → redirect to login
+      router.replace("/login");
+    } else if (user && !inTabsGroup) {
       // Signed in → redirect to main app
       router.replace("/(tabs)");
     }
@@ -35,7 +34,7 @@ function RootNavigator() {
 
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="modal"

@@ -236,6 +236,8 @@ export default function ProfileScreen() {
     setSigningOut(true);
     try {
       await signOut(auth);
+      setModalType(null);
+      setSigningOut(false);
     } catch {
       setSigningOut(false);
       setModalType("error");

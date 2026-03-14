@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(npx expo:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(where java:*)",
+      "Read(//c/Program Files/Eclipse Adoptium//**)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files/Microsoft//**)",
+      "Read(//c/Program Files/Android/Android Studio/jbr//**)"
     ]
   }
 }

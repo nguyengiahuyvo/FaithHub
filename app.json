@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/icon/ios/AppIcon~ios-marketing.png"
+      "icon": "./assets/images/icon/ios/AppIcon~ios-marketing.png",
+      "bundleIdentifier": "com.nguyengiahuy.vo.FaithHub"
     },
     "android": {
       "adaptiveIcon": {

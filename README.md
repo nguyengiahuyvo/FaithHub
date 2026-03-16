@@ -195,7 +195,7 @@ android/app/build/outputs/apk/release/app-release.apk
 |--------|-----------|
 | EAS Cloud Build (free plan) + Play Store | **$25** (just the Play Console fee) |
 | Local build + Play Store | **$25** (just the Play Console fee) |
-| EAS Cloud Build + App Store (iOS) | **$25 + $99/year** = $124 first year |
+| EAS Cloud Build + App Store (iOS) | **$25 + $99/year** = $124 first year | See [iOS Publishing Guide](IOS_PUBLISHING.md) |
 
 ---
 
@@ -521,10 +521,20 @@ FaithHub/
 
 ---
 
+## iOS Publishing
+
+For a complete guide to building, testing, and publishing FaithHub on the **Apple App Store**, see the dedicated iOS documentation:
+
+> **[iOS Publishing Guide (IOS_PUBLISHING.md)](IOS_PUBLISHING.md)** — Covers Apple Developer setup, EAS/local builds, App Store Connect, automated screenshots (Maestro & Fastlane), TestFlight beta testing, and App Store submission.
+
+---
+
 ## Useful Links
 
 - [Expo Docs](https://docs.expo.dev/)
 - [EAS Build Docs](https://docs.expo.dev/build/introduction/)
-- [EAS Submit Docs](https://docs.expo.dev/submit/android/)
+- [EAS Submit Docs (Android)](https://docs.expo.dev/submit/android/)
+- [EAS Submit Docs (iOS)](https://docs.expo.dev/submit/ios/)
 - [Google Play Console Help](https://support.google.com/googleplay/android-developer/)
+- [App Store Connect](https://appstoreconnect.apple.com/)
 - [Firebase Console](https://console.firebase.google.com/)

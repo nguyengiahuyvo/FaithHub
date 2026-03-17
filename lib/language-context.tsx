@@ -12,13 +12,13 @@ import { type Language } from "./i18n";
 
 type LanguageState = {
   lang: Language;
-  setLang: (lang: Language) => void;
+  setLang: (lang: Language) => Promise<void>;
   isLoading: boolean;
 };
 
 const LanguageContext = createContext<LanguageState>({
   lang: "en",
-  setLang: () => {},
+  setLang: async () => {},
   isLoading: true,
 });
 

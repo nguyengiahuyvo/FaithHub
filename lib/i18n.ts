@@ -412,6 +412,7 @@ const translations = {
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },
   try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
+  save: { en: "Save", de: "Speichern", vi: "Lưu" },
   delete: { en: "Delete", de: "Löschen", vi: "Xóa" },
   delete_title: { en: "Delete?", de: "Löschen?", vi: "Xóa?" },
   delete_task_msg: {

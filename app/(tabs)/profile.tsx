@@ -225,6 +225,22 @@ export default function ProfileScreen() {
   const { lang, setLang } = useLanguage();
   const [modalType, setModalType] = useState<ModalType>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [pendingLang, setPendingLang] = useState<Language>(lang);
+  const [saving, setSaving] = useState(false);
+  const langDirty = pendingLang !== lang;
+
+  useEffect(() => {
+    setPendingLang(lang);
+  }, [lang]);
+
+  async function saveLang() {
+    setSaving(true);
+    try {
+      await setLang(pendingLang);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const initials = (user?.displayName ?? user?.email ?? "?")
     .split(/[\s@]/)
@@ -320,16 +336,16 @@ export default function ProfileScreen() {
           {(["en", "de", "vi"] as Language[]).map((l) => (
             <Pressable
               key={l}
-              onPress={() => setLang(l)}
+              onPress={() => setPendingLang(l)}
               style={[
                 styles.langChip,
-                lang === l && styles.langChipActive,
+                pendingLang === l && styles.langChipActive,
               ]}
             >
               <Text
                 style={[
                   styles.langChipText,
-                  lang === l && styles.langChipTextActive,
+                  pendingLang === l && styles.langChipTextActive,
                 ]}
               >
                 {languageLabels[l]}
@@ -338,21 +354,19 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <View style={styles.separator} />
-
-        <View style={styles.row}>
-          <Ionicons name="notifications-outline" size={20} color="#5B7553" />
-          <Text style={styles.rowLabel}>{t("profile_notifications", lang)}</Text>
-          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.row}>
-          <Ionicons name="moon-outline" size={20} color="#5B7553" />
-          <Text style={styles.rowLabel}>{t("profile_appearance", lang)}</Text>
-          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-        </View>
+        {langDirty && (
+          <Pressable
+            onPress={saveLang}
+            disabled={saving}
+            style={[styles.saveButton, saving && { opacity: 0.7 }]}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.saveButtonText}>{t("save", lang)}</Text>
+            )}
+          </Pressable>
+        )}
       </View>
 
       <Pressable
@@ -469,6 +483,18 @@ const styles = StyleSheet.create({
   },
   langChipTextActive: {
     color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  saveButton: {
+    alignItems: "center",
+    backgroundColor: "#5B7553",
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "600",
   },
   signOutButton: {

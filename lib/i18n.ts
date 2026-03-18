@@ -157,6 +157,43 @@ const translations = {
   },
   auth_try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
 
+  // Email verification
+  verify_title: {
+    en: "Verify your email",
+    de: "E-Mail bestätigen",
+    vi: "Xác minh email",
+  },
+  verify_desc: {
+    en: "We've sent a verification link to your email. Please check your inbox and tap the link to continue.",
+    de: "Wir haben einen Bestätigungslink an deine E-Mail gesendet. Bitte prüfe dein Postfach und tippe auf den Link.",
+    vi: "Chúng tôi đã gửi liên kết xác minh đến email của bạn. Vui lòng kiểm tra hộp thư và nhấn vào liên kết.",
+  },
+  verify_resend: {
+    en: "Resend email",
+    de: "Erneut senden",
+    vi: "Gửi lại email",
+  },
+  verify_resent: {
+    en: "Email sent!",
+    de: "E-Mail gesendet!",
+    vi: "Đã gửi email!",
+  },
+  verify_check: {
+    en: "I've verified my email",
+    de: "Ich habe meine E-Mail bestätigt",
+    vi: "Tôi đã xác minh email",
+  },
+  verify_not_yet: {
+    en: "Email not verified yet. Please check your inbox.",
+    de: "E-Mail noch nicht bestätigt. Bitte prüfe dein Postfach.",
+    vi: "Email chưa được xác minh. Vui lòng kiểm tra hộp thư.",
+  },
+  verify_signout: {
+    en: "Sign out",
+    de: "Abmelden",
+    vi: "Đăng xuất",
+  },
+
   // Firebase errors
   firebase_invalid_email: {
     en: "The email address you entered isn't valid. Please check and try again.",

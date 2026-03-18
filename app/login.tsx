@@ -19,6 +19,7 @@ import {
 import {
   OAuthProvider,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   signInWithCredential,
   signInWithEmailAndPassword,
   updateProfile,
@@ -244,6 +245,7 @@ export default function AuthScreen() {
         if (fullName.trim()) {
           await updateProfile(user, { displayName: fullName.trim() });
         }
+        await sendEmailVerification(user);
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password);
       }

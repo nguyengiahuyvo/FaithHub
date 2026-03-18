@@ -104,10 +104,13 @@ function RootNavigator() {
     if (isLoading) return;
 
     const inTabsGroup = segments[0] === "(tabs)";
+    const inVerify = segments[0] === "verify-email";
 
-    if (!user && inTabsGroup) {
+    if (!user && (inTabsGroup || inVerify)) {
       router.replace("/login");
-    } else if (user && !inTabsGroup) {
+    } else if (user && !user.emailVerified && !inVerify) {
+      router.replace("/verify-email");
+    } else if (user && user.emailVerified && !inTabsGroup) {
       router.replace("/(tabs)");
     }
   }, [user, isLoading, segments]);
@@ -117,6 +120,7 @@ function RootNavigator() {
   return (
     <Stack>
       <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="verify-email" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="modal"

@@ -281,6 +281,15 @@ const translations = {
     vi: "Thêm chi tiết...",
   },
   tasks_by: { en: "by", de: "von", vi: "bởi" },
+  tasks_priority: {
+    en: "Priority",
+    de: "Priorität",
+    vi: "Mức độ ưu tiên",
+  },
+  tasks_priority_low: { en: "Low", de: "Niedrig", vi: "Thấp" },
+  tasks_priority_medium: { en: "Medium", de: "Mittel", vi: "Trung bình" },
+  tasks_priority_high: { en: "High", de: "Hoch", vi: "Cao" },
+  tasks_priority_urgent: { en: "Urgent", de: "Dringend", vi: "Khẩn cấp" },
 
   // Calendar
   cal_title: { en: "Calendar", de: "Kalender", vi: "Lịch" },

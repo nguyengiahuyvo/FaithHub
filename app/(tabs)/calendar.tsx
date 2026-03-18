@@ -21,6 +21,8 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
@@ -33,6 +35,14 @@ import { t, tArray } from "@/lib/i18n";
 type Attendee = {
   uid: string;
   displayName: string | null;
+};
+
+type Comment = {
+  id: string;
+  text: string;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
 };
 
 type CalEvent = {
@@ -244,90 +254,17 @@ export default function CalendarScreen() {
               </View>
             ) : (
               <View style={{ gap: 10 }}>
-                {eventsForDate.map((ev) => {
-                  const isAttending = ev.attendees.some(
-                    (a) => a.uid === user?.uid
-                  );
-                  const count = ev.attendees.length;
-                  return (
-                    <View key={ev.id} style={styles.eventCard}>
-                      <View style={styles.eventTimeBadge}>
-                        <Text style={styles.eventTime}>
-                          {ev.time || t("cal_all_day", lang)}
-                        </Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.eventTitle}>{ev.title}</Text>
-                        {ev.description ? (
-                          <Text style={styles.eventDesc}>
-                            {ev.description}
-                          </Text>
-                        ) : null}
-                        {ev.createdByName ? (
-                          <Text style={styles.eventMeta}>
-                            {t("tasks_by", lang)} {ev.createdByName}
-                          </Text>
-                        ) : null}
-
-                        {/* Attendees */}
-                        {count > 0 && (
-                          <View style={styles.attendeeRow}>
-                            {ev.attendees.slice(0, 5).map((a) => (
-                              <View key={a.uid} style={styles.attendeeBubble}>
-                                <Text style={styles.attendeeBubbleText}>
-                                  {(a.displayName || "?")[0]?.toUpperCase()}
-                                </Text>
-                              </View>
-                            ))}
-                            <Text style={styles.attendeeCount}>
-                              {count}{" "}
-                              {count === 1
-                                ? t("cal_attendee", lang)
-                                : t("cal_attendees", lang)}
-                            </Text>
-                          </View>
-                        )}
-
-                        {/* Attend button */}
-                        <Pressable
-                          onPress={() => toggleAttend(ev.id, ev.attendees)}
-                          style={[
-                            styles.attendBtn,
-                            isAttending && styles.attendBtnActive,
-                          ]}
-                        >
-                          <Ionicons
-                            name={
-                              isAttending
-                                ? "checkmark-circle"
-                                : "hand-right-outline"
-                            }
-                            size={16}
-                            color={isAttending ? "#FFFFFF" : "#5B7553"}
-                          />
-                          <Text
-                            style={[
-                              styles.attendBtnText,
-                              isAttending && styles.attendBtnTextActive,
-                            ]}
-                          >
-                            {isAttending
-                              ? t("cal_attending", lang)
-                              : t("cal_attend", lang)}
-                          </Text>
-                        </Pressable>
-                      </View>
-                      {ev.createdBy === user?.uid && (
-                        <Pressable
-                          onPress={() => setDeleteTarget(ev.id)}
-                          style={styles.eventDeleteBtn}
-                        >
-                          <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                        </Pressable>
-                      )}
-                    </View>
-                  );
-                })}
+                {eventsForDate.map((ev) => (
+                  <EventCard
+                    key={ev.id}
+                    event={ev}
+                    orgId={org.orgId}
+                    user={user}
+                    lang={lang}
+                    onToggleAttend={toggleAttend}
+                    onDelete={setDeleteTarget}
+                  />
+                ))}
               </View>
             )}
           </>
@@ -353,6 +290,228 @@ export default function CalendarScreen() {
         onConfirm={handleDeleteEvent}
         onDismiss={() => setDeleteTarget(null)}
       />
+    </View>
+  );
+}
+
+function timeAgo(date: Date | null, lang: "en" | "de" | "vi"): string {
+  if (!date) return "";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return t("cal_just_now", lang);
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}${t("cal_minutes_ago", lang)}`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}${t("cal_hours_ago", lang)}`;
+  const days = Math.floor(hours / 24);
+  return `${days}${t("cal_days_ago", lang)}`;
+}
+
+function EventCard({
+  event: ev,
+  orgId,
+  user,
+  lang,
+  onToggleAttend,
+  onDelete,
+}: {
+  event: CalEvent;
+  orgId: string;
+  user: { uid: string; displayName: string | null } | null;
+  lang: "en" | "de" | "vi";
+  onToggleAttend: (eventId: string, attendees: Attendee[]) => void;
+  onDelete: (eventId: string) => void;
+}) {
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!showComments) return;
+    const q = query(
+      collection(db, "organizations", orgId, "events", ev.id, "comments"),
+      orderBy("createdAt", "asc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setComments(
+        snap.docs.map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+    });
+    return unsub;
+  }, [showComments, orgId, ev.id]);
+
+  async function handleSendComment() {
+    if (!commentText.trim() || !user) return;
+    setSending(true);
+    try {
+      await addDoc(
+        collection(db, "organizations", orgId, "events", ev.id, "comments"),
+        {
+          text: commentText.trim(),
+          createdBy: user.uid,
+          createdByName: user.displayName,
+          createdAt: serverTimestamp(),
+        },
+      );
+      setCommentText("");
+    } catch {
+      // ignore
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const isAttending = ev.attendees.some((a) => a.uid === user?.uid);
+  const count = ev.attendees.length;
+
+  return (
+    <View style={styles.eventCard}>
+      <View style={styles.eventTimeBadge}>
+        <Text style={styles.eventTime}>
+          {ev.time || t("cal_all_day", lang)}
+        </Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.eventTitle}>{ev.title}</Text>
+        {ev.description ? (
+          <Text style={styles.eventDesc}>{ev.description}</Text>
+        ) : null}
+        {ev.createdByName ? (
+          <Text style={styles.eventMeta}>
+            {t("tasks_by", lang)} {ev.createdByName}
+          </Text>
+        ) : null}
+
+        {/* Attendees */}
+        {count > 0 && (
+          <View style={styles.attendeeRow}>
+            {ev.attendees.slice(0, 5).map((a) => (
+              <View key={a.uid} style={styles.attendeeBubble}>
+                <Text style={styles.attendeeBubbleText}>
+                  {(a.displayName || "?")[0]?.toUpperCase()}
+                </Text>
+              </View>
+            ))}
+            <Text style={styles.attendeeCount}>
+              {count}{" "}
+              {count === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}
+            </Text>
+          </View>
+        )}
+
+        {/* Attend button + Comments toggle */}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+          <Pressable
+            onPress={() => onToggleAttend(ev.id, ev.attendees)}
+            style={[styles.attendBtn, isAttending && styles.attendBtnActive, { marginTop: 0 }]}
+          >
+            <Ionicons
+              name={isAttending ? "checkmark-circle" : "hand-right-outline"}
+              size={16}
+              color={isAttending ? "#FFFFFF" : "#5B7553"}
+            />
+            <Text
+              style={[
+                styles.attendBtnText,
+                isAttending && styles.attendBtnTextActive,
+              ]}
+            >
+              {isAttending ? t("cal_attending", lang) : t("cal_attend", lang)}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setShowComments(!showComments)}
+            style={[styles.attendBtn, showComments && styles.attendBtnActive, { marginTop: 0 }]}
+          >
+            <Ionicons
+              name="chatbubble-outline"
+              size={14}
+              color={showComments ? "#FFFFFF" : "#5B7553"}
+            />
+            <Text
+              style={[
+                styles.attendBtnText,
+                showComments && styles.attendBtnTextActive,
+              ]}
+            >
+              {t("cal_comments", lang)}
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Comments section */}
+        {showComments && (
+          <View style={commentStyles.container}>
+            {comments.length === 0 ? (
+              <Text style={commentStyles.empty}>
+                {t("cal_no_comments", lang)}
+              </Text>
+            ) : (
+              comments.map((c) => (
+                <View key={c.id} style={commentStyles.comment}>
+                  <View style={commentStyles.avatarSmall}>
+                    <Text style={commentStyles.avatarSmallText}>
+                      {(c.createdByName || "?")[0]?.toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={commentStyles.commentHeader}>
+                      <Text style={commentStyles.commentAuthor}>
+                        {c.createdByName || "?"}
+                      </Text>
+                      <Text style={commentStyles.commentTime}>
+                        {timeAgo(c.createdAt, lang)}
+                      </Text>
+                    </View>
+                    <Text style={commentStyles.commentText}>{c.text}</Text>
+                  </View>
+                </View>
+              ))
+            )}
+
+            {/* Comment input */}
+            <View style={commentStyles.inputRow}>
+              <TextInput
+                value={commentText}
+                onChangeText={setCommentText}
+                placeholder={t("cal_add_comment", lang)}
+                placeholderTextColor="#A3A89E"
+                style={commentStyles.input}
+                multiline
+              />
+              <Pressable
+                onPress={handleSendComment}
+                disabled={sending || !commentText.trim()}
+                style={[
+                  commentStyles.sendBtn,
+                  (!commentText.trim() || sending) && { opacity: 0.4 },
+                ]}
+              >
+                {sending ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Ionicons name="send" size={16} color="#FFFFFF" />
+                )}
+              </Pressable>
+            </View>
+          </View>
+        )}
+      </View>
+      {ev.createdBy === user?.uid && (
+        <Pressable
+          onPress={() => onDelete(ev.id)}
+          style={styles.eventDeleteBtn}
+        >
+          <Ionicons name="trash-outline" size={18} color="#DC2626" />
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -908,5 +1067,85 @@ const styles = StyleSheet.create({
   eventDeleteBtn: {
     padding: 6,
     alignSelf: "flex-start",
+  },
+});
+
+const commentStyles = StyleSheet.create({
+  container: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.06)",
+    gap: 10,
+  },
+  empty: {
+    color: "#A3A89E",
+    fontSize: 13,
+    textAlign: "center",
+    paddingVertical: 8,
+  },
+  comment: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-start",
+  },
+  avatarSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarSmallText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  commentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  commentAuthor: {
+    color: "#2C3E2C",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  commentTime: {
+    color: "#A3A89E",
+    fontSize: 11,
+  },
+  commentText: {
+    color: "#4B5563",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 1,
+  },
+  inputRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-end",
+    marginTop: 4,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: "#F9F7F4",
+    borderColor: "rgba(0,0,0,0.08)",
+    borderRadius: 12,
+    borderWidth: 1,
+    color: "#111827",
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    maxHeight: 80,
+  },
+  sendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

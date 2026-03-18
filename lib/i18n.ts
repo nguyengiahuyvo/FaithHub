@@ -303,6 +303,22 @@ const translations = {
   cal_attending: { en: "Attending", de: "Teilnahme", vi: "Đã tham gia" },
   cal_attendees: { en: "attendees", de: "Teilnehmer", vi: "người tham gia" },
   cal_attendee: { en: "attendee", de: "Teilnehmer", vi: "người tham gia" },
+  cal_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
+  cal_no_comments: {
+    en: "No comments yet",
+    de: "Noch keine Kommentare",
+    vi: "Chưa có bình luận",
+  },
+  cal_add_comment: {
+    en: "Write a comment...",
+    de: "Kommentar schreiben...",
+    vi: "Viết bình luận...",
+  },
+  cal_send: { en: "Send", de: "Senden", vi: "Gửi" },
+  cal_just_now: { en: "Just now", de: "Gerade eben", vi: "Vừa xong" },
+  cal_minutes_ago: { en: "m ago", de: "Min.", vi: "phút trước" },
+  cal_hours_ago: { en: "h ago", de: "Std.", vi: "giờ trước" },
+  cal_days_ago: { en: "d ago", de: "T. her", vi: "ngày trước" },
   cal_months: {
     en: [
       "January",

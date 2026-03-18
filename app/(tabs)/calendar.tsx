@@ -323,9 +323,21 @@ function EventCard({
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [sending, setSending] = useState(false);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(null);
 
+  // Always listen for comment count
+  useEffect(() => {
+    const commentsRef = collection(db, "organizations", orgId, "events", ev.id, "comments");
+    const unsub = onSnapshot(commentsRef, (snap) => {
+      setCommentCount(snap.size);
+    });
+    return unsub;
+  }, [orgId, ev.id]);
+
+  // Load full comments when expanded
   useEffect(() => {
     if (!showComments) return;
     const q = query(
@@ -345,6 +357,18 @@ function EventCard({
     });
     return unsub;
   }, [showComments, orgId, ev.id]);
+
+  async function handleDeleteComment() {
+    if (!deleteCommentTarget) return;
+    try {
+      await deleteDoc(
+        doc(db, "organizations", orgId, "events", ev.id, "comments", deleteCommentTarget),
+      );
+    } catch {
+      // ignore
+    }
+    setDeleteCommentTarget(null);
+  }
 
   async function handleSendComment() {
     if (!commentText.trim() || !user) return;
@@ -372,145 +396,166 @@ function EventCard({
 
   return (
     <View style={styles.eventCard}>
-      <View style={styles.eventTimeBadge}>
-        <Text style={styles.eventTime}>
-          {ev.time || t("cal_all_day", lang)}
-        </Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.eventTitle}>{ev.title}</Text>
-        {ev.description ? (
-          <Text style={styles.eventDesc}>{ev.description}</Text>
-        ) : null}
-        {ev.createdByName ? (
-          <Text style={styles.eventMeta}>
-            {t("tasks_by", lang)} {ev.createdByName}
+      {/* Top row: time badge + title/desc + delete */}
+      <View style={styles.eventTopRow}>
+        <View style={styles.eventTimeBadge}>
+          <Text style={styles.eventTime}>
+            {ev.time || t("cal_all_day", lang)}
           </Text>
-        ) : null}
-
-        {/* Attendees */}
-        {count > 0 && (
-          <View style={styles.attendeeRow}>
-            {ev.attendees.slice(0, 5).map((a) => (
-              <View key={a.uid} style={styles.attendeeBubble}>
-                <Text style={styles.attendeeBubbleText}>
-                  {(a.displayName || "?")[0]?.toUpperCase()}
-                </Text>
-              </View>
-            ))}
-            <Text style={styles.attendeeCount}>
-              {count}{" "}
-              {count === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}
-            </Text>
-          </View>
-        )}
-
-        {/* Attend button + Comments toggle */}
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-          <Pressable
-            onPress={() => onToggleAttend(ev.id, ev.attendees)}
-            style={[styles.attendBtn, isAttending && styles.attendBtnActive, { marginTop: 0 }]}
-          >
-            <Ionicons
-              name={isAttending ? "checkmark-circle" : "hand-right-outline"}
-              size={16}
-              color={isAttending ? "#FFFFFF" : "#5B7553"}
-            />
-            <Text
-              style={[
-                styles.attendBtnText,
-                isAttending && styles.attendBtnTextActive,
-              ]}
-            >
-              {isAttending ? t("cal_attending", lang) : t("cal_attend", lang)}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setShowComments(!showComments)}
-            style={[styles.attendBtn, showComments && styles.attendBtnActive, { marginTop: 0 }]}
-          >
-            <Ionicons
-              name="chatbubble-outline"
-              size={14}
-              color={showComments ? "#FFFFFF" : "#5B7553"}
-            />
-            <Text
-              style={[
-                styles.attendBtnText,
-                showComments && styles.attendBtnTextActive,
-              ]}
-            >
-              {t("cal_comments", lang)}
-            </Text>
-          </Pressable>
         </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.eventTitle}>{ev.title}</Text>
+          {ev.description ? (
+            <Text style={styles.eventDesc}>{ev.description}</Text>
+          ) : null}
+          {ev.createdByName ? (
+            <Text style={styles.eventMeta}>
+              {t("tasks_by", lang)} {ev.createdByName}
+            </Text>
+          ) : null}
+        </View>
+        {ev.createdBy === user?.uid && (
+          <Pressable
+            onPress={() => onDelete(ev.id)}
+            style={styles.eventDeleteBtn}
+          >
+            <Ionicons name="trash-outline" size={18} color="#DC2626" />
+          </Pressable>
+        )}
+      </View>
 
-        {/* Comments section */}
-        {showComments && (
-          <View style={commentStyles.container}>
-            {comments.length === 0 ? (
-              <Text style={commentStyles.empty}>
-                {t("cal_no_comments", lang)}
+      {/* Attendees — full width */}
+      {count > 0 && (
+        <View style={styles.attendeeRow}>
+          {ev.attendees.slice(0, 5).map((a) => (
+            <View key={a.uid} style={styles.attendeeBubble}>
+              <Text style={styles.attendeeBubbleText}>
+                {(a.displayName || "?")[0]?.toUpperCase()}
               </Text>
-            ) : (
-              comments.map((c) => (
-                <View key={c.id} style={commentStyles.comment}>
-                  <View style={commentStyles.avatarSmall}>
-                    <Text style={commentStyles.avatarSmallText}>
-                      {(c.createdByName || "?")[0]?.toUpperCase()}
+            </View>
+          ))}
+          <Text style={styles.attendeeCount}>
+            {count}{" "}
+            {count === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}
+          </Text>
+        </View>
+      )}
+
+      {/* Attend button + Comments toggle — full width */}
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <Pressable
+          onPress={() => onToggleAttend(ev.id, ev.attendees)}
+          style={[styles.attendBtn, isAttending && styles.attendBtnActive, { marginTop: 0 }]}
+        >
+          <Ionicons
+            name={isAttending ? "checkmark-circle" : "hand-right-outline"}
+            size={16}
+            color={isAttending ? "#FFFFFF" : "#5B7553"}
+          />
+          <Text
+            style={[
+              styles.attendBtnText,
+              isAttending && styles.attendBtnTextActive,
+            ]}
+          >
+            {isAttending ? t("cal_attending", lang) : t("cal_attend", lang)}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setShowComments(!showComments)}
+          style={[styles.attendBtn, showComments && styles.attendBtnActive, { marginTop: 0 }]}
+        >
+          <Ionicons
+            name="chatbubble-outline"
+            size={14}
+            color={showComments ? "#FFFFFF" : "#5B7553"}
+          />
+          <Text
+            style={[
+              styles.attendBtnText,
+              showComments && styles.attendBtnTextActive,
+            ]}
+          >
+            {t("cal_comments", lang)}{commentCount > 0 ? ` (${commentCount})` : ""}
+          </Text>
+        </Pressable>
+      </View>
+
+      <DeleteConfirmModal
+        visible={!!deleteCommentTarget}
+        title={t("delete_title", lang)}
+        message={t("cal_delete_comment_msg", lang)}
+        confirmText={t("delete", lang)}
+        cancelText={t("cancel", lang)}
+        onConfirm={handleDeleteComment}
+        onDismiss={() => setDeleteCommentTarget(null)}
+      />
+
+      {/* Comments section — full width */}
+      {showComments && (
+        <View style={commentStyles.container}>
+          {comments.length === 0 ? (
+            <Text style={commentStyles.empty}>
+              {t("cal_no_comments", lang)}
+            </Text>
+          ) : (
+            comments.map((c) => (
+              <View key={c.id} style={commentStyles.comment}>
+                <View style={commentStyles.avatarSmall}>
+                  <Text style={commentStyles.avatarSmallText}>
+                    {(c.createdByName || "?")[0]?.toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={commentStyles.commentHeader}>
+                    <Text style={commentStyles.commentAuthor}>
+                      {c.createdByName || "?"}
+                    </Text>
+                    <Text style={commentStyles.commentTime}>
+                      {timeAgo(c.createdAt, lang)}
                     </Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={commentStyles.commentHeader}>
-                      <Text style={commentStyles.commentAuthor}>
-                        {c.createdByName || "?"}
-                      </Text>
-                      <Text style={commentStyles.commentTime}>
-                        {timeAgo(c.createdAt, lang)}
-                      </Text>
-                    </View>
-                    <Text style={commentStyles.commentText}>{c.text}</Text>
-                  </View>
+                  <Text style={commentStyles.commentText}>{c.text}</Text>
                 </View>
-              ))
-            )}
-
-            {/* Comment input */}
-            <View style={commentStyles.inputRow}>
-              <TextInput
-                value={commentText}
-                onChangeText={setCommentText}
-                placeholder={t("cal_add_comment", lang)}
-                placeholderTextColor="#A3A89E"
-                style={commentStyles.input}
-                multiline
-              />
-              <Pressable
-                onPress={handleSendComment}
-                disabled={sending || !commentText.trim()}
-                style={[
-                  commentStyles.sendBtn,
-                  (!commentText.trim() || sending) && { opacity: 0.4 },
-                ]}
-              >
-                {sending ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Ionicons name="send" size={16} color="#FFFFFF" />
+                {c.createdBy === user?.uid && (
+                  <Pressable
+                    onPress={() => setDeleteCommentTarget(c.id)}
+                    style={commentStyles.deleteBtn}
+                  >
+                    <Ionicons name="trash-outline" size={14} color="#DC2626" />
+                  </Pressable>
                 )}
-              </Pressable>
-            </View>
+              </View>
+            ))
+          )}
+
+          {/* Comment input */}
+          <View style={commentStyles.inputRow}>
+            <TextInput
+              value={commentText}
+              onChangeText={setCommentText}
+              placeholder={t("cal_add_comment", lang)}
+              placeholderTextColor="#A3A89E"
+              style={commentStyles.input}
+              multiline
+            />
+            <Pressable
+              onPress={handleSendComment}
+              disabled={sending || !commentText.trim()}
+              style={[
+                commentStyles.sendBtn,
+                (!commentText.trim() || sending) && { opacity: 0.4 },
+              ]}
+            >
+              {sending ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Ionicons name="send" size={16} color="#FFFFFF" />
+              )}
+            </Pressable>
           </View>
-        )}
-      </View>
-      {ev.createdBy === user?.uid && (
-        <Pressable
-          onPress={() => onDelete(ev.id)}
-          style={styles.eventDeleteBtn}
-        >
-          <Ionicons name="trash-outline" size={18} color="#DC2626" />
-        </Pressable>
+        </View>
       )}
     </View>
   );
@@ -979,13 +1024,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   eventCard: {
-    flexDirection: "row",
-    gap: 14,
+    gap: 10,
     backgroundColor: "rgba(255,255,255,0.7)",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.06)",
     padding: 16,
+  },
+  eventTopRow: {
+    flexDirection: "row",
+    gap: 14,
     alignItems: "flex-start",
   },
   eventTimeBadge: {
@@ -1019,7 +1067,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginTop: 10,
   },
   attendeeBubble: {
     width: 26,
@@ -1047,7 +1094,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-start",
     gap: 6,
-    marginTop: 10,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
@@ -1147,5 +1193,10 @@ const commentStyles = StyleSheet.create({
     backgroundColor: "#5B7553",
     justifyContent: "center",
     alignItems: "center",
+  },
+  deleteBtn: {
+    padding: 4,
+    alignSelf: "flex-start",
+    marginTop: 2,
   },
 });

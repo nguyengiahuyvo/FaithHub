@@ -319,6 +319,11 @@ const translations = {
   cal_minutes_ago: { en: "m ago", de: "Min.", vi: "phút trước" },
   cal_hours_ago: { en: "h ago", de: "Std.", vi: "giờ trước" },
   cal_days_ago: { en: "d ago", de: "T. her", vi: "ngày trước" },
+  cal_delete_comment_msg: {
+    en: "Are you sure you want to delete this comment?",
+    de: "Möchtest du diesen Kommentar wirklich löschen?",
+    vi: "Bạn có chắc chắn muốn xóa bình luận này không?",
+  },
   cal_months: {
     en: [
       "January",

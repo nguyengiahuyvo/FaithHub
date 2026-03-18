@@ -6,17 +6,34 @@ import {
   Keyboard,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { t, type Language } from "@/lib/i18n";
 
 const PRIORITIES = [1, 2, 3, 4] as const;
 export type Priority = (typeof PRIORITIES)[number];
+
+export type Assignee = {
+  uid: string;
+  displayName: string | null;
+} | null;
+
+type Member = {
+  uid: string;
+  displayName: string | null;
+  email: string;
+};
 
 export function priorityLabel(p: Priority, lang: Language): string {
   const map: Record<Priority, Parameters<typeof t>[0]> = {
@@ -68,7 +85,28 @@ export default function CreateTaskModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>(2);
+  const [assignee, setAssignee] = useState<Assignee>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!visible) return;
+    setLoadingMembers(true);
+    getDocs(collection(db, "organizations", orgId, "members"))
+      .then((snap) => {
+        setMembers(
+          snap.docs.map((d) => ({
+            uid: d.id,
+            displayName: d.data().displayName || null,
+            email: d.data().email || "",
+          })),
+        );
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMembers(false));
+  }, [visible, orgId]);
 
   useEffect(() => {
     if (visible) {
@@ -99,6 +137,8 @@ export default function CreateTaskModal({
       setTitle("");
       setDescription("");
       setPriority(2);
+      setAssignee(null);
+      setShowDropdown(false);
       onDismiss();
     });
   }
@@ -112,6 +152,8 @@ export default function CreateTaskModal({
         description: description.trim(),
         status: "todo",
         priority,
+        assignedTo: assignee?.uid || null,
+        assignedToName: assignee?.displayName || null,
         createdBy: userId,
         createdByName: userName,
         createdAt: serverTimestamp(),
@@ -119,6 +161,8 @@ export default function CreateTaskModal({
       setTitle("");
       setDescription("");
       setPriority(2);
+      setAssignee(null);
+      setShowDropdown(false);
       onDismiss();
     } catch {
       // ignore
@@ -196,6 +240,120 @@ export default function CreateTaskModal({
                   );
                 })}
               </View>
+            </View>
+
+            {/* Assign to */}
+            <View style={mStyles.field}>
+              <Text style={mStyles.label}>{t("tasks_assign_to", lang)}</Text>
+              <Pressable
+                onPress={() => setShowDropdown(!showDropdown)}
+                style={mStyles.dropdownBtn}
+              >
+                <Text
+                  style={[
+                    mStyles.dropdownBtnText,
+                    !assignee && { color: "#A3A89E" },
+                  ]}
+                >
+                  {assignee
+                    ? assignee.displayName || t("tasks_unassigned", lang)
+                    : t("tasks_select_member", lang)}
+                </Text>
+                <Ionicons
+                  name={showDropdown ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color="#8A8F84"
+                />
+              </Pressable>
+              {showDropdown && (
+                <View style={mStyles.dropdown}>
+                  {loadingMembers ? (
+                    <ActivityIndicator
+                      color="#5B7553"
+                      size="small"
+                      style={{ paddingVertical: 12 }}
+                    />
+                  ) : (
+                    <ScrollView
+                      style={{ maxHeight: 160 }}
+                      nestedScrollEnabled
+                    >
+                      {/* Unassigned option */}
+                      <Pressable
+                        onPress={() => {
+                          setAssignee(null);
+                          setShowDropdown(false);
+                        }}
+                        style={[
+                          mStyles.dropdownItem,
+                          !assignee && mStyles.dropdownItemSelected,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            mStyles.dropdownItemText,
+                            !assignee && mStyles.dropdownItemTextSelected,
+                          ]}
+                        >
+                          {t("tasks_unassigned", lang)}
+                        </Text>
+                      </Pressable>
+                      {members.map((m) => {
+                        const selected = assignee?.uid === m.uid;
+                        return (
+                          <Pressable
+                            key={m.uid}
+                            onPress={() => {
+                              setAssignee({
+                                uid: m.uid,
+                                displayName: m.displayName,
+                              });
+                              setShowDropdown(false);
+                            }}
+                            style={[
+                              mStyles.dropdownItem,
+                              selected && mStyles.dropdownItemSelected,
+                            ]}
+                          >
+                            <View style={mStyles.dropdownAvatar}>
+                              <Text style={mStyles.dropdownAvatarText}>
+                                {(m.displayName || m.email || "?")[0]?.toUpperCase()}
+                              </Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={[
+                                  mStyles.dropdownItemText,
+                                  selected &&
+                                    mStyles.dropdownItemTextSelected,
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {m.displayName || m.email}
+                              </Text>
+                              {m.displayName && m.email ? (
+                                <Text
+                                  style={mStyles.dropdownItemSub}
+                                  numberOfLines={1}
+                                >
+                                  {m.email}
+                                </Text>
+                              ) : null}
+                            </View>
+                            {selected && (
+                              <Ionicons
+                                name="checkmark"
+                                size={18}
+                                color="#5B7553"
+                              />
+                            )}
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                </View>
+              )}
             </View>
 
             <View style={mStyles.buttonRow}>
@@ -280,6 +438,63 @@ const mStyles = StyleSheet.create({
   priorityChipText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  dropdownBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F9F7F4",
+    borderColor: "rgba(0,0,0,0.08)",
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dropdownBtnText: {
+    color: "#111827",
+    fontSize: 16,
+  },
+  dropdown: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(0,0,0,0.08)",
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  dropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  dropdownItemSelected: {
+    backgroundColor: "rgba(91,117,83,0.08)",
+  },
+  dropdownItemText: {
+    color: "#2C3E2C",
+    fontSize: 15,
+  },
+  dropdownItemTextSelected: {
+    color: "#5B7553",
+    fontWeight: "600",
+  },
+  dropdownItemSub: {
+    color: "#A3A89E",
+    fontSize: 12,
+  },
+  dropdownAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dropdownAvatarText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
   buttonRow: {
     flexDirection: "row",

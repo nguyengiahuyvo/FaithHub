@@ -35,6 +35,8 @@ type Task = {
   description: string;
   status: "todo" | "done";
   priority: Priority;
+  assignedTo: string | null;
+  assignedToName: string | null;
   createdBy: string;
   createdByName: string | null;
 };
@@ -61,6 +63,8 @@ export default function TasksScreen() {
             description: d.data().description || "",
             status: d.data().status || "todo",
             priority: (d.data().priority as Priority) || 2,
+            assignedTo: d.data().assignedTo || null,
+            assignedToName: d.data().assignedToName || null,
             createdBy: d.data().createdBy,
             createdByName: d.data().createdByName || null,
           })),
@@ -145,15 +149,20 @@ export default function TasksScreen() {
                   color={task.status === "done" ? "#5B7553" : "#A3A89E"}
                 />
                 <View style={{ flex: 1 }}>
-                  <View style={styles.titleRow}>
-                    <Text
-                      style={[
-                        styles.taskTitle,
-                        task.status === "done" && styles.taskTitleDone,
-                      ]}
-                    >
-                      {task.title}
+                  <Text
+                    style={[
+                      styles.taskTitle,
+                      task.status === "done" && styles.taskTitleDone,
+                    ]}
+                  >
+                    {task.title}
+                  </Text>
+                  {task.description ? (
+                    <Text style={styles.taskDesc} numberOfLines={2}>
+                      {task.description}
                     </Text>
+                  ) : null}
+                  <View style={styles.badgeRow}>
                     <View
                       style={[
                         styles.priorityBadge,
@@ -169,12 +178,15 @@ export default function TasksScreen() {
                         {priorityLabel(task.priority, lang)}
                       </Text>
                     </View>
+                    {task.assignedToName ? (
+                      <View style={styles.assigneeBadge}>
+                        <Ionicons name="person-outline" size={11} color="#5B7553" />
+                        <Text style={styles.assigneeText}>
+                          {task.assignedToName}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
-                  {task.description ? (
-                    <Text style={styles.taskDesc} numberOfLines={2}>
-                      {task.description}
-                    </Text>
-                  ) : null}
                   {task.createdByName ? (
                     <Text style={styles.taskMeta}>
                       {t("tasks_by", lang)} {task.createdByName}
@@ -426,21 +438,20 @@ const styles = StyleSheet.create({
   taskCardDone: {
     opacity: 0.6,
   },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
   taskTitle: {
     color: "#2C3E2C",
     fontSize: 16,
     fontWeight: "600",
-    flexShrink: 1,
   },
   taskTitleDone: {
     textDecorationLine: "line-through",
     color: "#8A8F84",
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
   },
   priorityBadge: {
     paddingHorizontal: 8,
@@ -461,6 +472,20 @@ const styles = StyleSheet.create({
     color: "#A3A89E",
     fontSize: 12,
     marginTop: 4,
+  },
+  assigneeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(91,117,83,0.10)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  assigneeText: {
+    color: "#5B7553",
+    fontSize: 11,
+    fontWeight: "600",
   },
   deleteBtn: {
     padding: 6,

@@ -290,6 +290,21 @@ const translations = {
   tasks_priority_medium: { en: "Medium", de: "Mittel", vi: "Trung bình" },
   tasks_priority_high: { en: "High", de: "Hoch", vi: "Cao" },
   tasks_priority_urgent: { en: "Urgent", de: "Dringend", vi: "Khẩn cấp" },
+  tasks_assign_to: {
+    en: "Assign to",
+    de: "Zuweisen an",
+    vi: "Giao cho",
+  },
+  tasks_unassigned: {
+    en: "Unassigned",
+    de: "Nicht zugewiesen",
+    vi: "Chưa giao",
+  },
+  tasks_select_member: {
+    en: "Select a member...",
+    de: "Mitglied auswählen...",
+    vi: "Chọn thành viên...",
+  },
 
   // Calendar
   cal_title: { en: "Calendar", de: "Kalender", vi: "Lịch" },

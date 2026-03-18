@@ -1,3 +1,4 @@
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
   createContext,
   useContext,
@@ -5,9 +6,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "./firebase";
 import { useAuth } from "./auth-context";
+import { db } from "./firebase";
 import { type Language } from "./i18n";
 
 type LanguageState = {
@@ -62,10 +62,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         await setDoc(
           doc(db, "users", user.uid),
           { language: newLang },
-          { merge: true }
+          { merge: true },
         );
-      } catch {
-        // ignore
+      } catch (e) {
+        alert("Failed to save language to Firestore:", e);
       }
     }
   }

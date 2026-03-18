@@ -1,4 +1,10 @@
+import { useAuth } from "@/lib/auth-context";
+import { auth } from "@/lib/firebase";
+import { languageLabels, t, type Language } from "@/lib/i18n";
+import { useLanguage } from "@/lib/language-context";
+import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
+import { signOut } from "firebase/auth";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,12 +16,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
-import { useOrg } from "@/lib/org-context";
-import { useLanguage } from "@/lib/language-context";
-import { t, languageLabels, type Language } from "@/lib/i18n";
 
 type ModalType = "confirm" | "error" | null;
 
@@ -88,7 +88,9 @@ function SignOutModal({
           </View>
 
           <Text style={modalStyles.title}>
-            {isError ? t("profile_signout_failed", lang) : t("profile_signout_title", lang)}
+            {isError
+              ? t("profile_signout_failed", lang)
+              : t("profile_signout_title", lang)}
           </Text>
           <Text style={modalStyles.message}>
             {isError
@@ -97,8 +99,13 @@ function SignOutModal({
           </Text>
 
           {isError ? (
-            <Pressable onPress={handleDismiss} style={modalStyles.primaryButton}>
-              <Text style={modalStyles.primaryButtonText}>{t("try_again", lang)}</Text>
+            <Pressable
+              onPress={handleDismiss}
+              style={modalStyles.primaryButton}
+            >
+              <Text style={modalStyles.primaryButtonText}>
+                {t("try_again", lang)}
+              </Text>
             </Pressable>
           ) : (
             <View style={modalStyles.buttonRow}>
@@ -107,20 +114,21 @@ function SignOutModal({
                 disabled={loading}
                 style={modalStyles.cancelButton}
               >
-                <Text style={modalStyles.cancelButtonText}>{t("cancel", lang)}</Text>
+                <Text style={modalStyles.cancelButtonText}>
+                  {t("cancel", lang)}
+                </Text>
               </Pressable>
               <Pressable
                 onPress={onConfirm}
                 disabled={loading}
-                style={[
-                  modalStyles.confirmButton,
-                  loading && { opacity: 0.7 },
-                ]}
+                style={[modalStyles.confirmButton, loading && { opacity: 0.7 }]}
               >
                 {loading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={modalStyles.confirmButtonText}>{t("profile_signout", lang)}</Text>
+                  <Text style={modalStyles.confirmButtonText}>
+                    {t("profile_signout", lang)}
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -326,7 +334,9 @@ export default function ProfileScreen() {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t("profile_preferences", lang)}</Text>
+        <Text style={styles.sectionLabel}>
+          {t("profile_preferences", lang)}
+        </Text>
 
         <View style={styles.row}>
           <Ionicons name="language-outline" size={20} color="#5B7553" />
@@ -377,7 +387,7 @@ export default function ProfileScreen() {
         <Text style={styles.signOutText}>{t("profile_signout", lang)}</Text>
       </Pressable>
 
-      <Text style={styles.version}>FaithHub v1.0.0</Text>
+      <Text style={styles.version}>FaithHub v1.1.0</Text>
 
       <SignOutModal
         type={modalType}

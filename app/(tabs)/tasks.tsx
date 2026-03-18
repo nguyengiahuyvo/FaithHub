@@ -3,22 +3,18 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
-  Keyboard,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
   onSnapshot,
-  serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -26,12 +22,21 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import CreateTaskModal, {
+  type Priority,
+  priorityLabel,
+  priorityColor,
+  priorityBg,
+} from "@/components/CreateTaskModal";
 
 type Task = {
   id: string;
   title: string;
   description: string;
   status: "todo" | "done";
+  priority: Priority;
+  assignedTo: string | null;
+  assignedToName: string | null;
   createdBy: string;
   createdByName: string | null;
 };
@@ -57,12 +62,15 @@ export default function TasksScreen() {
             title: d.data().title,
             description: d.data().description || "",
             status: d.data().status || "todo",
+            priority: (d.data().priority as Priority) || 2,
+            assignedTo: d.data().assignedTo || null,
+            assignedToName: d.data().assignedToName || null,
             createdBy: d.data().createdBy,
             createdByName: d.data().createdByName || null,
-          }))
+          })),
         );
         setLoading(false);
-      }
+      },
     );
     return unsub;
   }, [org]);
@@ -77,9 +85,19 @@ export default function TasksScreen() {
 
   async function handleDeleteTask() {
     if (!org || !deleteTarget) return;
-    await deleteDoc(doc(db, "organizations", org.orgId, "tasks", deleteTarget));
+    await deleteDoc(
+      doc(db, "organizations", org.orgId, "tasks", deleteTarget),
+    );
     setDeleteTarget(null);
   }
+
+  const sorted = [...tasks].sort((a, b) => {
+    // Done tasks go to bottom
+    if (a.status === "done" && b.status !== "done") return 1;
+    if (a.status !== "done" && b.status === "done") return -1;
+    // Higher priority first (4 = urgent on top)
+    return b.priority - a.priority;
+  });
 
   if (!org) return null;
 
@@ -112,61 +130,86 @@ export default function TasksScreen() {
           </View>
         ) : (
           <View style={{ gap: 10 }}>
-            {tasks
-              .sort((a, b) =>
-                a.status === "done" && b.status !== "done" ? 1 : -1
-              )
-              .map((task) => (
-                <Pressable
-                  key={task.id}
-                  onPress={() => toggleTask(task.id, task.status)}
-                  style={[
-                    styles.taskCard,
-                    task.status === "done" && styles.taskCardDone,
-                  ]}
-                >
-                  <Ionicons
-                    name={
-                      task.status === "done"
-                        ? "checkmark-circle"
-                        : "ellipse-outline"
-                    }
-                    size={24}
-                    color={task.status === "done" ? "#5B7553" : "#A3A89E"}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text
+            {sorted.map((task) => (
+              <Pressable
+                key={task.id}
+                onPress={() => toggleTask(task.id, task.status)}
+                style={[
+                  styles.taskCard,
+                  task.status === "done" && styles.taskCardDone,
+                ]}
+              >
+                <Ionicons
+                  name={
+                    task.status === "done"
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
+                  }
+                  size={24}
+                  color={task.status === "done" ? "#5B7553" : "#A3A89E"}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      styles.taskTitle,
+                      task.status === "done" && styles.taskTitleDone,
+                    ]}
+                  >
+                    {task.title}
+                  </Text>
+                  {task.description ? (
+                    <Text style={styles.taskDesc} numberOfLines={2}>
+                      {task.description}
+                    </Text>
+                  ) : null}
+                  <View style={styles.badgeRow}>
+                    <View
                       style={[
-                        styles.taskTitle,
-                        task.status === "done" && styles.taskTitleDone,
+                        styles.priorityBadge,
+                        { backgroundColor: priorityBg(task.priority) },
                       ]}
                     >
-                      {task.title}
-                    </Text>
-                    {task.description ? (
-                      <Text style={styles.taskDesc} numberOfLines={2}>
-                        {task.description}
+                      <Text
+                        style={[
+                          styles.priorityBadgeText,
+                          { color: priorityColor(task.priority) },
+                        ]}
+                      >
+                        {priorityLabel(task.priority, lang)}
                       </Text>
-                    ) : null}
-                    {task.createdByName ? (
-                      <Text style={styles.taskMeta}>
-                        {t("tasks_by", lang)} {task.createdByName}
-                      </Text>
+                    </View>
+                    {task.assignedToName ? (
+                      <View style={styles.assigneeBadge}>
+                        <Ionicons name="person-outline" size={11} color="#5B7553" />
+                        <Text style={styles.assigneeText}>
+                          {task.assignedToName}
+                        </Text>
+                      </View>
                     ) : null}
                   </View>
-                  {task.createdBy === user?.uid && (
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setDeleteTarget(task.id);
-                      }}
-                      style={styles.deleteBtn}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                    </Pressable>
-                  )}
-                </Pressable>
-              ))}
+                  {task.createdByName ? (
+                    <Text style={styles.taskMeta}>
+                      {t("tasks_by", lang)} {task.createdByName}
+                    </Text>
+                  ) : null}
+                </View>
+                {task.createdBy === user?.uid && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(task.id);
+                    }}
+                    style={styles.deleteBtn}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={18}
+                      color="#DC2626"
+                    />
+                  </Pressable>
+                )}
+              </Pressable>
+            ))}
           </View>
         )}
       </ScrollView>
@@ -190,141 +233,6 @@ export default function TasksScreen() {
         onDismiss={() => setDeleteTarget(null)}
       />
     </View>
-  );
-}
-
-function CreateTaskModal({
-  visible,
-  orgId,
-  userId,
-  userName,
-  lang,
-  onDismiss,
-}: {
-  visible: boolean;
-  orgId: string;
-  userId: string;
-  userName: string | null;
-  lang: "en" | "de" | "vi";
-  onDismiss: () => void;
-}) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.9)).current;
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (visible) {
-      opacity.setValue(0);
-      scale.setValue(0.9);
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          damping: 20,
-          stiffness: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible, opacity, scale]);
-
-  function handleDismiss() {
-    Animated.timing(opacity, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
-      setTitle("");
-      setDescription("");
-      onDismiss();
-    });
-  }
-
-  async function handleCreate() {
-    if (!title.trim()) return;
-    setSaving(true);
-    try {
-      await addDoc(collection(db, "organizations", orgId, "tasks"), {
-        title: title.trim(),
-        description: description.trim(),
-        status: "todo",
-        createdBy: userId,
-        createdByName: userName,
-        createdAt: serverTimestamp(),
-      });
-      setTitle("");
-      setDescription("");
-      onDismiss();
-    } catch {
-      // ignore
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (!visible) return null;
-
-  return (
-    <Modal transparent visible animationType="none">
-      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-        <Animated.View style={[mStyles.backdrop, { opacity }]}>
-          <Animated.View
-            style={[mStyles.card, { opacity, transform: [{ scale }] }]}
-          >
-            <Text style={mStyles.modalTitle}>{t("tasks_new", lang)}</Text>
-
-          <View style={mStyles.field}>
-            <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t("tasks_title_placeholder", lang)}
-              placeholderTextColor="#A3A89E"
-              style={mStyles.input}
-            />
-          </View>
-
-          <View style={mStyles.field}>
-            <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder={t("tasks_desc_placeholder", lang)}
-              placeholderTextColor="#A3A89E"
-              style={[mStyles.input, { minHeight: 80, textAlignVertical: "top" }]}
-              multiline
-            />
-          </View>
-
-          <View style={mStyles.buttonRow}>
-            <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
-              <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleCreate}
-              disabled={saving || !title.trim()}
-              style={[
-                mStyles.createBtn,
-                (saving || !title.trim()) && { opacity: 0.6 },
-              ]}
-            >
-              {saving ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={mStyles.createText}>{t("create", lang)}</Text>
-              )}
-            </Pressable>
-          </View>
-          </Animated.View>
-        </Animated.View>
-      </Pressable>
-    </Modal>
   );
 }
 
@@ -380,18 +288,18 @@ function DeleteConfirmModal({
 
   return (
     <Modal transparent visible animationType="none">
-      <Animated.View style={[mStyles.backdrop, { opacity }]}>
+      <Animated.View style={[dStyles.backdrop, { opacity }]}>
         <Animated.View
-          style={[mStyles.card, { opacity, transform: [{ scale }] }]}
+          style={[dStyles.card, { opacity, transform: [{ scale }] }]}
         >
           <View style={dStyles.iconCircle}>
             <Ionicons name="trash-outline" size={28} color="#DC2626" />
           </View>
           <Text style={dStyles.title}>{title}</Text>
           <Text style={dStyles.message}>{message}</Text>
-          <View style={mStyles.buttonRow}>
-            <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
-              <Text style={mStyles.cancelText}>{cancelText}</Text>
+          <View style={dStyles.buttonRow}>
+            <Pressable onPress={handleDismiss} style={dStyles.cancelBtn}>
+              <Text style={dStyles.cancelText}>{cancelText}</Text>
             </Pressable>
             <Pressable onPress={onConfirm} style={dStyles.deleteBtn}>
               <Text style={dStyles.deleteBtnText}>{confirmText}</Text>
@@ -404,6 +312,26 @@ function DeleteConfirmModal({
 }
 
 const dStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    gap: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
   iconCircle: {
     width: 56,
     height: 56,
@@ -425,63 +353,6 @@ const dStyles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
   },
-  deleteBtn: {
-    flex: 1,
-    alignItems: "center",
-    backgroundColor: "#DC2626",
-    borderRadius: 16,
-    paddingVertical: 14,
-  },
-  deleteBtnText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});
-
-const mStyles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 360,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 24,
-    gap: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  modalTitle: {
-    color: "#2C3E2C",
-    fontSize: 22,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  field: { gap: 6 },
-  label: {
-    color: "#2C3E2C",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  input: {
-    backgroundColor: "#F9F7F4",
-    borderColor: "rgba(0,0,0,0.08)",
-    borderRadius: 14,
-    borderWidth: 1,
-    color: "#111827",
-    fontSize: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
   buttonRow: {
     flexDirection: "row",
     gap: 12,
@@ -499,14 +370,14 @@ const mStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  createBtn: {
+  deleteBtn: {
     flex: 1,
     alignItems: "center",
-    backgroundColor: "#5B7553",
+    backgroundColor: "#DC2626",
     borderRadius: 16,
     paddingVertical: 14,
   },
-  createText: {
+  deleteBtnText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
@@ -576,6 +447,21 @@ const styles = StyleSheet.create({
     textDecorationLine: "line-through",
     color: "#8A8F84",
   },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+  },
+  priorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  priorityBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
   taskDesc: {
     color: "#6B7264",
     fontSize: 14,
@@ -586,6 +472,20 @@ const styles = StyleSheet.create({
     color: "#A3A89E",
     fontSize: 12,
     marginTop: 4,
+  },
+  assigneeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(91,117,83,0.10)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  assigneeText: {
+    color: "#5B7553",
+    fontSize: 11,
+    fontWeight: "600",
   },
   deleteBtn: {
     padding: 6,

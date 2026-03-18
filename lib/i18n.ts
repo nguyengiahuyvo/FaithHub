@@ -157,6 +157,85 @@ const translations = {
   },
   auth_try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
 
+  // Email verification
+  verify_title: {
+    en: "Verify your email",
+    de: "E-Mail bestätigen",
+    vi: "Xác minh email",
+  },
+  verify_desc: {
+    en: "We've sent a verification link to your email. Please check your inbox and tap the link to continue.",
+    de: "Wir haben einen Bestätigungslink an deine E-Mail gesendet. Bitte prüfe dein Postfach und tippe auf den Link.",
+    vi: "Chúng tôi đã gửi liên kết xác minh đến email của bạn. Vui lòng kiểm tra hộp thư và nhấn vào liên kết.",
+  },
+  verify_resend: {
+    en: "Resend email",
+    de: "Erneut senden",
+    vi: "Gửi lại email",
+  },
+  verify_resent: {
+    en: "Email sent!",
+    de: "E-Mail gesendet!",
+    vi: "Đã gửi email!",
+  },
+  verify_check: {
+    en: "I've verified my email",
+    de: "Ich habe meine E-Mail bestätigt",
+    vi: "Tôi đã xác minh email",
+  },
+  verify_not_yet: {
+    en: "Email not verified yet. Please check your inbox.",
+    de: "E-Mail noch nicht bestätigt. Bitte prüfe dein Postfach.",
+    vi: "Email chưa được xác minh. Vui lòng kiểm tra hộp thư.",
+  },
+  verify_signout: {
+    en: "Sign out",
+    de: "Abmelden",
+    vi: "Đăng xuất",
+  },
+
+  // Reset password
+  auth_forgot_password: {
+    en: "Forgot password?",
+    de: "Passwort vergessen?",
+    vi: "Quên mật khẩu?",
+  },
+  auth_reset_title: {
+    en: "Reset password",
+    de: "Passwort zurücksetzen",
+    vi: "Đặt lại mật khẩu",
+  },
+  auth_reset_desc: {
+    en: "Enter your email and we'll send you a link to reset your password.",
+    de: "Gib deine E-Mail ein und wir senden dir einen Link zum Zurücksetzen.",
+    vi: "Nhập email và chúng tôi sẽ gửi liên kết đặt lại mật khẩu.",
+  },
+  auth_reset_send: {
+    en: "Send reset link",
+    de: "Link senden",
+    vi: "Gửi liên kết",
+  },
+  auth_reset_sent: {
+    en: "Password reset email sent! Check your inbox.",
+    de: "E-Mail zum Zurücksetzen gesendet! Prüfe dein Postfach.",
+    vi: "Đã gửi email đặt lại mật khẩu! Kiểm tra hộp thư.",
+  },
+  auth_reset_error: {
+    en: "Could not send reset email. Please check your email and try again.",
+    de: "E-Mail konnte nicht gesendet werden. Bitte überprüfe deine E-Mail.",
+    vi: "Không thể gửi email. Vui lòng kiểm tra email và thử lại.",
+  },
+  profile_reset_password: {
+    en: "Reset password",
+    de: "Passwort zurücksetzen",
+    vi: "Đặt lại mật khẩu",
+  },
+  profile_reset_sent: {
+    en: "Reset link sent to your email!",
+    de: "Link zum Zurücksetzen an deine E-Mail gesendet!",
+    vi: "Đã gửi liên kết đặt lại đến email!",
+  },
+
   // Firebase errors
   firebase_invalid_email: {
     en: "The email address you entered isn't valid. Please check and try again.",
@@ -281,6 +360,30 @@ const translations = {
     vi: "Thêm chi tiết...",
   },
   tasks_by: { en: "by", de: "von", vi: "bởi" },
+  tasks_priority: {
+    en: "Priority",
+    de: "Priorität",
+    vi: "Mức độ ưu tiên",
+  },
+  tasks_priority_low: { en: "Low", de: "Niedrig", vi: "Thấp" },
+  tasks_priority_medium: { en: "Medium", de: "Mittel", vi: "Trung bình" },
+  tasks_priority_high: { en: "High", de: "Hoch", vi: "Cao" },
+  tasks_priority_urgent: { en: "Urgent", de: "Dringend", vi: "Khẩn cấp" },
+  tasks_assign_to: {
+    en: "Assign to",
+    de: "Zuweisen an",
+    vi: "Giao cho",
+  },
+  tasks_unassigned: {
+    en: "Unassigned",
+    de: "Nicht zugewiesen",
+    vi: "Chưa giao",
+  },
+  tasks_select_member: {
+    en: "Select a member...",
+    de: "Mitglied auswählen...",
+    vi: "Chọn thành viên...",
+  },
 
   // Calendar
   cal_title: { en: "Calendar", de: "Kalender", vi: "Lịch" },

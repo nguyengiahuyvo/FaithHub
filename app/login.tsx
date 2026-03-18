@@ -20,6 +20,7 @@ import {
   OAuthProvider,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithCredential,
   signInWithEmailAndPassword,
   updateProfile,
@@ -163,6 +164,10 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ErrorInfo>(null);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSending, setForgotSending] = useState(false);
+  const [forgotStatus, setForgotStatus] = useState<"idle" | "sent" | "error">("idle");
 
   const copy =
     mode === "login"
@@ -182,6 +187,26 @@ export default function AuthScreen() {
           secondaryLabel: "Already have an account?",
           secondaryAction: "Log in instead",
         };
+
+  async function handleForgotPassword() {
+    if (!forgotEmail.trim()) return;
+    setForgotSending(true);
+    setForgotStatus("idle");
+    try {
+      await sendPasswordResetEmail(auth, forgotEmail.trim());
+      setForgotStatus("sent");
+    } catch {
+      setForgotStatus("error");
+    } finally {
+      setForgotSending(false);
+    }
+  }
+
+  function openForgotModal() {
+    setForgotEmail(email);
+    setForgotStatus("idle");
+    setShowForgot(true);
+  }
 
   function showError(title: string, message: string) {
     setError({ title, message });
@@ -388,6 +413,12 @@ export default function AuthScreen() {
               </View>
             ) : null}
 
+            {mode === "login" && (
+              <Pressable onPress={openForgotModal} style={styles.forgotLink}>
+                <Text style={styles.forgotLinkText}>Forgot password?</Text>
+              </Pressable>
+            )}
+
             <Pressable
               onPress={handleSubmit}
               disabled={loading}
@@ -440,10 +471,187 @@ export default function AuthScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
+      <ForgotPasswordModal
+        visible={showForgot}
+        email={forgotEmail}
+        onChangeEmail={setForgotEmail}
+        sending={forgotSending}
+        status={forgotStatus}
+        onSend={handleForgotPassword}
+        onDismiss={() => setShowForgot(false)}
+      />
+
       <ErrorModal error={error} onDismiss={() => setError(null)} />
     </View>
   );
 }
+
+function ForgotPasswordModal({
+  visible,
+  email,
+  onChangeEmail,
+  sending,
+  status,
+  onSend,
+  onDismiss,
+}: {
+  visible: boolean;
+  email: string;
+  onChangeEmail: (v: string) => void;
+  sending: boolean;
+  status: "idle" | "sent" | "error";
+  onSend: () => void;
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      scale.setValue(0.9);
+      onDismiss();
+    });
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[modalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={modalStyles.iconCircle}>
+            <Ionicons name="key-outline" size={32} color="#D97706" />
+          </View>
+          <Text style={modalStyles.title}>Reset password</Text>
+          <Text style={modalStyles.message}>
+            Enter your email and we'll send you a link to reset your password.
+          </Text>
+
+          <TextInput
+            value={email}
+            onChangeText={onChangeEmail}
+            placeholder="you@example.com"
+            placeholderTextColor="#8A8F98"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            style={forgotStyles.input}
+          />
+
+          {status === "sent" && (
+            <Text style={forgotStyles.success}>
+              Password reset email sent! Check your inbox.
+            </Text>
+          )}
+          {status === "error" && (
+            <Text style={forgotStyles.error}>
+              Could not send reset email. Please check your email and try again.
+            </Text>
+          )}
+
+          <Pressable
+            onPress={onSend}
+            disabled={sending || !email.trim()}
+            style={[
+              forgotStyles.sendBtn,
+              (sending || !email.trim()) && { opacity: 0.6 },
+            ]}
+          >
+            {sending ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={forgotStyles.sendBtnText}>Send reset link</Text>
+            )}
+          </Pressable>
+
+          <Pressable onPress={handleDismiss} style={forgotStyles.cancelBtn}>
+            <Text style={forgotStyles.cancelBtnText}>Cancel</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const forgotStyles = StyleSheet.create({
+  input: {
+    width: "100%",
+    backgroundColor: "#F9F7F4",
+    borderColor: "rgba(0,0,0,0.08)",
+    borderRadius: 14,
+    borderWidth: 1,
+    color: "#111827",
+    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  success: {
+    color: "#5B7553",
+    fontSize: 14,
+    textAlign: "center",
+    backgroundColor: "rgba(91,117,83,0.10)",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    overflow: "hidden",
+    width: "100%",
+  },
+  error: {
+    color: "#DC2626",
+    fontSize: 14,
+    textAlign: "center",
+    backgroundColor: "#FEF2F2",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    overflow: "hidden",
+    width: "100%",
+  },
+  sendBtn: {
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: "#D97706",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  sendBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  cancelBtn: {
+    paddingVertical: 8,
+  },
+  cancelBtnText: {
+    color: "#8A8F84",
+    fontSize: 14,
+  },
+});
 
 function firebaseErrorMessage(code: string): string {
   switch (code) {
@@ -638,6 +846,14 @@ const styles = StyleSheet.create({
   secondaryActionStrong: {
     color: "#1F3B2E",
     fontWeight: "700",
+  },
+  forgotLink: {
+    alignSelf: "flex-end",
+  },
+  forgotLinkText: {
+    color: "#D97706",
+    fontSize: 13,
+    fontWeight: "600",
   },
   footnote: {
     color: "#7B7F85",

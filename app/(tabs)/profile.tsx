@@ -4,7 +4,7 @@ import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
-import { signOut } from "firebase/auth";
+import { sendPasswordResetEmail, signOut } from "firebase/auth";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -236,6 +236,8 @@ export default function ProfileScreen() {
   const [pendingLang, setPendingLang] = useState<Language>(lang);
   const [saving, setSaving] = useState(false);
   const langDirty = pendingLang !== lang;
+  const [resetSending, setResetSending] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     setPendingLang(lang);
@@ -255,6 +257,20 @@ export default function ProfileScreen() {
     .slice(0, 2)
     .map((s) => s[0]?.toUpperCase() ?? "")
     .join("");
+
+  async function handleResetPassword() {
+    if (!user?.email) return;
+    setResetSending(true);
+    setResetSent(false);
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      setResetSent(true);
+    } catch {
+      // ignore
+    } finally {
+      setResetSending(false);
+    }
+  }
 
   async function confirmSignOut() {
     setSigningOut(true);
@@ -310,6 +326,29 @@ export default function ProfileScreen() {
             {user?.uid.slice(0, 12)}...
           </Text>
         </View>
+
+        <View style={styles.separator} />
+
+        <Pressable
+          onPress={handleResetPassword}
+          disabled={resetSending}
+          style={styles.row}
+        >
+          <Ionicons name="key-outline" size={20} color="#D97706" />
+          <Text style={[styles.rowLabel, { color: "#D97706" }]}>
+            {t("profile_reset_password", lang)}
+          </Text>
+          {resetSending ? (
+            <ActivityIndicator size="small" color="#D97706" />
+          ) : resetSent ? (
+            <Ionicons name="checkmark-circle" size={20} color="#5B7553" />
+          ) : null}
+        </Pressable>
+        {resetSent && (
+          <Text style={styles.resetSentText}>
+            {t("profile_reset_sent", lang)}
+          </Text>
+        )}
       </View>
 
       {org && (
@@ -517,6 +556,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     paddingVertical: 14,
+  },
+  resetSentText: {
+    color: "#5B7553",
+    fontSize: 13,
+    marginTop: -4,
+    paddingHorizontal: 4,
   },
   signOutText: {
     color: "#DC2626",

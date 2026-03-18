@@ -194,6 +194,48 @@ const translations = {
     vi: "Đăng xuất",
   },
 
+  // Reset password
+  auth_forgot_password: {
+    en: "Forgot password?",
+    de: "Passwort vergessen?",
+    vi: "Quên mật khẩu?",
+  },
+  auth_reset_title: {
+    en: "Reset password",
+    de: "Passwort zurücksetzen",
+    vi: "Đặt lại mật khẩu",
+  },
+  auth_reset_desc: {
+    en: "Enter your email and we'll send you a link to reset your password.",
+    de: "Gib deine E-Mail ein und wir senden dir einen Link zum Zurücksetzen.",
+    vi: "Nhập email và chúng tôi sẽ gửi liên kết đặt lại mật khẩu.",
+  },
+  auth_reset_send: {
+    en: "Send reset link",
+    de: "Link senden",
+    vi: "Gửi liên kết",
+  },
+  auth_reset_sent: {
+    en: "Password reset email sent! Check your inbox.",
+    de: "E-Mail zum Zurücksetzen gesendet! Prüfe dein Postfach.",
+    vi: "Đã gửi email đặt lại mật khẩu! Kiểm tra hộp thư.",
+  },
+  auth_reset_error: {
+    en: "Could not send reset email. Please check your email and try again.",
+    de: "E-Mail konnte nicht gesendet werden. Bitte überprüfe deine E-Mail.",
+    vi: "Không thể gửi email. Vui lòng kiểm tra email và thử lại.",
+  },
+  profile_reset_password: {
+    en: "Reset password",
+    de: "Passwort zurücksetzen",
+    vi: "Đặt lại mật khẩu",
+  },
+  profile_reset_sent: {
+    en: "Reset link sent to your email!",
+    de: "Link zum Zurücksetzen an deine E-Mail gesendet!",
+    vi: "Đã gửi liên kết đặt lại đến email!",
+  },
+
   // Firebase errors
   firebase_invalid_email: {
     en: "The email address you entered isn't valid. Please check and try again.",

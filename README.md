@@ -27,20 +27,20 @@ Before you start building, understand what's free and what costs money:
 
 ### One-time fees
 
-| Item | Cost | Notes |
-|------|------|-------|
-| Google Play Console | **$25** (one-time) | Required to publish on Play Store |
-| Apple Developer Program | **$99/year** | Only needed if you also want to publish on the App Store |
+| Item                    | Cost               | Notes                                                    |
+| ----------------------- | ------------------ | -------------------------------------------------------- |
+| Google Play Console     | **$25** (one-time) | Required to publish on Play Store                        |
+| Apple Developer Program | **$99/year**       | Only needed if you also want to publish on the App Store |
 
 ### EAS Build (Expo Cloud Builds)
 
 EAS Build compiles your app in the cloud. Expo offers a **free tier** but with limits:
 
-| Plan | Price | Builds per month | Build priority | Notes |
-|------|-------|-------------------|----------------|-------|
-| **Free** | $0 | **30 builds/month** | Low (queued) | Builds may wait 5-30+ min in queue before starting |
-| **Production** | $99/month | 1,000 builds/month | Normal | Faster queue times |
-| **Enterprise** | Custom | Unlimited | High | Priority builds, dedicated support |
+| Plan           | Price     | Builds per month    | Build priority | Notes                                              |
+| -------------- | --------- | ------------------- | -------------- | -------------------------------------------------- |
+| **Free**       | $0        | **30 builds/month** | Low (queued)   | Builds may wait 5-30+ min in queue before starting |
+| **Production** | $99/month | 1,000 builds/month  | Normal         | Faster queue times                                 |
+| **Enterprise** | Custom    | Unlimited           | High           | Priority builds, dedicated support                 |
 
 > **Tip:** On the free plan, each build counts against your 30/month limit regardless of profile (development, preview, or production). Plan your builds wisely - don't trigger unnecessary builds.
 
@@ -67,10 +67,12 @@ Before you start, install the following:
    - Add `%ANDROID_HOME%\platform-tools` to your `PATH`
 
    On Windows, open PowerShell as admin:
+
    ```powershell
    [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", "C:\Users\<you>\AppData\Local\Android\Sdk", "User")
    [System.Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot", "User")
    ```
+
    Restart your terminal after setting these.
 
 #### Step 1: Generate the native Android project
@@ -89,6 +91,7 @@ cd android
 ```
 
 The APK will be at:
+
 ```
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
@@ -106,6 +109,7 @@ keytool -genkeypair -v -storetype PKCS12 -keystore faithhub-release.keystore -al
 You'll be asked to set a password and enter your name/organization. **Save this keystore file and password somewhere safe** - you need the same key for all future updates on the Play Store.
 
 Move the keystore to the android app folder:
+
 ```bash
 mv faithhub-release.keystore android/app/
 ```
@@ -144,6 +148,7 @@ cd android
 ```
 
 The signed AAB will be at:
+
 ```
 android/app/build/outputs/bundle/release/app-release.aab
 ```
@@ -160,42 +165,43 @@ cd android
 ```
 
 The APK will be at:
+
 ```
 android/app/build/outputs/apk/release/app-release.apk
 ```
 
 #### Common local build errors
 
-| Error | Solution |
-|-------|----------|
-| `SDK location not found` | Set `ANDROID_HOME` env variable or create `android/local.properties` with `sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk` |
-| `Could not determine java version` | Install JDK 17 and set `JAVA_HOME` |
-| `Execution failed for task ':app:mergeReleaseResources'` | Run `cd android && ./gradlew clean` then rebuild |
-| `Keystore was tampered with, or password was incorrect` | Double-check your keystore password |
-| `./gradlew: Permission denied` | Run `chmod +x android/gradlew` (macOS/Linux) |
+| Error                                                    | Solution                                                                                                                            |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `SDK location not found`                                 | Set `ANDROID_HOME` env variable or create `android/local.properties` with `sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk` |
+| `Could not determine java version`                       | Install JDK 17 and set `JAVA_HOME`                                                                                                  |
+| `Execution failed for task ':app:mergeReleaseResources'` | Run `cd android && ./gradlew clean` then rebuild                                                                                    |
+| `Keystore was tampered with, or password was incorrect`  | Double-check your keystore password                                                                                                 |
+| `./gradlew: Permission denied`                           | Run `chmod +x android/gradlew` (macOS/Linux)                                                                                        |
 
 ### EAS Submit
 
-| Feature | Cost |
-|---------|------|
+| Feature                           | Cost                             |
+| --------------------------------- | -------------------------------- |
 | EAS Submit (upload to Play Store) | **Free** (included in all plans) |
 
 ### Firebase (Backend)
 
-| Plan | Cost | Limits |
-|------|------|--------|
-| **Spark (Free)** | $0 | 50K reads/day, 20K writes/day, 1GB storage, 50K auth users |
-| **Blaze (Pay as you go)** | Usage-based | Same free tier included, then pay per operation |
+| Plan                      | Cost        | Limits                                                     |
+| ------------------------- | ----------- | ---------------------------------------------------------- |
+| **Spark (Free)**          | $0          | 50K reads/day, 20K writes/day, 1GB storage, 50K auth users |
+| **Blaze (Pay as you go)** | Usage-based | Same free tier included, then pay per operation            |
 
 > For a small community app like FaithHub, the **free Spark plan** is more than enough.
 
 ### Summary: Minimum cost to publish on Play Store
 
-| Method | Total cost |
-|--------|-----------|
-| EAS Cloud Build (free plan) + Play Store | **$25** (just the Play Console fee) |
-| Local build + Play Store | **$25** (just the Play Console fee) |
-| EAS Cloud Build + App Store (iOS) | **$25 + $99/year** = $124 first year | See [iOS Publishing Guide](IOS_PUBLISHING.md) |
+| Method                                   | Total cost                           |
+| ---------------------------------------- | ------------------------------------ | --------------------------------------------- |
+| EAS Cloud Build (free plan) + Play Store | **$25** (just the Play Console fee)  |
+| Local build + Play Store                 | **$25** (just the Play Console fee)  |
+| EAS Cloud Build + App Store (iOS)        | **$25 + $99/year** = $124 first year | See [iOS Publishing Guide](IOS_PUBLISHING.md) |
 
 ---
 
@@ -216,6 +222,7 @@ npx expo start
 ```
 
 This will open the Expo dev tools. You can run the app on:
+
 - **Physical device**: Scan the QR code with Expo Go (Android) or Camera app (iOS)
 - **Android emulator**: Press `a` in the terminal
 - **iOS simulator** (macOS only): Press `i` in the terminal
@@ -290,6 +297,7 @@ This creates an `eas.json` file in your project root. Replace its contents with 
 ```
 
 **Build profiles explained:**
+
 - **development** - Debug build with dev tools, for local testing (uses 1 of your 30 free builds/month)
 - **preview** - Release APK for sharing with testers, no Play Store needed (uses 1 of your 30 free builds/month)
 - **production** - Optimized AAB for Play Store upload (uses 1 of your 30 free builds/month)
@@ -332,6 +340,7 @@ eas build --platform android --profile production
 ```
 
 This will:
+
 1. Compile your app in the cloud
 2. Automatically sign it with a keystore (EAS manages this for you)
 3. Provide a download link for the `.aab` file
@@ -510,14 +519,14 @@ FaithHub/
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
+| Problem                           | Solution                                              |
+| --------------------------------- | ----------------------------------------------------- |
 | Build fails with "keystore" error | Run `eas credentials` to manage your Android keystore |
-| App crashes on startup | Check Firebase config in `lib/firebase.ts` |
-| Icons not showing | Run `npx expo start --clear` to clear cache |
-| EAS build is slow | First builds are slower; subsequent builds use cache |
-| "Package name already taken" | Change the `android.package` in `app.json` |
-| Play Store rejects AAB | Ensure all declarations in App Content are completed |
+| App crashes on startup            | Check Firebase config in `lib/firebase.ts`            |
+| Icons not showing                 | Run `npx expo start --clear` to clear cache           |
+| EAS build is slow                 | First builds are slower; subsequent builds use cache  |
+| "Package name already taken"      | Change the `android.package` in `app.json`            |
+| Play Store rejects AAB            | Ensure all declarations in App Content are completed  |
 
 ---
 

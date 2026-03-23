@@ -4,7 +4,15 @@ import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
-import { sendPasswordResetEmail, signOut } from "firebase/auth";
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  sendPasswordResetEmail,
+  signOut,
+} from "firebase/auth";
+import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,10 +22,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
 type ModalType = "confirm" | "error" | null;
+type DeleteModalStep = "confirm" | "type-to-delete" | "error" | null;
 
 function SignOutModal({
   type,
@@ -227,6 +237,183 @@ const modalStyles = StyleSheet.create({
   },
 });
 
+function DeleteAccountModal({
+  step,
+  onDismiss,
+  onConfirm,
+  onProceedToPassword,
+  password,
+  onPasswordChange,
+  loading,
+  lang,
+}: {
+  step: DeleteModalStep;
+  onDismiss: () => void;
+  onConfirm: () => void;
+  onProceedToPassword: () => void;
+  password: string;
+  onPasswordChange: (v: string) => void;
+  loading: boolean;
+  lang: Language;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (step) {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [step, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      scale.setValue(0.9);
+      onDismiss();
+    });
+  }
+
+  if (!step) return null;
+
+  const isError = step === "error";
+  const isPasswordStep = step === "type-to-delete";
+  const canDelete = password.length >= 6;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[modalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View
+            style={[
+              modalStyles.iconCircle,
+              { backgroundColor: "#FEF2F2" },
+            ]}
+          >
+            <Ionicons
+              name={isError ? "alert-circle" : "trash-outline"}
+              size={32}
+              color="#DC2626"
+            />
+          </View>
+
+          <Text style={modalStyles.title}>
+            {isError
+              ? t("profile_delete_failed", lang)
+              : t("profile_delete_title", lang)}
+          </Text>
+          <Text style={modalStyles.message}>
+            {isError
+              ? t("profile_delete_error", lang)
+              : isPasswordStep
+                ? t("profile_delete_password_msg", lang)
+                : t("profile_delete_msg", lang)}
+          </Text>
+
+          {isError ? (
+            <Pressable
+              onPress={handleDismiss}
+              style={modalStyles.primaryButton}
+            >
+              <Text style={modalStyles.primaryButtonText}>
+                {t("try_again", lang)}
+              </Text>
+            </Pressable>
+          ) : isPasswordStep ? (
+            <>
+              <TextInput
+                style={deleteModalStyles.passwordInput}
+                value={password}
+                onChangeText={onPasswordChange}
+                placeholder={t("auth_password_placeholder_login", lang)}
+                placeholderTextColor="#D1D5DB"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <View style={modalStyles.buttonRow}>
+                <Pressable
+                  onPress={handleDismiss}
+                  disabled={loading}
+                  style={modalStyles.cancelButton}
+                >
+                  <Text style={modalStyles.cancelButtonText}>
+                    {t("cancel", lang)}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={onConfirm}
+                  disabled={!canDelete || loading}
+                  style={[
+                    modalStyles.confirmButton,
+                    (!canDelete || loading) && { opacity: 0.5 },
+                  ]}
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={modalStyles.confirmButtonText}>
+                      {t("profile_delete_confirm", lang)}
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            </>
+          ) : (
+            <View style={modalStyles.buttonRow}>
+              <Pressable
+                onPress={handleDismiss}
+                style={modalStyles.cancelButton}
+              >
+                <Text style={modalStyles.cancelButtonText}>
+                  {t("cancel", lang)}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={onProceedToPassword}
+                style={modalStyles.confirmButton}
+              >
+                <Text style={modalStyles.confirmButtonText}>
+                  {t("continue", lang)}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const deleteModalStyles = StyleSheet.create({
+  passwordInput: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: "#1F2A1F",
+  },
+});
+
 export default function ProfileScreen() {
   const { user } = useAuth();
   const { org, leaveOrg } = useOrg();
@@ -238,6 +425,9 @@ export default function ProfileScreen() {
   const langDirty = pendingLang !== lang;
   const [resetSending, setResetSending] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<DeleteModalStep>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
 
   useEffect(() => {
     setPendingLang(lang);
@@ -269,6 +459,37 @@ export default function ProfileScreen() {
       // ignore
     } finally {
       setResetSending(false);
+    }
+  }
+
+  async function confirmDeleteAccount() {
+    if (!user?.email) return;
+    setDeleting(true);
+    try {
+      // Re-authenticate before destructive action
+      const credential = EmailAuthProvider.credential(user.email, deletePassword);
+      await reauthenticateWithCredential(user, credential);
+      // Remove user from organization membership
+      if (org) {
+        const memberRef = doc(
+          db,
+          "organizations",
+          org.orgId,
+          "members",
+          user.uid
+        );
+        await deleteDoc(memberRef);
+      }
+      // Remove user document from Firestore
+      await deleteDoc(doc(db, "users", user.uid));
+      // Delete the Firebase Auth account
+      await deleteUser(user);
+      setDeleteStep(null);
+      setDeleting(false);
+      setDeletePassword("");
+    } catch {
+      setDeleting(false);
+      setDeleteStep("error");
     }
   }
 
@@ -349,6 +570,18 @@ export default function ProfileScreen() {
             {t("profile_reset_sent", lang)}
           </Text>
         )}
+
+        <View style={styles.separator} />
+
+        <Pressable
+          onPress={() => setDeleteStep("confirm")}
+          style={styles.row}
+        >
+          <Ionicons name="trash-outline" size={20} color="#DC2626" />
+          <Text style={[styles.rowLabel, { color: "#DC2626" }]}>
+            {t("profile_delete_account", lang)}
+          </Text>
+        </Pressable>
       </View>
 
       {org && (
@@ -426,13 +659,27 @@ export default function ProfileScreen() {
         <Text style={styles.signOutText}>{t("profile_signout", lang)}</Text>
       </Pressable>
 
-      <Text style={styles.version}>FaithHub v1.1.0</Text>
+      <Text style={styles.version}>FaithHub v1.2.0</Text>
 
       <SignOutModal
         type={modalType}
         onDismiss={() => setModalType(null)}
         onConfirm={confirmSignOut}
         loading={signingOut}
+        lang={lang}
+      />
+
+      <DeleteAccountModal
+        step={deleteStep}
+        onDismiss={() => {
+          setDeleteStep(null);
+          setDeletePassword("");
+        }}
+        onProceedToPassword={() => setDeleteStep("type-to-delete")}
+        onConfirm={confirmDeleteAccount}
+        password={deletePassword}
+        onPasswordChange={setDeletePassword}
+        loading={deleting}
         lang={lang}
       />
     </ScrollView>

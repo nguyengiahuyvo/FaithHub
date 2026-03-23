@@ -258,6 +258,7 @@ function DeleteAccountModal({
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (step) {
@@ -337,16 +338,28 @@ function DeleteAccountModal({
             </Pressable>
           ) : isPasswordStep ? (
             <>
-              <TextInput
-                style={deleteModalStyles.passwordInput}
-                value={password}
-                onChangeText={onPasswordChange}
-                placeholder={t("auth_password_placeholder_login", lang)}
-                placeholderTextColor="#D1D5DB"
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+              <View style={deleteModalStyles.passwordRow}>
+                <TextInput
+                  style={deleteModalStyles.passwordField}
+                  value={password}
+                  onChangeText={onPasswordChange}
+                  placeholder={t("auth_password_placeholder_login", lang)}
+                  placeholderTextColor="#D1D5DB"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={deleteModalStyles.eyeButton}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#8A8F98"
+                  />
+                </Pressable>
+              </View>
               <View style={modalStyles.buttonRow}>
                 <Pressable
                   onPress={handleDismiss}
@@ -402,15 +415,24 @@ function DeleteAccountModal({
 }
 
 const deleteModalStyles = StyleSheet.create({
-  passwordInput: {
+  passwordRow: {
     width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "#E5E7EB",
     borderRadius: 12,
+  },
+  passwordField: {
+    flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 16,
     color: "#1F2A1F",
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
 });
 

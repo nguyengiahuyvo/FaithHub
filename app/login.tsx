@@ -164,6 +164,8 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ErrorInfo>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSending, setForgotSending] = useState(false);
@@ -382,34 +384,58 @@ export default function AuthScreen() {
 
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Password</Text>
-              <TextInput
-                autoCapitalize="none"
-                autoComplete={
-                  mode === "login" ? "current-password" : "new-password"
-                }
-                onChangeText={setPassword}
-                placeholder={
-                  mode === "login" ? "Enter your password" : "Create a password"
-                }
-                placeholderTextColor="#8A8F98"
-                secureTextEntry
-                style={styles.input}
-                value={password}
-              />
+              <View style={styles.passwordRow}>
+                <TextInput
+                  autoCapitalize="none"
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
+                  onChangeText={setPassword}
+                  placeholder={
+                    mode === "login" ? "Enter your password" : "Create a password"
+                  }
+                  placeholderTextColor="#8A8F98"
+                  secureTextEntry={!showPassword}
+                  style={styles.passwordInput}
+                  value={password}
+                />
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.eyeButton}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#8A8F98"
+                  />
+                </Pressable>
+              </View>
             </View>
 
             {mode === "signup" ? (
               <View style={styles.fieldGroup}>
                 <Text style={styles.label}>Confirm password</Text>
-                <TextInput
-                  autoCapitalize="none"
-                  onChangeText={setConfirmPassword}
-                  placeholder="Re-enter your password"
-                  placeholderTextColor="#8A8F98"
-                  secureTextEntry
-                  style={styles.input}
-                  value={confirmPassword}
-                />
+                <View style={styles.passwordRow}>
+                  <TextInput
+                    autoCapitalize="none"
+                    onChangeText={setConfirmPassword}
+                    placeholder="Re-enter your password"
+                    placeholderTextColor="#8A8F98"
+                    secureTextEntry={!showConfirmPassword}
+                    style={styles.passwordInput}
+                    value={confirmPassword}
+                  />
+                  <Pressable
+                    onPress={() => setShowConfirmPassword((v) => !v)}
+                    style={styles.eyeButton}
+                  >
+                    <Ionicons
+                      name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#8A8F98"
+                    />
+                  </Pressable>
+                </View>
               </View>
             ) : null}
 
@@ -800,6 +826,25 @@ const styles = StyleSheet.create({
     color: "#111827",
     fontSize: 16,
     paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  passwordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#D8D0C4",
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  passwordInput: {
+    flex: 1,
+    color: "#111827",
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
     paddingVertical: 14,
   },
   primaryButton: {

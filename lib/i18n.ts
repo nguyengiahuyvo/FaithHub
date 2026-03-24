@@ -478,6 +478,21 @@ const translations = {
   },
 
   // Profile
+  profile_change_photo: {
+    en: "Change photo",
+    de: "Foto ändern",
+    vi: "Đổi ảnh",
+  },
+  profile_photo_pick: {
+    en: "Choose from library",
+    de: "Aus Galerie wählen",
+    vi: "Chọn từ thư viện",
+  },
+  profile_photo_remove: {
+    en: "Remove photo",
+    de: "Foto entfernen",
+    vi: "Xóa ảnh",
+  },
   profile_account: { en: "Account", de: "Konto", vi: "Tài khoản" },
   profile_display_name: {
     en: "Display name",

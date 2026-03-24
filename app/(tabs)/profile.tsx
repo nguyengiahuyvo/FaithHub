@@ -1,9 +1,11 @@
 import { useAuth } from "@/lib/auth-context";
-import { auth } from "@/lib/firebase";
+import UserAvatar, { invalidatePhotoCache } from "@/components/UserAvatar";
+import { auth, db } from "@/lib/firebase";
 import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import {
   deleteUser,
   EmailAuthProvider,
@@ -11,12 +13,12 @@ import {
   sendPasswordResetEmail,
   signOut,
 } from "firebase/auth";
-import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -450,10 +452,22 @@ export default function ProfileScreen() {
   const [deleteStep, setDeleteStep] = useState<DeleteModalStep>(null);
   const [deleting, setDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [photoURI, setPhotoURI] = useState<string | null>(null);
 
   useEffect(() => {
     setPendingLang(lang);
   }, [lang]);
+
+  useEffect(() => {
+    if (!user) return;
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      if (snap.exists() && snap.data().photoBase64) {
+        setPhotoURI(snap.data().photoBase64);
+      }
+    });
+  }, [user]);
 
   async function saveLang() {
     setSaving(true);
@@ -464,11 +478,51 @@ export default function ProfileScreen() {
     }
   }
 
-  const initials = (user?.displayName ?? user?.email ?? "?")
-    .split(/[\s@]/)
-    .slice(0, 2)
-    .map((s) => s[0]?.toUpperCase() ?? "")
-    .join("");
+  async function pickAndUploadPhoto() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]?.base64 || !user) return;
+    setUploadingPhoto(true);
+    setShowPhotoMenu(false);
+    try {
+      const dataURI = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      await setDoc(
+        doc(db, "users", user.uid),
+        { photoBase64: dataURI },
+        { merge: true },
+      );
+      setPhotoURI(dataURI);
+      invalidatePhotoCache(user.uid, dataURI);
+    } catch (e) {
+      console.error("Photo upload failed:", e);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  async function removePhoto() {
+    if (!user) return;
+    setUploadingPhoto(true);
+    setShowPhotoMenu(false);
+    try {
+      await setDoc(
+        doc(db, "users", user.uid),
+        { photoBase64: null },
+        { merge: true },
+      );
+      setPhotoURI(null);
+      invalidatePhotoCache(user.uid, null);
+    } catch {
+      // ignore
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
 
   async function handleResetPassword() {
     if (!user?.email) return;
@@ -530,14 +584,62 @@ export default function ProfileScreen() {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
-        </View>
+        <Pressable onPress={() => setShowPhotoMenu(true)} style={styles.avatarWrapper}>
+          {photoURI ? (
+            <Image source={{ uri: photoURI }} style={styles.avatarImage} />
+          ) : (
+            <UserAvatar uid={user?.uid} name={user?.displayName} email={user?.email} size={80} />
+          )}
+          {uploadingPhoto ? (
+            <View style={styles.avatarBadge}>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            </View>
+          ) : (
+            <View style={styles.avatarBadge}>
+              <Ionicons name="camera-outline" size={14} color="#FFFFFF" />
+            </View>
+          )}
+        </Pressable>
         <Text style={styles.name}>
           {user?.displayName || t("profile_member_fallback", lang)}
         </Text>
         <Text style={styles.email}>{user?.email}</Text>
       </View>
+
+      <Modal transparent visible={showPhotoMenu} animationType="fade">
+        <Pressable
+          style={styles.photoMenuBackdrop}
+          onPress={() => setShowPhotoMenu(false)}
+        >
+          <View style={styles.photoMenuCard}>
+            <Text style={styles.photoMenuTitle}>
+              {t("profile_change_photo", lang)}
+            </Text>
+            <Pressable onPress={pickAndUploadPhoto} style={styles.photoMenuItem}>
+              <Ionicons name="image-outline" size={22} color="#5B7553" />
+              <Text style={styles.photoMenuItemText}>
+                {t("profile_photo_pick", lang)}
+              </Text>
+            </Pressable>
+            {photoURI ? (
+              <Pressable onPress={removePhoto} style={styles.photoMenuItem}>
+                <Ionicons name="trash-outline" size={22} color="#DC2626" />
+                <Text style={[styles.photoMenuItemText, { color: "#DC2626" }]}>
+                  {t("profile_photo_remove", lang)}
+                </Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => setShowPhotoMenu(false)}
+              style={styles.photoMenuCancel}
+            >
+              <Text style={styles.photoMenuCancelText}>
+                {t("cancel", lang)}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>{t("profile_account", lang)}</Text>
@@ -719,19 +821,71 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  avatar: {
+  avatarWrapper: {
+    position: "relative",
+    marginBottom: 4,
+  },
+  avatarImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#5B7553",
+  },
+  avatarBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#3D5A3A",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 4,
+    borderWidth: 2,
+    borderColor: "#F9F7F4",
   },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 28,
+  photoMenuBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "flex-end",
+    padding: 16,
+  },
+  photoMenuCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    gap: 4,
+  },
+  photoMenuTitle: {
+    color: "#1F2A1F",
+    fontSize: 18,
     fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  photoMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  photoMenuItemText: {
+    color: "#2C3E2C",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  photoMenuCancel: {
+    alignItems: "center",
+    paddingVertical: 14,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.06)",
+  },
+  photoMenuCancelText: {
+    color: "#8A8F84",
+    fontSize: 16,
+    fontWeight: "600",
   },
   name: {
     color: "#2C3E2C",

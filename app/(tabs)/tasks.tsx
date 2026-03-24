@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import UserAvatar from "@/components/UserAvatar";
 import CreateTaskModal, {
   type Priority,
   priorityLabel,
@@ -180,7 +181,7 @@ export default function TasksScreen() {
                     </View>
                     {task.assignedToName ? (
                       <View style={styles.assigneeBadge}>
-                        <Ionicons name="person-outline" size={11} color="#5B7553" />
+                        <UserAvatar uid={task.assignedTo} name={task.assignedToName} size={14} />
                         <Text style={styles.assigneeText}>
                           {task.assignedToName}
                         </Text>
@@ -188,9 +189,12 @@ export default function TasksScreen() {
                     ) : null}
                   </View>
                   {task.createdByName ? (
-                    <Text style={styles.taskMeta}>
-                      {t("tasks_by", lang)} {task.createdByName}
-                    </Text>
+                    <View style={styles.creatorRow}>
+                      <UserAvatar uid={task.createdBy} name={task.createdByName} size={16} />
+                      <Text style={styles.taskMeta}>
+                        {t("tasks_by", lang)} {task.createdByName}
+                      </Text>
+                    </View>
                   ) : null}
                 </View>
                 {task.createdBy === user?.uid && (
@@ -471,6 +475,11 @@ const styles = StyleSheet.create({
   taskMeta: {
     color: "#A3A89E",
     fontSize: 12,
+  },
+  creatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginTop: 4,
   },
   assigneeBadge: {

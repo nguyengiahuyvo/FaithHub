@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { t, type Language } from "@/lib/i18n";
+import UserAvatar from "@/components/UserAvatar";
 
 const PRIORITIES = [1, 2, 3, 4] as const;
 export type Priority = (typeof PRIORITIES)[number];
@@ -315,11 +316,7 @@ export default function CreateTaskModal({
                               selected && mStyles.dropdownItemSelected,
                             ]}
                           >
-                            <View style={mStyles.dropdownAvatar}>
-                              <Text style={mStyles.dropdownAvatarText}>
-                                {(m.displayName || m.email || "?")[0]?.toUpperCase()}
-                              </Text>
-                            </View>
+                            <UserAvatar uid={m.uid} name={m.displayName} email={m.email} size={28} />
                             <View style={{ flex: 1 }}>
                               <Text
                                 style={[
@@ -482,19 +479,6 @@ const mStyles = StyleSheet.create({
   dropdownItemSub: {
     color: "#A3A89E",
     fontSize: 12,
-  },
-  dropdownAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#5B7553",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dropdownAvatarText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
   },
   buttonRow: {
     flexDirection: "row",

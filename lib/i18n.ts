@@ -343,6 +343,7 @@ const translations = {
     vi: "Nhấn + để tạo công việc đầu tiên",
   },
   tasks_new: { en: "New Task", de: "Neue Aufgabe", vi: "Công việc mới" },
+  tasks_edit: { en: "Edit Task", de: "Aufgabe bearbeiten", vi: "Sửa công việc" },
   tasks_title_label: { en: "Title", de: "Titel", vi: "Tiêu đề" },
   tasks_title_placeholder: {
     en: "What needs to be done?",

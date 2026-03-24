@@ -15,11 +15,14 @@ import {
 import {
   addDoc,
   collection,
+  doc,
   getDocs,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { t, type Language } from "@/lib/i18n";
+import UserAvatar from "@/components/UserAvatar";
 
 const PRIORITIES = [1, 2, 3, 4] as const;
 export type Priority = (typeof PRIORITIES)[number];
@@ -33,6 +36,15 @@ type Member = {
   uid: string;
   displayName: string | null;
   email: string;
+};
+
+export type EditTask = {
+  id: string;
+  title: string;
+  description: string;
+  priority: Priority;
+  assignedTo: string | null;
+  assignedToName: string | null;
 };
 
 export function priorityLabel(p: Priority, lang: Language): string {
@@ -72,6 +84,7 @@ export default function CreateTaskModal({
   userName,
   lang,
   onDismiss,
+  editTask,
 }: {
   visible: boolean;
   orgId: string;
@@ -79,7 +92,9 @@ export default function CreateTaskModal({
   userName: string | null;
   lang: Language;
   onDismiss: () => void;
+  editTask?: EditTask | null;
 }) {
+  const isEdit = !!editTask;
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
   const [title, setTitle] = useState("");
@@ -107,6 +122,19 @@ export default function CreateTaskModal({
       .catch(() => {})
       .finally(() => setLoadingMembers(false));
   }, [visible, orgId]);
+
+  useEffect(() => {
+    if (visible && editTask) {
+      setTitle(editTask.title);
+      setDescription(editTask.description);
+      setPriority(editTask.priority);
+      setAssignee(
+        editTask.assignedTo
+          ? { uid: editTask.assignedTo, displayName: editTask.assignedToName }
+          : null,
+      );
+    }
+  }, [visible, editTask]);
 
   useEffect(() => {
     if (visible) {
@@ -143,21 +171,34 @@ export default function CreateTaskModal({
     });
   }
 
-  async function handleCreate() {
+  async function handleSave() {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "organizations", orgId, "tasks"), {
-        title: title.trim(),
-        description: description.trim(),
-        status: "todo",
-        priority,
-        assignedTo: assignee?.uid || null,
-        assignedToName: assignee?.displayName || null,
-        createdBy: userId,
-        createdByName: userName,
-        createdAt: serverTimestamp(),
-      });
+      if (isEdit && editTask) {
+        await updateDoc(
+          doc(db, "organizations", orgId, "tasks", editTask.id),
+          {
+            title: title.trim(),
+            description: description.trim(),
+            priority,
+            assignedTo: assignee?.uid || null,
+            assignedToName: assignee?.displayName || null,
+          },
+        );
+      } else {
+        await addDoc(collection(db, "organizations", orgId, "tasks"), {
+          title: title.trim(),
+          description: description.trim(),
+          status: "todo",
+          priority,
+          assignedTo: assignee?.uid || null,
+          assignedToName: assignee?.displayName || null,
+          createdBy: userId,
+          createdByName: userName,
+          createdAt: serverTimestamp(),
+        });
+      }
       setTitle("");
       setDescription("");
       setPriority(2);
@@ -180,7 +221,9 @@ export default function CreateTaskModal({
           <Animated.View
             style={[mStyles.card, { opacity, transform: [{ scale }] }]}
           >
-            <Text style={mStyles.modalTitle}>{t("tasks_new", lang)}</Text>
+            <Text style={mStyles.modalTitle}>
+              {isEdit ? t("tasks_edit", lang) : t("tasks_new", lang)}
+            </Text>
 
             <View style={mStyles.field}>
               <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
@@ -315,11 +358,7 @@ export default function CreateTaskModal({
                               selected && mStyles.dropdownItemSelected,
                             ]}
                           >
-                            <View style={mStyles.dropdownAvatar}>
-                              <Text style={mStyles.dropdownAvatarText}>
-                                {(m.displayName || m.email || "?")[0]?.toUpperCase()}
-                              </Text>
-                            </View>
+                            <UserAvatar uid={m.uid} name={m.displayName} email={m.email} size={28} />
                             <View style={{ flex: 1 }}>
                               <Text
                                 style={[
@@ -361,7 +400,7 @@ export default function CreateTaskModal({
                 <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
               </Pressable>
               <Pressable
-                onPress={handleCreate}
+                onPress={handleSave}
                 disabled={saving || !title.trim()}
                 style={[
                   mStyles.createBtn,
@@ -371,7 +410,9 @@ export default function CreateTaskModal({
                 {saving ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={mStyles.createText}>{t("create", lang)}</Text>
+                  <Text style={mStyles.createText}>
+                    {isEdit ? t("save", lang) : t("create", lang)}
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -482,19 +523,6 @@ const mStyles = StyleSheet.create({
   dropdownItemSub: {
     color: "#A3A89E",
     fontSize: 12,
-  },
-  dropdownAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#5B7553",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dropdownAvatarText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
   },
   buttonRow: {
     flexDirection: "row",

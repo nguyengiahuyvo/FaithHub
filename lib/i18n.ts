@@ -343,6 +343,7 @@ const translations = {
     vi: "Nhấn + để tạo công việc đầu tiên",
   },
   tasks_new: { en: "New Task", de: "Neue Aufgabe", vi: "Công việc mới" },
+  tasks_edit: { en: "Edit Task", de: "Aufgabe bearbeiten", vi: "Sửa công việc" },
   tasks_title_label: { en: "Title", de: "Titel", vi: "Tiêu đề" },
   tasks_title_placeholder: {
     en: "What needs to be done?",
@@ -478,6 +479,21 @@ const translations = {
   },
 
   // Profile
+  profile_change_photo: {
+    en: "Change photo",
+    de: "Foto ändern",
+    vi: "Đổi ảnh",
+  },
+  profile_photo_pick: {
+    en: "Choose from library",
+    de: "Aus Galerie wählen",
+    vi: "Chọn từ thư viện",
+  },
+  profile_photo_remove: {
+    en: "Remove photo",
+    de: "Foto entfernen",
+    vi: "Xóa ảnh",
+  },
   profile_account: { en: "Account", de: "Konto", vi: "Tài khoản" },
   profile_display_name: {
     en: "Display name",
@@ -531,11 +547,47 @@ const translations = {
     de: "FaithHub-Mitglied",
     vi: "Thành viên FaithHub",
   },
+  profile_delete_account: {
+    en: "Delete account",
+    de: "Konto löschen",
+    vi: "Xóa tài khoản",
+  },
+  profile_delete_title: {
+    en: "Delete Account?",
+    de: "Konto löschen?",
+    vi: "Xóa tài khoản?",
+  },
+  profile_delete_msg: {
+    en: "This will permanently delete your account and all associated data. This action cannot be undone.",
+    de: "Dein Konto und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    vi: "Tài khoản và tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.",
+  },
+  profile_delete_password_msg: {
+    en: "Enter your password to confirm account deletion.",
+    de: "Gib dein Passwort ein, um die Kontolöschung zu bestätigen.",
+    vi: "Nhập mật khẩu để xác nhận xóa tài khoản.",
+  },
+  profile_delete_confirm: {
+    en: "Delete My Account",
+    de: "Mein Konto löschen",
+    vi: "Xóa tài khoản của tôi",
+  },
+  profile_delete_failed: {
+    en: "Deletion failed",
+    de: "Löschung fehlgeschlagen",
+    vi: "Xóa thất bại",
+  },
+  profile_delete_error: {
+    en: "Could not delete your account. You may need to sign in again before deleting.",
+    de: "Konto konnte nicht gelöscht werden. Möglicherweise musst du dich erneut anmelden.",
+    vi: "Không thể xóa tài khoản. Bạn có thể cần đăng nhập lại trước khi xóa.",
+  },
 
   // Shared
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },
   try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
+  continue: { en: "Continue", de: "Weiter", vi: "Tiếp tục" },
   save: { en: "Save", de: "Speichern", vi: "Lưu" },
   delete: { en: "Delete", de: "Löschen", vi: "Xóa" },
   delete_title: { en: "Delete?", de: "Löschen?", vi: "Xóa?" },

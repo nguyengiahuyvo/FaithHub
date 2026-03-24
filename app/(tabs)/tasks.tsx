@@ -22,7 +22,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import UserAvatar from "@/components/UserAvatar";
 import CreateTaskModal, {
+  type EditTask,
   type Priority,
   priorityLabel,
   priorityColor,
@@ -48,6 +50,7 @@ export default function TasksScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [editingTask, setEditingTask] = useState<EditTask | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
@@ -180,7 +183,7 @@ export default function TasksScreen() {
                     </View>
                     {task.assignedToName ? (
                       <View style={styles.assigneeBadge}>
-                        <Ionicons name="person-outline" size={11} color="#5B7553" />
+                        <UserAvatar uid={task.assignedTo} name={task.assignedToName} size={14} />
                         <Text style={styles.assigneeText}>
                           {task.assignedToName}
                         </Text>
@@ -188,25 +191,42 @@ export default function TasksScreen() {
                     ) : null}
                   </View>
                   {task.createdByName ? (
-                    <Text style={styles.taskMeta}>
-                      {t("tasks_by", lang)} {task.createdByName}
-                    </Text>
+                    <View style={styles.creatorRow}>
+                      <UserAvatar uid={task.createdBy} name={task.createdByName} size={16} />
+                      <Text style={styles.taskMeta}>
+                        {t("tasks_by", lang)} {task.createdByName}
+                      </Text>
+                    </View>
                   ) : null}
                 </View>
                 {task.createdBy === user?.uid && (
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setDeleteTarget(task.id);
-                    }}
-                    style={styles.deleteBtn}
-                  >
-                    <Ionicons
-                      name="trash-outline"
-                      size={18}
-                      color="#DC2626"
-                    />
-                  </Pressable>
+                  <View style={styles.actionCol}>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setEditingTask({
+                          id: task.id,
+                          title: task.title,
+                          description: task.description,
+                          priority: task.priority,
+                          assignedTo: task.assignedTo,
+                          assignedToName: task.assignedToName,
+                        });
+                      }}
+                      style={styles.actionBtn}
+                    >
+                      <Ionicons name="pencil-outline" size={18} color="#5B7553" />
+                    </Pressable>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(task.id);
+                      }}
+                      style={styles.actionBtn}
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                    </Pressable>
+                  </View>
                 )}
               </Pressable>
             ))}
@@ -215,12 +235,16 @@ export default function TasksScreen() {
       </ScrollView>
 
       <CreateTaskModal
-        visible={showCreate}
+        visible={showCreate || !!editingTask}
         orgId={org.orgId}
         userId={user?.uid ?? ""}
         userName={user?.displayName ?? null}
         lang={lang}
-        onDismiss={() => setShowCreate(false)}
+        editTask={editingTask}
+        onDismiss={() => {
+          setShowCreate(false);
+          setEditingTask(null);
+        }}
       />
 
       <DeleteConfirmModal
@@ -471,6 +495,11 @@ const styles = StyleSheet.create({
   taskMeta: {
     color: "#A3A89E",
     fontSize: 12,
+  },
+  creatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginTop: 4,
   },
   assigneeBadge: {
@@ -487,7 +516,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
   },
-  deleteBtn: {
+  actionCol: {
+    gap: 4,
+    alignItems: "center",
+  },
+  actionBtn: {
     padding: 6,
   },
 });

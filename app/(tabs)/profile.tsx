@@ -12,8 +12,9 @@ import {
   reauthenticateWithCredential,
   sendPasswordResetEmail,
   signOut,
+  updateProfile,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -438,8 +439,153 @@ const deleteModalStyles = StyleSheet.create({
   },
 });
 
+function EditDisplayNameModal({
+  visible,
+  onDismiss,
+  onSave,
+  currentName,
+  loading,
+  lang,
+}: {
+  visible: boolean;
+  onDismiss: () => void;
+  onSave: (name: string) => void;
+  currentName: string;
+  loading: boolean;
+  lang: Language;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+  const [name, setName] = useState(currentName);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setName(currentName);
+      setError(false);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale, currentName]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      scale.setValue(0.9);
+      onDismiss();
+    });
+  }
+
+  if (!visible) return null;
+
+  const canSave = name.trim().length > 0 && name.trim() !== currentName;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[modalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View
+            style={[
+              modalStyles.iconCircle,
+              { backgroundColor: "#F0FDF4" },
+            ]}
+          >
+            <Ionicons name="person-outline" size={32} color="#5B7553" />
+          </View>
+
+          <Text style={modalStyles.title}>
+            {t("profile_edit_name_title", lang)}
+          </Text>
+          <Text style={modalStyles.message}>
+            {t("profile_edit_name_msg", lang)}
+          </Text>
+
+          <TextInput
+            style={editNameStyles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder={t("profile_edit_name_placeholder", lang)}
+            placeholderTextColor="#D1D5DB"
+            autoCapitalize="words"
+            autoFocus
+          />
+
+          {error && (
+            <Text style={editNameStyles.error}>
+              {t("profile_edit_name_error", lang)}
+            </Text>
+          )}
+
+          <View style={modalStyles.buttonRow}>
+            <Pressable
+              onPress={handleDismiss}
+              disabled={loading}
+              style={modalStyles.cancelButton}
+            >
+              <Text style={modalStyles.cancelButtonText}>
+                {t("cancel", lang)}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onSave(name.trim())}
+              disabled={!canSave || loading}
+              style={[
+                modalStyles.confirmButton,
+                { backgroundColor: "#5B7553" },
+                (!canSave || loading) && { opacity: 0.5 },
+              ]}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={modalStyles.confirmButtonText}>
+                  {t("save", lang)}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const editNameStyles = StyleSheet.create({
+  input: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: "#1F2A1F",
+  },
+  error: {
+    color: "#DC2626",
+    fontSize: 13,
+    textAlign: "center",
+  },
+});
+
 export default function ProfileScreen() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { org, leaveOrg } = useOrg();
   const { lang, setLang } = useLanguage();
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -455,6 +601,8 @@ export default function ProfileScreen() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const [photoURI, setPhotoURI] = useState<string | null>(null);
+  const [showEditName, setShowEditName] = useState(false);
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     setPendingLang(lang);
@@ -468,6 +616,27 @@ export default function ProfileScreen() {
       }
     });
   }, [user]);
+
+  async function saveDisplayName(newName: string) {
+    if (!user) return;
+    setSavingName(true);
+    try {
+      await updateProfile(user, { displayName: newName });
+      // Update Firestore user doc
+      await setDoc(doc(db, "users", user.uid), { displayName: newName }, { merge: true });
+      // Update org member doc if in an org
+      if (org) {
+        const memberRef = doc(db, "organizations", org.orgId, "members", user.uid);
+        await setDoc(memberRef, { displayName: newName }, { merge: true });
+      }
+      await refreshUser();
+      setShowEditName(false);
+    } catch (e) {
+      console.error("Failed to update display name:", e);
+    } finally {
+      setSavingName(false);
+    }
+  }
 
   async function saveLang() {
     setSaving(true);
@@ -644,13 +813,14 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>{t("profile_account", lang)}</Text>
 
-        <View style={styles.row}>
+        <Pressable onPress={() => setShowEditName(true)} style={styles.row}>
           <Ionicons name="person-outline" size={20} color="#5B7553" />
           <Text style={styles.rowLabel}>{t("profile_display_name", lang)}</Text>
           <Text style={styles.rowValue}>
             {user?.displayName || t("profile_not_set", lang)}
           </Text>
-        </View>
+          <Ionicons name="chevron-forward" size={16} color="#C4C9BE" />
+        </Pressable>
 
         <View style={styles.separator} />
 
@@ -790,6 +960,15 @@ export default function ProfileScreen() {
         onDismiss={() => setModalType(null)}
         onConfirm={confirmSignOut}
         loading={signingOut}
+        lang={lang}
+      />
+
+      <EditDisplayNameModal
+        visible={showEditName}
+        onDismiss={() => setShowEditName(false)}
+        onSave={saveDisplayName}
+        currentName={user?.displayName || ""}
+        loading={savingName}
         lang={lang}
       />
 

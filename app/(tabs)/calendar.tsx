@@ -31,6 +31,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t, tArray } from "@/lib/i18n";
+import UserAvatar from "@/components/UserAvatar";
 
 type Attendee = {
   uid: string;
@@ -409,9 +410,12 @@ function EventCard({
             <Text style={styles.eventDesc}>{ev.description}</Text>
           ) : null}
           {ev.createdByName ? (
-            <Text style={styles.eventMeta}>
-              {t("tasks_by", lang)} {ev.createdByName}
-            </Text>
+            <View style={styles.creatorRow}>
+              <UserAvatar uid={ev.createdBy} name={ev.createdByName} size={16} />
+              <Text style={styles.eventMeta}>
+                {t("tasks_by", lang)} {ev.createdByName}
+              </Text>
+            </View>
           ) : null}
         </View>
         {ev.createdBy === user?.uid && (
@@ -428,10 +432,8 @@ function EventCard({
       {count > 0 && (
         <View style={styles.attendeeRow}>
           {ev.attendees.slice(0, 5).map((a) => (
-            <View key={a.uid} style={styles.attendeeBubble}>
-              <Text style={styles.attendeeBubbleText}>
-                {(a.displayName || "?")[0]?.toUpperCase()}
-              </Text>
+            <View key={a.uid} style={styles.attendeeBubbleWrap}>
+              <UserAvatar uid={a.uid} name={a.displayName} size={26} />
             </View>
           ))}
           <Text style={styles.attendeeCount}>
@@ -502,11 +504,7 @@ function EventCard({
           ) : (
             comments.map((c) => (
               <View key={c.id} style={commentStyles.comment}>
-                <View style={commentStyles.avatarSmall}>
-                  <Text style={commentStyles.avatarSmallText}>
-                    {(c.createdByName || "?")[0]?.toUpperCase()}
-                  </Text>
-                </View>
+                <UserAvatar uid={c.createdBy} name={c.createdByName} size={28} />
                 <View style={{ flex: 1 }}>
                   <View style={commentStyles.commentHeader}>
                     <Text style={commentStyles.commentAuthor}>
@@ -1061,6 +1059,11 @@ const styles = StyleSheet.create({
   eventMeta: {
     color: "#A3A89E",
     fontSize: 12,
+  },
+  creatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginTop: 4,
   },
   attendeeRow: {
@@ -1068,21 +1071,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  attendeeBubble: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "#5B7553",
-    justifyContent: "center",
-    alignItems: "center",
+  attendeeBubbleWrap: {
     marginRight: -4,
+    borderRadius: 15,
     borderWidth: 2,
     borderColor: "#FFFFFF",
-  },
-  attendeeBubbleText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "700",
+    overflow: "hidden",
   },
   attendeeCount: {
     color: "#8A8F84",
@@ -1134,19 +1128,6 @@ const commentStyles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     alignItems: "flex-start",
-  },
-  avatarSmall: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#5B7553",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarSmallText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
   },
   commentHeader: {
     flexDirection: "row",

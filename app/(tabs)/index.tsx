@@ -17,8 +17,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import UserAvatar from "@/components/UserAvatar";
 
-type MemberInfo = { displayName: string | null; email: string; role: string };
+type MemberInfo = { uid: string; displayName: string | null; email: string; role: string };
 
 function ErrorModal({
   title,
@@ -228,6 +229,7 @@ function OrgDashboard() {
         if (!cancelled) {
           setMembers(
             snap.docs.map((d) => ({
+              uid: d.id,
               displayName: d.data().displayName,
               email: d.data().email,
               role: d.data().role,
@@ -268,13 +270,9 @@ function OrgDashboard() {
         ) : members.length === 0 ? (
           <Text style={styles.body}>{t("home_no_members", lang)}</Text>
         ) : (
-          members.map((m, i) => (
-            <View key={i} style={styles.memberRow}>
-              <View style={styles.memberAvatar}>
-                <Text style={styles.memberAvatarText}>
-                  {(m.displayName || m.email)[0]?.toUpperCase()}
-                </Text>
-              </View>
+          members.map((m) => (
+            <View key={m.uid} style={styles.memberRow}>
+              <UserAvatar uid={m.uid} name={m.displayName} email={m.email} size={36} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.memberName}>
                   {m.displayName || t("home_member_fallback", lang)}
@@ -398,19 +396,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     paddingVertical: 6,
-  },
-  memberAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#5B7553",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  memberAvatarText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
   },
   memberName: {
     color: "#2C3E2C",

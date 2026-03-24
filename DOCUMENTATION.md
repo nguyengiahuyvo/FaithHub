@@ -119,6 +119,7 @@ The Profile tab is where you manage your account and preferences.
 ### Account Information
 
 View your:
+
 - **Display name**
 - **Email address**
 - **Account ID**
@@ -126,6 +127,7 @@ View your:
 ### Organization
 
 If you're part of a community, you'll see:
+
 - Your **organization name**
 - Your **role** within the organization
 - An option to **leave the organization**
@@ -145,13 +147,14 @@ Tap **Sign Out** at the bottom of the profile screen. You'll be asked to confirm
 
 FaithHub is available in three languages:
 
-| Language | Label |
-|----------|-------|
-| English | English |
-| German | Deutsch |
+| Language   | Label      |
+| ---------- | ---------- |
+| English    | English    |
+| German     | Deutsch    |
 | Vietnamese | Tieng Viet |
 
 To change your language:
+
 1. Go to the **Profile** tab.
 2. Under **Preferences**, tap your preferred language.
 3. The entire app updates instantly.
@@ -182,4 +185,4 @@ A: You can sign in and access your profile, but the Tasks and Calendar features 
 
 ---
 
-*FaithHub v1.0.0*
+_FaithHub v1.1.0_

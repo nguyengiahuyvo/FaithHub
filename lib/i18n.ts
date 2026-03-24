@@ -157,6 +157,85 @@ const translations = {
   },
   auth_try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
 
+  // Email verification
+  verify_title: {
+    en: "Verify your email",
+    de: "E-Mail bestätigen",
+    vi: "Xác minh email",
+  },
+  verify_desc: {
+    en: "We've sent a verification link to your email. Please check your inbox and tap the link to continue.",
+    de: "Wir haben einen Bestätigungslink an deine E-Mail gesendet. Bitte prüfe dein Postfach und tippe auf den Link.",
+    vi: "Chúng tôi đã gửi liên kết xác minh đến email của bạn. Vui lòng kiểm tra hộp thư và nhấn vào liên kết.",
+  },
+  verify_resend: {
+    en: "Resend email",
+    de: "Erneut senden",
+    vi: "Gửi lại email",
+  },
+  verify_resent: {
+    en: "Email sent!",
+    de: "E-Mail gesendet!",
+    vi: "Đã gửi email!",
+  },
+  verify_check: {
+    en: "I've verified my email",
+    de: "Ich habe meine E-Mail bestätigt",
+    vi: "Tôi đã xác minh email",
+  },
+  verify_not_yet: {
+    en: "Email not verified yet. Please check your inbox.",
+    de: "E-Mail noch nicht bestätigt. Bitte prüfe dein Postfach.",
+    vi: "Email chưa được xác minh. Vui lòng kiểm tra hộp thư.",
+  },
+  verify_signout: {
+    en: "Sign out",
+    de: "Abmelden",
+    vi: "Đăng xuất",
+  },
+
+  // Reset password
+  auth_forgot_password: {
+    en: "Forgot password?",
+    de: "Passwort vergessen?",
+    vi: "Quên mật khẩu?",
+  },
+  auth_reset_title: {
+    en: "Reset password",
+    de: "Passwort zurücksetzen",
+    vi: "Đặt lại mật khẩu",
+  },
+  auth_reset_desc: {
+    en: "Enter your email and we'll send you a link to reset your password.",
+    de: "Gib deine E-Mail ein und wir senden dir einen Link zum Zurücksetzen.",
+    vi: "Nhập email và chúng tôi sẽ gửi liên kết đặt lại mật khẩu.",
+  },
+  auth_reset_send: {
+    en: "Send reset link",
+    de: "Link senden",
+    vi: "Gửi liên kết",
+  },
+  auth_reset_sent: {
+    en: "Password reset email sent! Check your inbox.",
+    de: "E-Mail zum Zurücksetzen gesendet! Prüfe dein Postfach.",
+    vi: "Đã gửi email đặt lại mật khẩu! Kiểm tra hộp thư.",
+  },
+  auth_reset_error: {
+    en: "Could not send reset email. Please check your email and try again.",
+    de: "E-Mail konnte nicht gesendet werden. Bitte überprüfe deine E-Mail.",
+    vi: "Không thể gửi email. Vui lòng kiểm tra email và thử lại.",
+  },
+  profile_reset_password: {
+    en: "Reset password",
+    de: "Passwort zurücksetzen",
+    vi: "Đặt lại mật khẩu",
+  },
+  profile_reset_sent: {
+    en: "Reset link sent to your email!",
+    de: "Link zum Zurücksetzen an deine E-Mail gesendet!",
+    vi: "Đã gửi liên kết đặt lại đến email!",
+  },
+
   // Firebase errors
   firebase_invalid_email: {
     en: "The email address you entered isn't valid. Please check and try again.",
@@ -264,6 +343,7 @@ const translations = {
     vi: "Nhấn + để tạo công việc đầu tiên",
   },
   tasks_new: { en: "New Task", de: "Neue Aufgabe", vi: "Công việc mới" },
+  tasks_edit: { en: "Edit Task", de: "Aufgabe bearbeiten", vi: "Sửa công việc" },
   tasks_title_label: { en: "Title", de: "Titel", vi: "Tiêu đề" },
   tasks_title_placeholder: {
     en: "What needs to be done?",
@@ -281,6 +361,30 @@ const translations = {
     vi: "Thêm chi tiết...",
   },
   tasks_by: { en: "by", de: "von", vi: "bởi" },
+  tasks_priority: {
+    en: "Priority",
+    de: "Priorität",
+    vi: "Mức độ ưu tiên",
+  },
+  tasks_priority_low: { en: "Low", de: "Niedrig", vi: "Thấp" },
+  tasks_priority_medium: { en: "Medium", de: "Mittel", vi: "Trung bình" },
+  tasks_priority_high: { en: "High", de: "Hoch", vi: "Cao" },
+  tasks_priority_urgent: { en: "Urgent", de: "Dringend", vi: "Khẩn cấp" },
+  tasks_assign_to: {
+    en: "Assign to",
+    de: "Zuweisen an",
+    vi: "Giao cho",
+  },
+  tasks_unassigned: {
+    en: "Unassigned",
+    de: "Nicht zugewiesen",
+    vi: "Chưa giao",
+  },
+  tasks_select_member: {
+    en: "Select a member...",
+    de: "Mitglied auswählen...",
+    vi: "Chọn thành viên...",
+  },
 
   // Calendar
   cal_title: { en: "Calendar", de: "Kalender", vi: "Lịch" },
@@ -375,6 +479,21 @@ const translations = {
   },
 
   // Profile
+  profile_change_photo: {
+    en: "Change photo",
+    de: "Foto ändern",
+    vi: "Đổi ảnh",
+  },
+  profile_photo_pick: {
+    en: "Choose from library",
+    de: "Aus Galerie wählen",
+    vi: "Chọn từ thư viện",
+  },
+  profile_photo_remove: {
+    en: "Remove photo",
+    de: "Foto entfernen",
+    vi: "Xóa ảnh",
+  },
   profile_account: { en: "Account", de: "Konto", vi: "Tài khoản" },
   profile_display_name: {
     en: "Display name",
@@ -428,11 +547,47 @@ const translations = {
     de: "FaithHub-Mitglied",
     vi: "Thành viên FaithHub",
   },
+  profile_delete_account: {
+    en: "Delete account",
+    de: "Konto löschen",
+    vi: "Xóa tài khoản",
+  },
+  profile_delete_title: {
+    en: "Delete Account?",
+    de: "Konto löschen?",
+    vi: "Xóa tài khoản?",
+  },
+  profile_delete_msg: {
+    en: "This will permanently delete your account and all associated data. This action cannot be undone.",
+    de: "Dein Konto und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    vi: "Tài khoản và tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.",
+  },
+  profile_delete_password_msg: {
+    en: "Enter your password to confirm account deletion.",
+    de: "Gib dein Passwort ein, um die Kontolöschung zu bestätigen.",
+    vi: "Nhập mật khẩu để xác nhận xóa tài khoản.",
+  },
+  profile_delete_confirm: {
+    en: "Delete My Account",
+    de: "Mein Konto löschen",
+    vi: "Xóa tài khoản của tôi",
+  },
+  profile_delete_failed: {
+    en: "Deletion failed",
+    de: "Löschung fehlgeschlagen",
+    vi: "Xóa thất bại",
+  },
+  profile_delete_error: {
+    en: "Could not delete your account. You may need to sign in again before deleting.",
+    de: "Konto konnte nicht gelöscht werden. Möglicherweise musst du dich erneut anmelden.",
+    vi: "Không thể xóa tài khoản. Bạn có thể cần đăng nhập lại trước khi xóa.",
+  },
 
   // Shared
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },
   try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
+  continue: { en: "Continue", de: "Weiter", vi: "Tiếp tục" },
   save: { en: "Save", de: "Speichern", vi: "Lưu" },
   delete: { en: "Delete", de: "Löschen", vi: "Xóa" },
   delete_title: { en: "Delete?", de: "Löschen?", vi: "Xóa?" },

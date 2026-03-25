@@ -583,6 +583,45 @@ const translations = {
     vi: "Không thể xóa tài khoản. Bạn có thể cần đăng nhập lại trước khi xóa.",
   },
 
+  // Display name editing
+  profile_edit_name_title: {
+    en: "Update Display Name",
+    de: "Anzeigename ändern",
+    vi: "Cập nhật tên hiển thị",
+  },
+  profile_edit_name_msg: {
+    en: "Enter your new display name.",
+    de: "Gib deinen neuen Anzeigenamen ein.",
+    vi: "Nhập tên hiển thị mới của bạn.",
+  },
+  profile_edit_name_placeholder: {
+    en: "Enter your name",
+    de: "Name eingeben",
+    vi: "Nhập tên của bạn",
+  },
+  profile_edit_name_error: {
+    en: "Could not update your display name. Please try again.",
+    de: "Anzeigename konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+    vi: "Không thể cập nhật tên hiển thị. Vui lòng thử lại.",
+  },
+
+  // Apple Sign-In display name prompt
+  apple_name_prompt_title: {
+    en: "Welcome to FaithHub!",
+    de: "Willkommen bei FaithHub!",
+    vi: "Chào mừng đến FaithHub!",
+  },
+  apple_name_prompt_msg: {
+    en: "Please set a display name so others in your community can recognize you.",
+    de: "Bitte lege einen Anzeigenamen fest, damit andere dich erkennen können.",
+    vi: "Vui lòng đặt tên hiển thị để mọi người trong cộng đồng nhận ra bạn.",
+  },
+  apple_name_prompt_skip: {
+    en: "Skip for now",
+    de: "Jetzt überspringen",
+    vi: "Bỏ qua",
+  },
+
   // Shared
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },

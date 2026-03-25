@@ -25,7 +25,8 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 type AuthMode = "login" | "signup";
 
@@ -235,7 +236,13 @@ export default function AuthScreen() {
         rawNonce: nonce,
       });
 
-      await signInWithCredential(auth, oauthCredential);
+      const result = await signInWithCredential(auth, oauthCredential);
+      // Store auth provider so we can prompt for display name later
+      await setDoc(
+        doc(db, "users", result.user.uid),
+        { authProvider: "apple.com", email: result.user.email },
+        { merge: true },
+      );
       router.replace("/(tabs)");
     } catch (error: any) {
       if (error.code !== "ERR_REQUEST_CANCELED") {

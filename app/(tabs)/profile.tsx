@@ -4,6 +4,7 @@ import { auth, db } from "@/lib/firebase";
 import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -953,7 +954,7 @@ export default function ProfileScreen() {
         <Text style={styles.signOutText}>{t("profile_signout", lang)}</Text>
       </Pressable>
 
-      <Text style={styles.version}>FaithHub v1.2.0</Text>
+      <Text style={styles.version}>{`FaithHub v${Constants.expoConfig?.version ?? "?"}`}</Text>
 
       <SignOutModal
         type={modalType}

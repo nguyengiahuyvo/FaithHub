@@ -328,6 +328,7 @@ function EventCard({
   const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(
     null,
   );
+  const [showAttendees, setShowAttendees] = useState(false);
 
   // Always listen for comment count
   useEffect(() => {
@@ -449,7 +450,7 @@ function EventCard({
 
       {/* Attendees — full width */}
       {count > 0 && (
-        <View style={styles.attendeeRow}>
+        <Pressable onPress={() => setShowAttendees(true)} style={styles.attendeeRow}>
           {ev.attendees.slice(0, 5).map((a) => (
             <View key={a.uid} style={styles.attendeeBubbleWrap}>
               <UserAvatar uid={a.uid} name={a.displayName} size={26} />
@@ -459,8 +460,19 @@ function EventCard({
             {count}{" "}
             {count === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}
           </Text>
-        </View>
+          {count > 5 && (
+            <Ionicons name="chevron-forward" size={14} color="#8A8F84" />
+          )}
+        </Pressable>
       )}
+
+      {/* Attendees list modal */}
+      <AttendeesModal
+        visible={showAttendees}
+        attendees={ev.attendees}
+        lang={lang}
+        onDismiss={() => setShowAttendees(false)}
+      />
 
       {/* Attend button + Comments toggle — full width */}
       <View style={{ flexDirection: "row", gap: 8 }}>
@@ -590,6 +602,106 @@ function EventCard({
     </View>
   );
 }
+
+function AttendeesModal({
+  visible,
+  attendees,
+  lang,
+  onDismiss,
+}: {
+  visible: boolean;
+  attendees: Attendee[];
+  lang: "en" | "de" | "vi";
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => onDismiss());
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[mStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[mStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <Text style={mStyles.modalTitle}>
+            {t("cal_attendees_title", lang)}
+          </Text>
+          <ScrollView style={{ maxHeight: 320 }}>
+            <View style={{ gap: 10 }}>
+              {attendees.map((a) => (
+                <View key={a.uid} style={attendeeModalStyles.row}>
+                  <UserAvatar uid={a.uid} name={a.displayName} size={36} />
+                  <Text style={attendeeModalStyles.name}>
+                    {a.displayName || "?"}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+          <Pressable onPress={handleDismiss} style={attendeeModalStyles.closeBtn}>
+            <Text style={attendeeModalStyles.closeText}>{t("close", lang)}</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const attendeeModalStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  name: {
+    color: "#2C3E2C",
+    fontSize: 16,
+    fontWeight: "500",
+    flex: 1,
+  },
+  closeBtn: {
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  closeText: {
+    color: "#4B5563",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
 
 function CreateEventModal({
   visible,

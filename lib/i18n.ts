@@ -423,6 +423,7 @@ const translations = {
   cal_attend: { en: "Attend", de: "Teilnehmen", vi: "Tham gia" },
   cal_attending: { en: "Attending", de: "Teilnahme", vi: "Đã tham gia" },
   cal_attendees: { en: "attendees", de: "Teilnehmer", vi: "người tham gia" },
+  cal_attendees_title: { en: "Attendees", de: "Teilnehmer", vi: "Người tham gia" },
   cal_attendee: { en: "attendee", de: "Teilnehmer", vi: "người tham gia" },
   cal_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
   cal_no_comments: {
@@ -641,6 +642,7 @@ const translations = {
 
   // Shared
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
+  close: { en: "Close", de: "Schließen", vi: "Đóng" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },
   try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
   continue: { en: "Continue", de: "Weiter", vi: "Tiếp tục" },

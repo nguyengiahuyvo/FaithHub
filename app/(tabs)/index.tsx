@@ -210,12 +210,142 @@ function JoinOrgView() {
   );
 }
 
+function MembersModal({
+  visible,
+  members,
+  lang,
+  onDismiss,
+}: {
+  visible: boolean;
+  members: MemberInfo[];
+  lang: "en" | "de" | "vi";
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => onDismiss());
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[membersModalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <Text style={membersModalStyles.title}>
+            {t("home_members", lang)}
+          </Text>
+          <ScrollView style={{ maxHeight: 400 }}>
+            <View style={{ gap: 12 }}>
+              {members.map((m) => (
+                <View key={m.uid} style={membersModalStyles.row}>
+                  <UserAvatar uid={m.uid} name={m.displayName} email={m.email} size={40} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={membersModalStyles.name}>
+                      {m.displayName || t("home_member_fallback", lang)}
+                    </Text>
+                    <Text style={membersModalStyles.role}>{m.role}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+          <Pressable onPress={handleDismiss} style={membersModalStyles.closeBtn}>
+            <Text style={membersModalStyles.closeText}>{t("close", lang)}</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const membersModalStyles = StyleSheet.create({
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    gap: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  title: {
+    color: "#2C3E2C",
+    fontSize: 22,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  name: {
+    color: "#2C3E2C",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  role: {
+    color: "#8D5B2D",
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginTop: 1,
+  },
+  closeBtn: {
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  closeText: {
+    color: "#4B5563",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
+
 function OrgDashboard() {
   const { user } = useAuth();
   const { org } = useOrg();
   const { lang } = useLanguage();
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
+  const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
     if (!org) return;
@@ -258,32 +388,31 @@ function OrgDashboard() {
           {user?.displayName ? `, ${user.displayName}` : ""}
         </Text>
         <Text style={styles.body}>{t("home_desc", lang)}</Text>
+
+        {/* Members button */}
+        <Pressable
+          onPress={() => setShowMembers(true)}
+          style={styles.membersBtn}
+        >
+          <Ionicons name="people" size={18} color="#5B7553" />
+          <Text style={styles.membersBtnText}>
+            {t("home_members", lang)}
+          </Text>
+          {!loadingMembers && (
+            <View style={styles.membersBadge}>
+              <Text style={styles.membersBadgeText}>{members.length}</Text>
+            </View>
+          )}
+          <Ionicons name="chevron-forward" size={16} color="#8A8F84" />
+        </Pressable>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t("home_members", lang)}</Text>
-        {loadingMembers ? (
-          <ActivityIndicator
-            color="#5B7553"
-            style={{ marginVertical: 12 }}
-          />
-        ) : members.length === 0 ? (
-          <Text style={styles.body}>{t("home_no_members", lang)}</Text>
-        ) : (
-          members.map((m) => (
-            <View key={m.uid} style={styles.memberRow}>
-              <UserAvatar uid={m.uid} name={m.displayName} email={m.email} size={36} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.memberName}>
-                  {m.displayName || t("home_member_fallback", lang)}
-                </Text>
-                <Text style={styles.memberEmail}>{m.email}</Text>
-              </View>
-              <Text style={styles.memberRole}>{m.role}</Text>
-            </View>
-          ))
-        )}
-      </View>
+      <MembersModal
+        visible={showMembers}
+        members={members}
+        lang={lang}
+        onDismiss={() => setShowMembers(false)}
+      />
     </View>
   );
 }
@@ -378,39 +507,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  section: {
-    backgroundColor: "rgba(255,255,255,0.55)",
-    borderColor: "rgba(0,0,0,0.06)",
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 20,
-    gap: 12,
-  },
-  sectionTitle: {
-    color: "#2C3E2C",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  memberRow: {
+  membersBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 6,
+    gap: 10,
+    backgroundColor: "rgba(91,117,83,0.08)",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 4,
   },
-  memberName: {
+  membersBtnText: {
     color: "#2C3E2C",
     fontSize: 15,
-    fontWeight: "500",
-  },
-  memberEmail: {
-    color: "#8A8F84",
-    fontSize: 13,
-  },
-  memberRole: {
-    color: "#8D5B2D",
-    fontSize: 12,
     fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    flex: 1,
+  },
+  membersBadge: {
+    backgroundColor: "#5B7553",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    minWidth: 24,
+    alignItems: "center",
+  },
+  membersBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
 });

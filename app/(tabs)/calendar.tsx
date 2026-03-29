@@ -54,6 +54,7 @@ type CalEvent = {
   createdBy: string;
   createdByName: string | null;
   attendees: Attendee[];
+  maybe: Attendee[];
 };
 
 function getDaysInMonth(year: number, month: number) {
@@ -99,6 +100,7 @@ export default function CalendarScreen() {
             createdBy: d.data().createdBy || "",
             createdByName: d.data().createdByName || null,
             attendees: d.data().attendees || [],
+            maybe: d.data().maybe || [],
           })),
         );
         setLoading(false);
@@ -153,16 +155,37 @@ export default function CalendarScreen() {
     return events.filter((e) => e.date === ds).length;
   }
 
-  async function toggleAttend(eventId: string, attendees: Attendee[]) {
+  async function toggleAttend(eventId: string, ev: CalEvent) {
     if (!org || !user) return;
     const ref = doc(db, "organizations", org.orgId, "events", eventId);
-    const already = attendees.some((a) => a.uid === user.uid);
+    const already = ev.attendees.some((a) => a.uid === user.uid);
     const me: Attendee = { uid: user.uid, displayName: user.displayName };
     if (already) {
-      const existing = attendees.find((a) => a.uid === user.uid)!;
+      const existing = ev.attendees.find((a) => a.uid === user.uid)!;
       await updateDoc(ref, { attendees: arrayRemove(existing) });
     } else {
-      await updateDoc(ref, { attendees: arrayUnion(me) });
+      // Remove from maybe if switching to attend
+      const inMaybe = ev.maybe.find((a) => a.uid === user.uid);
+      const updates: Record<string, unknown> = { attendees: arrayUnion(me) };
+      if (inMaybe) updates.maybe = arrayRemove(inMaybe);
+      await updateDoc(ref, updates);
+    }
+  }
+
+  async function toggleMaybe(eventId: string, ev: CalEvent) {
+    if (!org || !user) return;
+    const ref = doc(db, "organizations", org.orgId, "events", eventId);
+    const already = ev.maybe.some((a) => a.uid === user.uid);
+    const me: Attendee = { uid: user.uid, displayName: user.displayName };
+    if (already) {
+      const existing = ev.maybe.find((a) => a.uid === user.uid)!;
+      await updateDoc(ref, { maybe: arrayRemove(existing) });
+    } else {
+      // Remove from attendees if switching to maybe
+      const inAttend = ev.attendees.find((a) => a.uid === user.uid);
+      const updates: Record<string, unknown> = { maybe: arrayUnion(me) };
+      if (inAttend) updates.attendees = arrayRemove(inAttend);
+      await updateDoc(ref, updates);
     }
   }
 
@@ -322,6 +345,7 @@ export default function CalendarScreen() {
                     user={user}
                     lang={lang}
                     onToggleAttend={toggleAttend}
+                    onToggleMaybe={toggleMaybe}
                     onDelete={setDeleteTarget}
                   />
                 ))}
@@ -372,13 +396,15 @@ function EventCard({
   user,
   lang,
   onToggleAttend,
+  onToggleMaybe,
   onDelete,
 }: {
   event: CalEvent;
   orgId: string;
   user: { uid: string; displayName: string | null } | null;
   lang: "en" | "de" | "vi";
-  onToggleAttend: (eventId: string, attendees: Attendee[]) => void;
+  onToggleAttend: (eventId: string, ev: CalEvent) => void;
+  onToggleMaybe: (eventId: string, ev: CalEvent) => void;
   onDelete: (eventId: string) => void;
 }) {
   const [showComments, setShowComments] = useState(false);
@@ -470,6 +496,7 @@ function EventCard({
   }
 
   const isAttending = ev.attendees.some((a) => a.uid === user?.uid);
+  const isMaybe = ev.maybe.some((a) => a.uid === user?.uid);
   const count = ev.attendees.length;
 
   return (
@@ -535,10 +562,10 @@ function EventCard({
         onDismiss={() => setShowAttendees(false)}
       />
 
-      {/* Attend button + Comments toggle — full width */}
-      <View style={{ flexDirection: "row", gap: 8 }}>
+      {/* Attend + Maybe + Comments — full width */}
+      <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         <Pressable
-          onPress={() => onToggleAttend(ev.id, ev.attendees)}
+          onPress={() => onToggleAttend(ev.id, ev)}
           style={[
             styles.attendBtn,
             isAttending && styles.attendBtnActive,
@@ -557,6 +584,30 @@ function EventCard({
             ]}
           >
             {isAttending ? t("cal_attending", lang) : t("cal_attend", lang)}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => onToggleMaybe(ev.id, ev)}
+          style={[
+            styles.attendBtn,
+            isMaybe && styles.maybeBtnActive,
+            { marginTop: 0 },
+          ]}
+        >
+          <Ionicons
+            name={isMaybe ? "help-circle" : "help-circle-outline"}
+            size={16}
+            color={isMaybe ? "#FFFFFF" : "#C0956C"}
+          />
+          <Text
+            style={[
+              styles.attendBtnText,
+              { color: "#C0956C" },
+              isMaybe && styles.maybeBtnTextActive,
+            ]}
+          >
+            {isMaybe ? t("cal_interested", lang) : t("cal_maybe", lang)}
           </Text>
         </Pressable>
 
@@ -1319,12 +1370,18 @@ const styles = StyleSheet.create({
   attendBtnActive: {
     backgroundColor: "#5B7553",
   },
+  maybeBtnActive: {
+    backgroundColor: "#C0956C",
+  },
   attendBtnText: {
     color: "#5B7553",
     fontSize: 13,
     fontWeight: "600",
   },
   attendBtnTextActive: {
+    color: "#FFFFFF",
+  },
+  maybeBtnTextActive: {
     color: "#FFFFFF",
   },
   eventDeleteBtn: {

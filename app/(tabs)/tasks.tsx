@@ -28,6 +28,10 @@ import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
+import {
+  arrayRemove,
+  arrayUnion,
+} from "firebase/firestore";
 import CreateTaskModal, {
   type Assignee,
   type EditTask,
@@ -52,6 +56,7 @@ type Task = {
   status: "todo" | "done";
   priority: Priority;
   assignees: Assignee[];
+  helpers: Assignee[];
   createdBy: string;
   createdByName: string | null;
   createdAt: Date | null;
@@ -84,6 +89,7 @@ export default function TasksScreen() {
               (d.data().assignedTo
                 ? [{ uid: d.data().assignedTo, displayName: d.data().assignedToName || null }]
                 : []),
+            helpers: d.data().helpers || [],
             createdBy: d.data().createdBy,
             createdByName: d.data().createdByName || null,
             createdAt: d.data().createdAt?.toDate?.() || null,
@@ -101,6 +107,18 @@ export default function TasksScreen() {
     await updateDoc(ref, {
       status: currentStatus === "done" ? "todo" : "done",
     });
+  }
+
+  async function toggleHelper(taskId: string, helpers: Assignee[]) {
+    if (!org || !user) return;
+    const ref = doc(db, "organizations", org.orgId, "tasks", taskId);
+    const me: Assignee = { uid: user.uid, displayName: user.displayName };
+    const existing = helpers.find((h) => h.uid === user.uid);
+    if (existing) {
+      await updateDoc(ref, { helpers: arrayRemove(existing) });
+    } else {
+      await updateDoc(ref, { helpers: arrayUnion(me) });
+    }
   }
 
   async function handleDeleteTask() {
@@ -158,6 +176,7 @@ export default function TasksScreen() {
                 user={user}
                 lang={lang}
                 onToggle={toggleTask}
+                onToggleHelper={toggleHelper}
                 onEdit={setEditingTask}
                 onDelete={setDeleteTarget}
               />
@@ -222,6 +241,7 @@ function TaskCard({
   user,
   lang,
   onToggle,
+  onToggleHelper,
   onEdit,
   onDelete,
 }: {
@@ -230,6 +250,7 @@ function TaskCard({
   user: { uid: string; displayName: string | null } | null;
   lang: "en" | "de" | "vi";
   onToggle: (taskId: string, currentStatus: string) => void;
+  onToggleHelper: (taskId: string, helpers: Assignee[]) => void;
   onEdit: (editTask: EditTask) => void;
   onDelete: (taskId: string) => void;
 }) {
@@ -421,29 +442,75 @@ function TaskCard({
         )}
       </Pressable>
 
-      {/* Comments toggle button */}
-      <Pressable
-        onPress={() => setShowComments(!showComments)}
-        style={[
-          styles.commentToggleBtn,
-          showComments && styles.commentToggleBtnActive,
-        ]}
-      >
-        <Ionicons
-          name="chatbubble-outline"
-          size={14}
-          color={showComments ? "#FFFFFF" : "#5B7553"}
-        />
-        <Text
+      {/* Helpers row */}
+      {task.helpers.length > 0 && (
+        <View style={styles.helpersRow}>
+          {task.helpers.map((h) => (
+            <View key={h.uid} style={styles.assigneeBadge}>
+              <UserAvatar uid={h.uid} name={h.displayName} size={14} />
+              <Text style={styles.helperText}>{h.displayName || "?"}</Text>
+            </View>
+          ))}
+          <Text style={styles.helperCount}>
+            {task.helpers.length}{" "}
+            {task.helpers.length === 1 ? t("tasks_helper", lang) : t("tasks_helpers", lang)}
+          </Text>
+        </View>
+      )}
+
+      {/* Action buttons */}
+      <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+        {(() => {
+          const isHelping = task.helpers.some((h) => h.uid === user?.uid);
+          return (
+            <Pressable
+              onPress={() => onToggleHelper(task.id, task.helpers)}
+              style={[
+                styles.commentToggleBtn,
+                isHelping && styles.helpBtnActive,
+              ]}
+            >
+              <Ionicons
+                name={isHelping ? "heart" : "heart-outline"}
+                size={14}
+                color={isHelping ? "#FFFFFF" : "#C0956C"}
+              />
+              <Text
+                style={[
+                  styles.commentToggleText,
+                  { color: "#C0956C" },
+                  isHelping && styles.helpBtnTextActive,
+                ]}
+              >
+                {isHelping ? t("tasks_helping", lang) : t("tasks_offer_help", lang)}
+              </Text>
+            </Pressable>
+          );
+        })()}
+
+        <Pressable
+          onPress={() => setShowComments(!showComments)}
           style={[
-            styles.commentToggleText,
-            showComments && styles.commentToggleTextActive,
+            styles.commentToggleBtn,
+            showComments && styles.commentToggleBtnActive,
           ]}
         >
-          {t("tasks_comments", lang)}
-          {commentCount > 0 ? ` (${commentCount})` : ""}
-        </Text>
-      </Pressable>
+          <Ionicons
+            name="chatbubble-outline"
+            size={14}
+            color={showComments ? "#FFFFFF" : "#5B7553"}
+          />
+          <Text
+            style={[
+              styles.commentToggleText,
+              showComments && styles.commentToggleTextActive,
+            ]}
+          >
+            {t("tasks_comments", lang)}
+            {commentCount > 0 ? ` (${commentCount})` : ""}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Delete comment confirm */}
       <DeleteConfirmModal
@@ -812,6 +879,28 @@ const styles = StyleSheet.create({
   },
   commentToggleTextActive: {
     color: "#FFFFFF",
+  },
+  helpBtnActive: {
+    backgroundColor: "#C0956C",
+  },
+  helpBtnTextActive: {
+    color: "#FFFFFF",
+  },
+  helpersRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  helperText: {
+    color: "#C0956C",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  helperCount: {
+    color: "#A3A89E",
+    fontSize: 11,
+    marginLeft: 2,
   },
 });
 

@@ -1,18 +1,10 @@
+import UserAvatar from "@/components/UserAvatar";
+import { useAuth } from "@/lib/auth-context";
+import { db } from "@/lib/firebase";
+import { t, tArray } from "@/lib/i18n";
+import { useLanguage } from "@/lib/language-context";
+import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  Keyboard,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
 import {
   addDoc,
   arrayRemove,
@@ -26,12 +18,19 @@ import {
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
-import { useOrg } from "@/lib/org-context";
-import { useLanguage } from "@/lib/language-context";
-import { t, tArray } from "@/lib/i18n";
-import UserAvatar from "@/components/UserAvatar";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Keyboard,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 type Attendee = {
   uid: string;
@@ -80,7 +79,7 @@ export default function CalendarScreen() {
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState(
-    today.toISOString().split("T")[0]
+    today.toISOString().split("T")[0],
   );
 
   useEffect(() => {
@@ -98,10 +97,10 @@ export default function CalendarScreen() {
             createdBy: d.data().createdBy || "",
             createdByName: d.data().createdByName || null,
             attendees: d.data().attendees || [],
-          }))
+          })),
         );
         setLoading(false);
-      }
+      },
     );
     return unsub;
   }, [org]);
@@ -156,7 +155,9 @@ export default function CalendarScreen() {
 
   async function handleDeleteEvent() {
     if (!org || !deleteTarget) return;
-    await deleteDoc(doc(db, "organizations", org.orgId, "events", deleteTarget));
+    await deleteDoc(
+      doc(db, "organizations", org.orgId, "events", deleteTarget),
+    );
     setDeleteTarget(null);
   }
 
@@ -236,10 +237,7 @@ export default function CalendarScreen() {
                     </Text>
                     {count > 0 && (
                       <View
-                        style={[
-                          styles.dot,
-                          isSelected && styles.dotSelected,
-                        ]}
+                        style={[styles.dot, isSelected && styles.dotSelected]}
                       />
                     )}
                   </Pressable>
@@ -327,11 +325,20 @@ function EventCard({
   const [commentCount, setCommentCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [sending, setSending] = useState(false);
-  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(null);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(
+    null,
+  );
 
   // Always listen for comment count
   useEffect(() => {
-    const commentsRef = collection(db, "organizations", orgId, "events", ev.id, "comments");
+    const commentsRef = collection(
+      db,
+      "organizations",
+      orgId,
+      "events",
+      ev.id,
+      "comments",
+    );
     const unsub = onSnapshot(commentsRef, (snap) => {
       setCommentCount(snap.size);
     });
@@ -363,7 +370,15 @@ function EventCard({
     if (!deleteCommentTarget) return;
     try {
       await deleteDoc(
-        doc(db, "organizations", orgId, "events", ev.id, "comments", deleteCommentTarget),
+        doc(
+          db,
+          "organizations",
+          orgId,
+          "events",
+          ev.id,
+          "comments",
+          deleteCommentTarget,
+        ),
       );
     } catch {
       // ignore
@@ -411,7 +426,11 @@ function EventCard({
           ) : null}
           {ev.createdByName ? (
             <View style={styles.creatorRow}>
-              <UserAvatar uid={ev.createdBy} name={ev.createdByName} size={16} />
+              <UserAvatar
+                uid={ev.createdBy}
+                name={ev.createdByName}
+                size={16}
+              />
               <Text style={styles.eventMeta}>
                 {t("tasks_by", lang)} {ev.createdByName}
               </Text>
@@ -447,7 +466,11 @@ function EventCard({
       <View style={{ flexDirection: "row", gap: 8 }}>
         <Pressable
           onPress={() => onToggleAttend(ev.id, ev.attendees)}
-          style={[styles.attendBtn, isAttending && styles.attendBtnActive, { marginTop: 0 }]}
+          style={[
+            styles.attendBtn,
+            isAttending && styles.attendBtnActive,
+            { marginTop: 0 },
+          ]}
         >
           <Ionicons
             name={isAttending ? "checkmark-circle" : "hand-right-outline"}
@@ -466,7 +489,11 @@ function EventCard({
 
         <Pressable
           onPress={() => setShowComments(!showComments)}
-          style={[styles.attendBtn, showComments && styles.attendBtnActive, { marginTop: 0 }]}
+          style={[
+            styles.attendBtn,
+            showComments && styles.attendBtnActive,
+            { marginTop: 0 },
+          ]}
         >
           <Ionicons
             name="chatbubble-outline"
@@ -479,7 +506,8 @@ function EventCard({
               showComments && styles.attendBtnTextActive,
             ]}
           >
-            {t("cal_comments", lang)}{commentCount > 0 ? ` (${commentCount})` : ""}
+            {t("cal_comments", lang)}
+            {commentCount > 0 ? ` (${commentCount})` : ""}
           </Text>
         </Pressable>
       </View>
@@ -504,7 +532,11 @@ function EventCard({
           ) : (
             comments.map((c) => (
               <View key={c.id} style={commentStyles.comment}>
-                <UserAvatar uid={c.createdBy} name={c.createdByName} size={28} />
+                <UserAvatar
+                  uid={c.createdBy}
+                  name={c.createdByName}
+                  size={28}
+                />
                 <View style={{ flex: 1 }}>
                   <View style={commentStyles.commentHeader}>
                     <Text style={commentStyles.commentAuthor}>
@@ -653,74 +685,74 @@ function CreateEventModal({
           >
             <Text style={mStyles.modalTitle}>{t("cal_new", lang)}</Text>
 
-          <View style={mStyles.field}>
-            <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t("cal_event_name", lang)}
-              placeholderTextColor="#A3A89E"
-              style={mStyles.input}
-            />
-          </View>
-
-          <View style={mStyles.fieldRow}>
-            <View style={[mStyles.field, { flex: 1 }]}>
-              <Text style={mStyles.label}>{t("cal_date", lang)}</Text>
+            <View style={mStyles.field}>
+              <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
               <TextInput
-                value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
+                value={title}
+                onChangeText={setTitle}
+                placeholder={t("cal_event_name", lang)}
                 placeholderTextColor="#A3A89E"
                 style={mStyles.input}
               />
             </View>
-            <View style={[mStyles.field, { flex: 1 }]}>
-              <Text style={mStyles.label}>{t("cal_time", lang)}</Text>
+
+            <View style={mStyles.fieldRow}>
+              <View style={[mStyles.field, { flex: 1 }]}>
+                <Text style={mStyles.label}>{t("cal_date", lang)}</Text>
+                <TextInput
+                  value={date}
+                  onChangeText={setDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#A3A89E"
+                  style={mStyles.input}
+                />
+              </View>
+              <View style={[mStyles.field, { flex: 1 }]}>
+                <Text style={mStyles.label}>{t("cal_time", lang)}</Text>
+                <TextInput
+                  value={time}
+                  onChangeText={setTime}
+                  placeholder={t("cal_time_placeholder", lang)}
+                  placeholderTextColor="#A3A89E"
+                  style={mStyles.input}
+                />
+              </View>
+            </View>
+
+            <View style={mStyles.field}>
+              <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
               <TextInput
-                value={time}
-                onChangeText={setTime}
-                placeholder={t("cal_time_placeholder", lang)}
+                value={description}
+                onChangeText={setDescription}
+                placeholder={t("tasks_desc_placeholder", lang)}
                 placeholderTextColor="#A3A89E"
-                style={mStyles.input}
+                style={[
+                  mStyles.input,
+                  { minHeight: 70, textAlignVertical: "top" },
+                ]}
+                multiline
               />
             </View>
-          </View>
 
-          <View style={mStyles.field}>
-            <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder={t("tasks_desc_placeholder", lang)}
-              placeholderTextColor="#A3A89E"
-              style={[
-                mStyles.input,
-                { minHeight: 70, textAlignVertical: "top" },
-              ]}
-              multiline
-            />
-          </View>
-
-          <View style={mStyles.buttonRow}>
-            <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
-              <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleCreate}
-              disabled={saving || !title.trim()}
-              style={[
-                mStyles.createBtn,
-                (saving || !title.trim()) && { opacity: 0.6 },
-              ]}
-            >
-              {saving ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={mStyles.createText}>{t("create", lang)}</Text>
-              )}
-            </Pressable>
-          </View>
+            <View style={mStyles.buttonRow}>
+              <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
+                <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleCreate}
+                disabled={saving || !title.trim()}
+                style={[
+                  mStyles.createBtn,
+                  (saving || !title.trim()) && { opacity: 0.6 },
+                ]}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={mStyles.createText}>{t("create", lang)}</Text>
+                )}
+              </Pressable>
+            </View>
           </Animated.View>
         </Animated.View>
       </Pressable>

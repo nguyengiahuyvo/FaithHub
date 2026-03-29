@@ -31,7 +31,12 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
 .env*.local
+
+# Firebase Admin SDK key
+scripts/adminkey.json
 
 # typescript
 *.tsbuildinfo

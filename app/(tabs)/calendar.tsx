@@ -131,6 +131,17 @@ export default function CalendarScreen() {
 
   const eventsForDate = events.filter((e) => e.date === selectedDate);
 
+  // Find all upcoming events on the nearest future date
+  const upcomingEvents = (() => {
+    const future = events.filter((e) => e.date >= todayStr);
+    if (future.length === 0) return [];
+    const sorted = [...future].sort((a, b) => a.date.localeCompare(b.date));
+    const nearestDate = sorted[0].date;
+    return sorted
+      .filter((e) => e.date === nearestDate)
+      .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+  })();
+
   function dateStr(day: number) {
     const m = String(viewMonth + 1).padStart(2, "0");
     const d = String(day).padStart(2, "0");
@@ -186,6 +197,40 @@ export default function CalendarScreen() {
           />
         ) : (
           <>
+            {/* Upcoming events */}
+            {upcomingEvents.length > 0 && (
+              <View style={{ gap: 8 }}>
+                <Text style={styles.upcomingLabel}>{t("cal_upcoming", lang)}</Text>
+                {upcomingEvents.map((ev) => (
+                  <Pressable
+                    key={ev.id}
+                    onPress={() => {
+                      setSelectedDate(ev.date);
+                      const [y, m] = ev.date.split("-").map(Number);
+                      setViewYear(y);
+                      setViewMonth(m - 1);
+                    }}
+                    style={styles.upcomingCard}
+                  >
+                    <View style={styles.upcomingIconWrap}>
+                      <Ionicons name="calendar" size={20} color="#FFFFFF" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.upcomingTitle} numberOfLines={1}>{ev.title}</Text>
+                      <Text style={styles.upcomingMeta}>
+                        {ev.date}
+                        {ev.time ? ` · ${ev.time}` : ""}
+                        {ev.attendees.length > 0
+                          ? ` · ${ev.attendees.length} ${ev.attendees.length === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}`
+                          : ""}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#5B7553" />
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
             {/* Month navigation */}
             <View style={styles.monthNav}>
               <Pressable onPress={prevMonth} style={styles.navBtn}>
@@ -1285,6 +1330,43 @@ const styles = StyleSheet.create({
   eventDeleteBtn: {
     padding: 6,
     alignSelf: "flex-start",
+  },
+  upcomingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(91,117,83,0.08)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(91,117,83,0.15)",
+    padding: 14,
+  },
+  upcomingIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  upcomingLabel: {
+    color: "#5B7553",
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  upcomingTitle: {
+    color: "#2C3E2C",
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 1,
+  },
+  upcomingMeta: {
+    color: "#8A8F84",
+    fontSize: 12,
+    marginTop: 2,
   },
 });
 

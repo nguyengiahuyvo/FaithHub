@@ -424,6 +424,7 @@ const translations = {
   cal_attending: { en: "Attending", de: "Teilnahme", vi: "Đã tham gia" },
   cal_attendees: { en: "attendees", de: "Teilnehmer", vi: "người tham gia" },
   cal_attendees_title: { en: "Attendees", de: "Teilnehmer", vi: "Người tham gia" },
+  cal_upcoming: { en: "Upcoming", de: "Demnächst", vi: "Sắp tới" },
   cal_attendee: { en: "attendee", de: "Teilnehmer", vi: "người tham gia" },
   cal_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
   cal_no_comments: {

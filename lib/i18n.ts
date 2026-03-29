@@ -491,9 +491,9 @@ const translations = {
     ],
   },
   cal_days: {
-    en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    de: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
-    vi: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+    en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    de: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+    vi: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
   },
 
   // Profile

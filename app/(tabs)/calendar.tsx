@@ -61,7 +61,9 @@ function getDaysInMonth(year: number, month: number) {
 }
 
 function getFirstDayOfMonth(year: number, month: number) {
-  return new Date(year, month, 1).getDay();
+  const day = new Date(year, month, 1).getDay();
+  // Convert from Sun=0 to Mon=0: (day + 6) % 7
+  return (day + 6) % 7;
 }
 
 export default function CalendarScreen() {
@@ -197,52 +199,66 @@ export default function CalendarScreen() {
               </Pressable>
             </View>
 
-            {/* Day headers */}
-            <View style={styles.dayHeaderRow}>
-              {DAYS.map((d) => (
-                <Text key={d} style={styles.dayHeader}>
-                  {d}
-                </Text>
-              ))}
-            </View>
-
-            {/* Calendar grid */}
-            <View style={styles.calGrid}>
-              {Array.from({ length: firstDay }).map((_, i) => (
-                <View key={`empty-${i}`} style={styles.dayCell} />
-              ))}
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const day = i + 1;
-                const ds = dateStr(day);
-                const isToday = ds === todayStr;
-                const isSelected = ds === selectedDate;
-                const count = eventCountForDay(day);
-                return (
-                  <Pressable
-                    key={day}
-                    onPress={() => setSelectedDate(ds)}
+            {/* Calendar card */}
+            <View style={styles.calCard}>
+              {/* Day headers */}
+              <View style={styles.dayHeaderRow}>
+                {DAYS.map((d, i) => (
+                  <Text
+                    key={d}
                     style={[
-                      styles.dayCell,
-                      isSelected && styles.dayCellSelected,
+                      styles.dayHeader,
+                      i >= 5 && styles.dayHeaderWeekend,
                     ]}
                   >
-                    <Text
+                    {d}
+                  </Text>
+                ))}
+              </View>
+
+              {/* Calendar grid */}
+              <View style={styles.calGrid}>
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <View key={`empty-${i}`} style={styles.dayCell} />
+                ))}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const ds = dateStr(day);
+                  const isToday = ds === todayStr;
+                  const isSelected = ds === selectedDate;
+                  const count = eventCountForDay(day);
+                  // Calculate column index (0-6) for weekend styling
+                  const col = (firstDay + i) % 7;
+                  const isWeekend = col >= 5;
+                  return (
+                    <Pressable
+                      key={day}
+                      onPress={() => setSelectedDate(ds)}
                       style={[
-                        styles.dayText,
-                        isToday && styles.dayTextToday,
-                        isSelected && styles.dayTextSelected,
+                        styles.dayCell,
+                        isSelected && styles.dayCellSelected,
+                        isToday && !isSelected && styles.dayCellToday,
                       ]}
                     >
-                      {day}
-                    </Text>
-                    {count > 0 && (
-                      <View
-                        style={[styles.dot, isSelected && styles.dotSelected]}
-                      />
-                    )}
-                  </Pressable>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.dayText,
+                          isWeekend && styles.dayTextWeekend,
+                          isToday && styles.dayTextToday,
+                          isSelected && styles.dayTextSelected,
+                        ]}
+                      >
+                        {day}
+                      </Text>
+                      {count > 0 && (
+                        <View
+                          style={[styles.dot, isSelected && styles.dotSelected]}
+                        />
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
             {/* Events for selected date */}
@@ -1102,16 +1118,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
+  calCard: {
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 20,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+  },
   dayHeaderRow: {
     flexDirection: "row",
+    marginBottom: 4,
   },
   dayHeader: {
     flex: 1,
     textAlign: "center",
-    color: "#A3A89E",
+    color: "#5B7553",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
     paddingVertical: 8,
+  },
+  dayHeaderWeekend: {
+    color: "#C0956C",
   },
   calGrid: {
     flexDirection: "row",
@@ -1120,17 +1147,24 @@ const styles = StyleSheet.create({
   dayCell: {
     width: `${100 / 7}%`,
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 10,
     gap: 3,
   },
   dayCellSelected: {
     backgroundColor: "#5B7553",
-    borderRadius: 12,
+    borderRadius: 14,
+  },
+  dayCellToday: {
+    backgroundColor: "rgba(141,91,45,0.1)",
+    borderRadius: 14,
   },
   dayText: {
     color: "#2C3E2C",
     fontSize: 15,
     fontWeight: "500",
+  },
+  dayTextWeekend: {
+    color: "#A3A89E",
   },
   dayTextToday: {
     color: "#8D5B2D",

@@ -605,6 +605,8 @@ export default function ProfileScreen() {
   const [showEditName, setShowEditName] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [snackbar, setSnackbar] = useState<string | null>(null);
+  const snackOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setPendingLang(lang);
@@ -753,6 +755,7 @@ export default function ProfileScreen() {
   }
 
   return (
+    <>
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Pressable onPress={() => setShowPhotoMenu(true)} style={styles.avatarWrapper}>
@@ -983,9 +986,24 @@ export default function ProfileScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => {
+                  onPress={async () => {
                     setShowLeaveConfirm(false);
-                    leaveOrg();
+                    await leaveOrg();
+                    setSnackbar(t("profile_leave_success", lang));
+                    snackOpacity.setValue(0);
+                    Animated.timing(snackOpacity, {
+                      toValue: 1,
+                      duration: 250,
+                      useNativeDriver: true,
+                    }).start(() => {
+                      setTimeout(() => {
+                        Animated.timing(snackOpacity, {
+                          toValue: 0,
+                          duration: 400,
+                          useNativeDriver: true,
+                        }).start(() => setSnackbar(null));
+                      }, 3000);
+                    });
                   }}
                   style={[modalStyles.primaryButton, { backgroundColor: "#DC2626" }]}
                 >
@@ -1030,8 +1048,44 @@ export default function ProfileScreen() {
         lang={lang}
       />
     </ScrollView>
+
+    {/* Snackbar */}
+    {snackbar && (
+      <Animated.View style={[snackStyles.container, { opacity: snackOpacity }]}>
+        <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+        <Text style={snackStyles.text}>{snackbar}</Text>
+      </Animated.View>
+    )}
+    </>
   );
 }
+
+const snackStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    bottom: 40,
+    left: 24,
+    right: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#2C3E2C",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  text: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+  },
+});
 
 const styles = StyleSheet.create({
   content: {

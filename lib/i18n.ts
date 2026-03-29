@@ -549,6 +549,11 @@ const translations = {
     de: "Verlassen",
     vi: "Rời",
   },
+  profile_leave_success: {
+    en: "You have left the organization",
+    de: "Du hast die Organisation verlassen",
+    vi: "Bạn đã rời tổ chức",
+  },
   profile_preferences: {
     en: "Preferences",
     de: "Einstellungen",

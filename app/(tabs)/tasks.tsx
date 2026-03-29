@@ -29,6 +29,7 @@ import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
 import CreateTaskModal, {
+  type Assignee,
   type EditTask,
   type Priority,
   priorityLabel,
@@ -50,8 +51,7 @@ type Task = {
   description: string;
   status: "todo" | "done";
   priority: Priority;
-  assignedTo: string | null;
-  assignedToName: string | null;
+  assignees: Assignee[];
   createdBy: string;
   createdByName: string | null;
   createdAt: Date | null;
@@ -80,8 +80,10 @@ export default function TasksScreen() {
             description: d.data().description || "",
             status: d.data().status || "todo",
             priority: (d.data().priority as Priority) || 2,
-            assignedTo: d.data().assignedTo || null,
-            assignedToName: d.data().assignedToName || null,
+            assignees: d.data().assignees ||
+              (d.data().assignedTo
+                ? [{ uid: d.data().assignedTo, displayName: d.data().assignedToName || null }]
+                : []),
             createdBy: d.data().createdBy,
             createdByName: d.data().createdByName || null,
             createdAt: d.data().createdAt?.toDate?.() || null,
@@ -366,14 +368,14 @@ function TaskCard({
                 {priorityLabel(task.priority, lang)}
               </Text>
             </View>
-            {task.assignedToName ? (
-              <View style={styles.assigneeBadge}>
-                <UserAvatar uid={task.assignedTo} name={task.assignedToName} size={14} />
+            {task.assignees.map((a) => (
+              <View key={a.uid} style={styles.assigneeBadge}>
+                <UserAvatar uid={a.uid} name={a.displayName} size={14} />
                 <Text style={styles.assigneeText}>
-                  {task.assignedToName}
+                  {a.displayName || "?"}
                 </Text>
               </View>
-            ) : null}
+            ))}
           </View>
           {task.createdByName ? (
             <View style={styles.creatorRow}>
@@ -399,8 +401,7 @@ function TaskCard({
                   title: task.title,
                   description: task.description,
                   priority: task.priority,
-                  assignedTo: task.assignedTo,
-                  assignedToName: task.assignedToName,
+                  assignees: task.assignees,
                 });
               }}
               style={styles.actionBtn}
@@ -741,7 +742,8 @@ const styles = StyleSheet.create({
   badgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    flexWrap: "wrap",
+    gap: 6,
     marginTop: 4,
   },
   priorityBadge: {

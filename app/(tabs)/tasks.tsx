@@ -8,13 +8,18 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
   onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -31,6 +36,14 @@ import CreateTaskModal, {
   priorityBg,
 } from "@/components/CreateTaskModal";
 
+type Comment = {
+  id: string;
+  text: string;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
+};
+
 type Task = {
   id: string;
   title: string;
@@ -41,6 +54,7 @@ type Task = {
   assignedToName: string | null;
   createdBy: string;
   createdByName: string | null;
+  createdAt: Date | null;
 };
 
 export default function TasksScreen() {
@@ -70,6 +84,7 @@ export default function TasksScreen() {
             assignedToName: d.data().assignedToName || null,
             createdBy: d.data().createdBy,
             createdByName: d.data().createdByName || null,
+            createdAt: d.data().createdAt?.toDate?.() || null,
           })),
         );
         setLoading(false);
@@ -134,101 +149,16 @@ export default function TasksScreen() {
         ) : (
           <View style={{ gap: 10 }}>
             {sorted.map((task) => (
-              <Pressable
+              <TaskCard
                 key={task.id}
-                onPress={() => toggleTask(task.id, task.status)}
-                style={[
-                  styles.taskCard,
-                  task.status === "done" && styles.taskCardDone,
-                ]}
-              >
-                <Ionicons
-                  name={
-                    task.status === "done"
-                      ? "checkmark-circle"
-                      : "ellipse-outline"
-                  }
-                  size={24}
-                  color={task.status === "done" ? "#5B7553" : "#A3A89E"}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={[
-                      styles.taskTitle,
-                      task.status === "done" && styles.taskTitleDone,
-                    ]}
-                  >
-                    {task.title}
-                  </Text>
-                  {task.description ? (
-                    <Text style={styles.taskDesc} numberOfLines={2}>
-                      {task.description}
-                    </Text>
-                  ) : null}
-                  <View style={styles.badgeRow}>
-                    <View
-                      style={[
-                        styles.priorityBadge,
-                        { backgroundColor: priorityBg(task.priority) },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.priorityBadgeText,
-                          { color: priorityColor(task.priority) },
-                        ]}
-                      >
-                        {priorityLabel(task.priority, lang)}
-                      </Text>
-                    </View>
-                    {task.assignedToName ? (
-                      <View style={styles.assigneeBadge}>
-                        <UserAvatar uid={task.assignedTo} name={task.assignedToName} size={14} />
-                        <Text style={styles.assigneeText}>
-                          {task.assignedToName}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  {task.createdByName ? (
-                    <View style={styles.creatorRow}>
-                      <UserAvatar uid={task.createdBy} name={task.createdByName} size={16} />
-                      <Text style={styles.taskMeta}>
-                        {t("tasks_by", lang)} {task.createdByName}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                {task.createdBy === user?.uid && (
-                  <View style={styles.actionCol}>
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setEditingTask({
-                          id: task.id,
-                          title: task.title,
-                          description: task.description,
-                          priority: task.priority,
-                          assignedTo: task.assignedTo,
-                          assignedToName: task.assignedToName,
-                        });
-                      }}
-                      style={styles.actionBtn}
-                    >
-                      <Ionicons name="pencil-outline" size={18} color="#5B7553" />
-                    </Pressable>
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setDeleteTarget(task.id);
-                      }}
-                      style={styles.actionBtn}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                    </Pressable>
-                  </View>
-                )}
-              </Pressable>
+                task={task}
+                orgId={org.orgId}
+                user={user}
+                lang={lang}
+                onToggle={toggleTask}
+                onEdit={setEditingTask}
+                onDelete={setDeleteTarget}
+              />
             ))}
           </View>
         )}
@@ -256,6 +186,340 @@ export default function TasksScreen() {
         onConfirm={handleDeleteTask}
         onDismiss={() => setDeleteTarget(null)}
       />
+    </View>
+  );
+}
+
+function formatDate(date: Date | null, lang: "en" | "de" | "vi"): string {
+  if (!date) return "";
+  const d = date.getDate().toString().padStart(2, "0");
+  const m = (date.getMonth() + 1).toString().padStart(2, "0");
+  const y = date.getFullYear();
+  const h = date.getHours().toString().padStart(2, "0");
+  const min = date.getMinutes().toString().padStart(2, "0");
+  if (lang === "de") return `${d}.${m}.${y}, ${h}:${min}`;
+  if (lang === "vi") return `${d}/${m}/${y}, ${h}:${min}`;
+  return `${m}/${d}/${y}, ${h}:${min}`;
+}
+
+function timeAgo(date: Date | null, lang: "en" | "de" | "vi"): string {
+  if (!date) return "";
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return t("cal_just_now", lang);
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}${t("cal_minutes_ago", lang)}`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}${t("cal_hours_ago", lang)}`;
+  const days = Math.floor(hours / 24);
+  return `${days}${t("cal_days_ago", lang)}`;
+}
+
+function TaskCard({
+  task,
+  orgId,
+  user,
+  lang,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  task: Task;
+  orgId: string;
+  user: { uid: string; displayName: string | null } | null;
+  lang: "en" | "de" | "vi";
+  onToggle: (taskId: string, currentStatus: string) => void;
+  onEdit: (editTask: EditTask) => void;
+  onDelete: (taskId: string) => void;
+}) {
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [commentText, setCommentText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(null);
+
+  // Always listen for comment count
+  useEffect(() => {
+    const commentsRef = collection(
+      db,
+      "organizations",
+      orgId,
+      "tasks",
+      task.id,
+      "comments",
+    );
+    const unsub = onSnapshot(commentsRef, (snap) => {
+      setCommentCount(snap.size);
+    });
+    return unsub;
+  }, [orgId, task.id]);
+
+  // Load full comments when expanded
+  useEffect(() => {
+    if (!showComments) return;
+    const q = query(
+      collection(db, "organizations", orgId, "tasks", task.id, "comments"),
+      orderBy("createdAt", "asc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setComments(
+        snap.docs.map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+    });
+    return unsub;
+  }, [showComments, orgId, task.id]);
+
+  async function handleDeleteComment() {
+    if (!deleteCommentTarget) return;
+    try {
+      await deleteDoc(
+        doc(
+          db,
+          "organizations",
+          orgId,
+          "tasks",
+          task.id,
+          "comments",
+          deleteCommentTarget,
+        ),
+      );
+    } catch {
+      // ignore
+    }
+    setDeleteCommentTarget(null);
+  }
+
+  async function handleSendComment() {
+    if (!commentText.trim() || !user) return;
+    setSending(true);
+    try {
+      await addDoc(
+        collection(db, "organizations", orgId, "tasks", task.id, "comments"),
+        {
+          text: commentText.trim(),
+          createdBy: user.uid,
+          createdByName: user.displayName,
+          createdAt: serverTimestamp(),
+        },
+      );
+      setCommentText("");
+    } catch {
+      // ignore
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <View
+      style={[
+        styles.taskCard,
+        task.status === "done" && styles.taskCardDone,
+      ]}
+    >
+      <Pressable
+        onPress={() => onToggle(task.id, task.status)}
+        style={styles.taskTopRow}
+      >
+        <Ionicons
+          name={
+            task.status === "done"
+              ? "checkmark-circle"
+              : "ellipse-outline"
+          }
+          size={24}
+          color={task.status === "done" ? "#5B7553" : "#A3A89E"}
+        />
+        <View style={{ flex: 1 }}>
+          <Text
+            style={[
+              styles.taskTitle,
+              task.status === "done" && styles.taskTitleDone,
+            ]}
+          >
+            {task.title}
+          </Text>
+          {task.description ? (
+            <Text style={styles.taskDesc} numberOfLines={2}>
+              {task.description}
+            </Text>
+          ) : null}
+          <View style={styles.badgeRow}>
+            <View
+              style={[
+                styles.priorityBadge,
+                { backgroundColor: priorityBg(task.priority) },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.priorityBadgeText,
+                  { color: priorityColor(task.priority) },
+                ]}
+              >
+                {priorityLabel(task.priority, lang)}
+              </Text>
+            </View>
+            {task.assignedToName ? (
+              <View style={styles.assigneeBadge}>
+                <UserAvatar uid={task.assignedTo} name={task.assignedToName} size={14} />
+                <Text style={styles.assigneeText}>
+                  {task.assignedToName}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          {task.createdByName ? (
+            <View style={styles.creatorRow}>
+              <UserAvatar uid={task.createdBy} name={task.createdByName} size={16} />
+              <Text style={styles.taskMeta}>
+                {t("tasks_by", lang)} {task.createdByName}
+                {task.createdAt ? ` · ${formatDate(task.createdAt, lang)}` : ""}
+              </Text>
+            </View>
+          ) : task.createdAt ? (
+            <Text style={styles.taskMeta}>
+              {t("tasks_created", lang)}: {formatDate(task.createdAt, lang)}
+            </Text>
+          ) : null}
+        </View>
+        {task.createdBy === user?.uid && (
+          <View style={styles.actionCol}>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                onEdit({
+                  id: task.id,
+                  title: task.title,
+                  description: task.description,
+                  priority: task.priority,
+                  assignedTo: task.assignedTo,
+                  assignedToName: task.assignedToName,
+                });
+              }}
+              style={styles.actionBtn}
+            >
+              <Ionicons name="pencil-outline" size={18} color="#5B7553" />
+            </Pressable>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                onDelete(task.id);
+              }}
+              style={styles.actionBtn}
+            >
+              <Ionicons name="trash-outline" size={18} color="#DC2626" />
+            </Pressable>
+          </View>
+        )}
+      </Pressable>
+
+      {/* Comments toggle button */}
+      <Pressable
+        onPress={() => setShowComments(!showComments)}
+        style={[
+          styles.commentToggleBtn,
+          showComments && styles.commentToggleBtnActive,
+        ]}
+      >
+        <Ionicons
+          name="chatbubble-outline"
+          size={14}
+          color={showComments ? "#FFFFFF" : "#5B7553"}
+        />
+        <Text
+          style={[
+            styles.commentToggleText,
+            showComments && styles.commentToggleTextActive,
+          ]}
+        >
+          {t("tasks_comments", lang)}
+          {commentCount > 0 ? ` (${commentCount})` : ""}
+        </Text>
+      </Pressable>
+
+      {/* Delete comment confirm */}
+      <DeleteConfirmModal
+        visible={!!deleteCommentTarget}
+        title={t("delete_title", lang)}
+        message={t("tasks_delete_comment_msg", lang)}
+        confirmText={t("delete", lang)}
+        cancelText={t("cancel", lang)}
+        onConfirm={handleDeleteComment}
+        onDismiss={() => setDeleteCommentTarget(null)}
+      />
+
+      {/* Comments section */}
+      {showComments && (
+        <View style={commentStyles.container}>
+          {comments.length === 0 ? (
+            <Text style={commentStyles.empty}>
+              {t("tasks_no_comments", lang)}
+            </Text>
+          ) : (
+            comments.map((c) => (
+              <View key={c.id} style={commentStyles.comment}>
+                <UserAvatar
+                  uid={c.createdBy}
+                  name={c.createdByName}
+                  size={28}
+                />
+                <View style={{ flex: 1 }}>
+                  <View style={commentStyles.commentHeader}>
+                    <Text style={commentStyles.commentAuthor}>
+                      {c.createdByName || "?"}
+                    </Text>
+                    <Text style={commentStyles.commentTime}>
+                      {timeAgo(c.createdAt, lang)}
+                    </Text>
+                  </View>
+                  <Text style={commentStyles.commentText}>{c.text}</Text>
+                </View>
+                {c.createdBy === user?.uid && (
+                  <Pressable
+                    onPress={() => setDeleteCommentTarget(c.id)}
+                    style={commentStyles.deleteBtn}
+                  >
+                    <Ionicons name="trash-outline" size={14} color="#DC2626" />
+                  </Pressable>
+                )}
+              </View>
+            ))
+          )}
+
+          {/* Comment input */}
+          <View style={commentStyles.inputRow}>
+            <TextInput
+              value={commentText}
+              onChangeText={setCommentText}
+              placeholder={t("tasks_add_comment", lang)}
+              placeholderTextColor="#A3A89E"
+              style={commentStyles.input}
+              multiline
+            />
+            <Pressable
+              onPress={handleSendComment}
+              disabled={sending || !commentText.trim()}
+              style={[
+                commentStyles.sendBtn,
+                (!commentText.trim() || sending) && { opacity: 0.4 },
+              ]}
+            >
+              {sending ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Ionicons name="send" size={16} color="#FFFFFF" />
+              )}
+            </Pressable>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -450,14 +714,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   taskCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 14,
+    gap: 10,
     backgroundColor: "rgba(255,255,255,0.7)",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.06)",
     padding: 16,
+  },
+  taskTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
   },
   taskCardDone: {
     opacity: 0.6,
@@ -522,5 +789,98 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     padding: 6,
+  },
+  commentToggleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "rgba(91,117,83,0.1)",
+  },
+  commentToggleBtnActive: {
+    backgroundColor: "#5B7553",
+  },
+  commentToggleText: {
+    color: "#5B7553",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  commentToggleTextActive: {
+    color: "#FFFFFF",
+  },
+});
+
+const commentStyles = StyleSheet.create({
+  container: {
+    marginTop: 2,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.06)",
+    gap: 10,
+  },
+  empty: {
+    color: "#A3A89E",
+    fontSize: 13,
+    textAlign: "center",
+    paddingVertical: 8,
+  },
+  comment: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-start",
+  },
+  commentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  commentAuthor: {
+    color: "#2C3E2C",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  commentTime: {
+    color: "#A3A89E",
+    fontSize: 11,
+  },
+  commentText: {
+    color: "#4B5563",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 1,
+  },
+  inputRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-end",
+    marginTop: 4,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: "#F9F7F4",
+    borderColor: "rgba(0,0,0,0.08)",
+    borderRadius: 12,
+    borderWidth: 1,
+    color: "#111827",
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    maxHeight: 80,
+  },
+  sendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteBtn: {
+    padding: 4,
+    alignSelf: "flex-start",
+    marginTop: 2,
   },
 });

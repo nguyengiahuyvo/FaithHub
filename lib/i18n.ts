@@ -385,6 +385,23 @@ const translations = {
     de: "Mitglied auswählen...",
     vi: "Chọn thành viên...",
   },
+  tasks_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
+  tasks_no_comments: {
+    en: "No comments yet",
+    de: "Noch keine Kommentare",
+    vi: "Chưa có bình luận",
+  },
+  tasks_add_comment: {
+    en: "Write a comment...",
+    de: "Kommentar schreiben...",
+    vi: "Viết bình luận...",
+  },
+  tasks_delete_comment_msg: {
+    en: "Are you sure you want to delete this comment?",
+    de: "Möchtest du diesen Kommentar wirklich löschen?",
+    vi: "Bạn có chắc chắn muốn xóa bình luận này không?",
+  },
+  tasks_created: { en: "Created", de: "Erstellt", vi: "Tạo lúc" },
 
   // Calendar
   cal_title: { en: "Calendar", de: "Kalender", vi: "Lịch" },

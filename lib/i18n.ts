@@ -534,6 +534,21 @@ const translations = {
     de: "Organisation verlassen",
     vi: "Rời tổ chức",
   },
+  profile_leave_title: {
+    en: "Leave Organization?",
+    de: "Organisation verlassen?",
+    vi: "Rời tổ chức?",
+  },
+  profile_leave_msg: {
+    en: "Are you sure you want to leave this organization? You will lose access to all shared tasks and events.",
+    de: "Möchtest du diese Organisation wirklich verlassen? Du verlierst den Zugriff auf alle gemeinsamen Aufgaben und Termine.",
+    vi: "Bạn có chắc chắn muốn rời tổ chức? Bạn sẽ mất quyền truy cập vào tất cả công việc và sự kiện chung.",
+  },
+  profile_leave_confirm: {
+    en: "Leave",
+    de: "Verlassen",
+    vi: "Rời",
+  },
   profile_preferences: {
     en: "Preferences",
     de: "Einstellungen",

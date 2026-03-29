@@ -604,6 +604,7 @@ export default function ProfileScreen() {
   const [photoURI, setPhotoURI] = useState<string | null>(null);
   const [showEditName, setShowEditName] = useState(false);
   const [savingName, setSavingName] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   useEffect(() => {
     setPendingLang(lang);
@@ -891,7 +892,7 @@ export default function ProfileScreen() {
 
           <View style={styles.separator} />
 
-          <Pressable onPress={leaveOrg} style={styles.row}>
+          <Pressable onPress={() => setShowLeaveConfirm(true)} style={styles.row}>
             <Ionicons name="exit-outline" size={20} color="#DC2626" />
             <Text style={[styles.rowLabel, { color: "#DC2626" }]}>
               {t("profile_leave_org", lang)}
@@ -955,6 +956,48 @@ export default function ProfileScreen() {
       </Pressable>
 
       <Text style={styles.version}>{`FaithHub v${Constants.expoConfig?.version ?? "?"}`}</Text>
+
+      {/* Leave org confirmation */}
+      {showLeaveConfirm && (
+        <Modal transparent visible animationType="none">
+          <View style={modalStyles.backdrop}>
+            <View style={modalStyles.card}>
+              <Pressable
+                onPress={() => setShowLeaveConfirm(false)}
+                style={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
+              >
+                <Ionicons name="close" size={24} color="#8A8F84" />
+              </Pressable>
+              <View style={[modalStyles.iconCircle, { backgroundColor: "#FEF2F2" }]}>
+                <Ionicons name="exit-outline" size={28} color="#DC2626" />
+              </View>
+              <Text style={modalStyles.title}>{t("profile_leave_title", lang)}</Text>
+              <Text style={modalStyles.message}>{t("profile_leave_msg", lang)}</Text>
+              <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+                <Pressable
+                  onPress={() => setShowLeaveConfirm(false)}
+                  style={modalStyles.cancelButton}
+                >
+                  <Text style={modalStyles.cancelButtonText}>
+                    {t("cancel", lang)}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setShowLeaveConfirm(false);
+                    leaveOrg();
+                  }}
+                  style={[modalStyles.primaryButton, { backgroundColor: "#DC2626" }]}
+                >
+                  <Text style={modalStyles.primaryButtonText}>
+                    {t("profile_leave_confirm", lang)}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       <SignOutModal
         type={modalType}

@@ -123,7 +123,7 @@ export default function TasksScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <View style={styles.headerRow}>
           <Text style={styles.title}>{t("tasks_title", lang)}</Text>
           <Pressable

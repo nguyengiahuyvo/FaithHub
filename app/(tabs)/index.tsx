@@ -362,6 +362,155 @@ const membersModalStyles = StyleSheet.create({
   },
 });
 
+function MyPrayersModal({
+  visible,
+  prayers,
+  user,
+  lang,
+  timeAgo,
+  onDelete,
+  onTogglePraying,
+  onDismiss,
+}: {
+  visible: boolean;
+  prayers: PrayerRequest[];
+  user: { uid: string; displayName: string | null } | null;
+  lang: "en" | "de" | "vi";
+  timeAgo: (date: Date | null) => string;
+  onDelete: (id: string) => void;
+  onTogglePraying: (prayer: PrayerRequest) => void;
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => onDismiss());
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[membersModalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <Text style={membersModalStyles.title}>
+            {t("prayer_my_requests", lang)}
+          </Text>
+          <ScrollView style={{ maxHeight: 400 }}>
+            {prayers.length === 0 ? (
+              <View style={{ alignItems: "center", paddingVertical: 24, gap: 8 }}>
+                <Ionicons name="heart-outline" size={32} color="#A3A89E" />
+                <Text style={{ color: "#A3A89E", fontSize: 14, textAlign: "center" }}>
+                  {t("prayer_my_empty", lang)}
+                </Text>
+              </View>
+            ) : (
+              <View style={{ gap: 12 }}>
+                {prayers.map((p) => {
+                  const isPraying = p.prayingFor.some((x) => x.uid === user?.uid);
+                  return (
+                    <View key={p.id} style={myPrayerStyles.card}>
+                      <View style={myPrayerStyles.header}>
+                        <Text style={myPrayerStyles.time}>{timeAgo(p.createdAt)}</Text>
+                        {p.anonymous && (
+                          <Text style={myPrayerStyles.anonBadge}>
+                            {t("prayer_anonymous_label", lang)}
+                          </Text>
+                        )}
+                        <View style={{ flex: 1 }} />
+                        <Pressable onPress={() => onDelete(p.id)} style={{ padding: 4 }}>
+                          <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                        </Pressable>
+                      </View>
+                      <Text style={myPrayerStyles.text}>{p.text}</Text>
+                      {p.prayingFor.length > 0 && (
+                        <View style={myPrayerStyles.footer}>
+                          <Ionicons name="heart" size={12} color="#C0956C" />
+                          <Text style={myPrayerStyles.prayingCount}>
+                            {p.prayingFor.length} {t("prayer_praying", lang).toLowerCase()}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </ScrollView>
+          <Pressable onPress={handleDismiss} style={membersModalStyles.closeBtn}>
+            <Text style={membersModalStyles.closeText}>{t("close", lang)}</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const myPrayerStyles = StyleSheet.create({
+  card: {
+    backgroundColor: "#F9F7F4",
+    borderRadius: 14,
+    padding: 14,
+    gap: 8,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  time: {
+    color: "#A3A89E",
+    fontSize: 11,
+  },
+  anonBadge: {
+    color: "#8A8F84",
+    fontSize: 11,
+    fontStyle: "italic",
+  },
+  text: {
+    color: "#4B5563",
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  prayingCount: {
+    color: "#C0956C",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+});
+
 function OrgDashboard() {
   const { user } = useAuth();
   const { org } = useOrg();
@@ -374,6 +523,7 @@ function OrgDashboard() {
   const [anonymous, setAnonymous] = useState(false);
   const [sendingPrayer, setSendingPrayer] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showMyPrayers, setShowMyPrayers] = useState(false);
 
   useEffect(() => {
     if (!org) return;
@@ -507,6 +657,25 @@ function OrgDashboard() {
           )}
           <Ionicons name="chevron-forward" size={16} color="#8A8F84" />
         </Pressable>
+
+        {/* My Prayer Requests button */}
+        <Pressable
+          onPress={() => setShowMyPrayers(true)}
+          style={styles.membersBtn}
+        >
+          <Ionicons name="heart" size={18} color="#C0956C" />
+          <Text style={styles.membersBtnText}>
+            {t("prayer_my_requests", lang)}
+          </Text>
+          {prayers.filter((p) => p.createdBy === user?.uid).length > 0 && (
+            <View style={[styles.membersBadge, { backgroundColor: "#C0956C" }]}>
+              <Text style={styles.membersBadgeText}>
+                {prayers.filter((p) => p.createdBy === user?.uid).length}
+              </Text>
+            </View>
+          )}
+          <Ionicons name="chevron-forward" size={16} color="#8A8F84" />
+        </Pressable>
       </View>
 
       <MembersModal
@@ -514,6 +683,17 @@ function OrgDashboard() {
         members={members}
         lang={lang}
         onDismiss={() => setShowMembers(false)}
+      />
+
+      <MyPrayersModal
+        visible={showMyPrayers}
+        prayers={prayers.filter((p) => p.createdBy === user?.uid)}
+        user={user}
+        lang={lang}
+        timeAgo={timeAgo}
+        onDelete={setDeleteTarget}
+        onTogglePraying={togglePraying}
+        onDismiss={() => setShowMyPrayers(false)}
       />
 
       {/* Prayer Requests */}

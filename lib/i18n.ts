@@ -350,6 +350,12 @@ const translations = {
     vi: "Bạn có chắc chắn muốn xóa nan đề cầu nguyện này không?",
   },
   prayer_praying: { en: "Praying", de: "Bete", vi: "Cầu nguyện" },
+  prayer_my_requests: { en: "My Prayer Requests", de: "Meine Gebetsanliegen", vi: "Nan đề của tôi" },
+  prayer_my_empty: {
+    en: "You haven't shared any prayer requests yet",
+    de: "Du hast noch keine Gebetsanliegen geteilt",
+    vi: "Bạn chưa chia sẻ nan đề cầu nguyện nào",
+  },
 
   // Tasks
   tasks_title: { en: "Tasks", de: "Aufgaben", vi: "Công việc" },

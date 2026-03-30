@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -512,10 +513,17 @@ function CreateVoteModal({
 
   return (
     <Modal transparent visible animationType="none">
+      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
       <Animated.View style={[voteModalStyles.backdrop, { opacity }]}>
         <Animated.View
           style={[voteModalStyles.card, { opacity, transform: [{ scale }] }]}
         >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{ gap: 14 }}>
           <Text style={voteModalStyles.modalTitle}>{t("tasks_add_vote", lang)}</Text>
 
           <View style={voteModalStyles.field}>
@@ -607,8 +615,11 @@ function CreateVoteModal({
               )}
             </Pressable>
           </View>
+          </View>
+        </ScrollView>
         </Animated.View>
       </Animated.View>
+      </Pressable>
     </Modal>
   );
 }

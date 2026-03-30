@@ -30,7 +30,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export type Assignee = {
   uid: string;
   displayName: string | null;
-} | null;
+};
 
 type Member = {
   uid: string;
@@ -43,8 +43,7 @@ export type EditTask = {
   title: string;
   description: string;
   priority: Priority;
-  assignedTo: string | null;
-  assignedToName: string | null;
+  assignees: Assignee[];
 };
 
 export function priorityLabel(p: Priority, lang: Language): string {
@@ -100,7 +99,7 @@ export default function CreateTaskModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>(2);
-  const [assignee, setAssignee] = useState<Assignee>(null);
+  const [assignees, setAssignees] = useState<Assignee[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
@@ -128,11 +127,7 @@ export default function CreateTaskModal({
       setTitle(editTask.title);
       setDescription(editTask.description);
       setPriority(editTask.priority);
-      setAssignee(
-        editTask.assignedTo
-          ? { uid: editTask.assignedTo, displayName: editTask.assignedToName }
-          : null,
-      );
+      setAssignees(editTask.assignees);
     }
   }, [visible, editTask]);
 
@@ -165,9 +160,17 @@ export default function CreateTaskModal({
       setTitle("");
       setDescription("");
       setPriority(2);
-      setAssignee(null);
+      setAssignees([]);
       setShowDropdown(false);
       onDismiss();
+    });
+  }
+
+  function toggleAssignee(member: Member) {
+    setAssignees((prev) => {
+      const exists = prev.some((a) => a.uid === member.uid);
+      if (exists) return prev.filter((a) => a.uid !== member.uid);
+      return [...prev, { uid: member.uid, displayName: member.displayName }];
     });
   }
 
@@ -182,8 +185,7 @@ export default function CreateTaskModal({
             title: title.trim(),
             description: description.trim(),
             priority,
-            assignedTo: assignee?.uid || null,
-            assignedToName: assignee?.displayName || null,
+            assignees,
           },
         );
       } else {
@@ -192,8 +194,7 @@ export default function CreateTaskModal({
           description: description.trim(),
           status: "todo",
           priority,
-          assignedTo: assignee?.uid || null,
-          assignedToName: assignee?.displayName || null,
+          assignees,
           createdBy: userId,
           createdByName: userName,
           createdAt: serverTimestamp(),
@@ -202,7 +203,7 @@ export default function CreateTaskModal({
       setTitle("");
       setDescription("");
       setPriority(2);
-      setAssignee(null);
+      setAssignees([]);
       setShowDropdown(false);
       onDismiss();
     } catch {
@@ -295,12 +296,13 @@ export default function CreateTaskModal({
                 <Text
                   style={[
                     mStyles.dropdownBtnText,
-                    !assignee && { color: "#A3A89E" },
+                    assignees.length === 0 && { color: "#A3A89E" },
                   ]}
+                  numberOfLines={1}
                 >
-                  {assignee
-                    ? assignee.displayName || t("tasks_unassigned", lang)
-                    : t("tasks_select_member", lang)}
+                  {assignees.length === 0
+                    ? t("tasks_select_member", lang)
+                    : assignees.map((a) => a.displayName || "?").join(", ")}
                 </Text>
                 <Ionicons
                   name={showDropdown ? "chevron-up" : "chevron-down"}
@@ -318,46 +320,25 @@ export default function CreateTaskModal({
                     />
                   ) : (
                     <ScrollView
-                      style={{ maxHeight: 160 }}
+                      style={{ maxHeight: 200 }}
                       nestedScrollEnabled
                     >
-                      {/* Unassigned option */}
-                      <Pressable
-                        onPress={() => {
-                          setAssignee(null);
-                          setShowDropdown(false);
-                        }}
-                        style={[
-                          mStyles.dropdownItem,
-                          !assignee && mStyles.dropdownItemSelected,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            mStyles.dropdownItemText,
-                            !assignee && mStyles.dropdownItemTextSelected,
-                          ]}
-                        >
-                          {t("tasks_unassigned", lang)}
-                        </Text>
-                      </Pressable>
                       {members.map((m) => {
-                        const selected = assignee?.uid === m.uid;
+                        const selected = assignees.some((a) => a.uid === m.uid);
                         return (
                           <Pressable
                             key={m.uid}
-                            onPress={() => {
-                              setAssignee({
-                                uid: m.uid,
-                                displayName: m.displayName,
-                              });
-                              setShowDropdown(false);
-                            }}
+                            onPress={() => toggleAssignee(m)}
                             style={[
                               mStyles.dropdownItem,
                               selected && mStyles.dropdownItemSelected,
                             ]}
                           >
+                            <Ionicons
+                              name={selected ? "checkbox" : "square-outline"}
+                              size={20}
+                              color={selected ? "#5B7553" : "#A3A89E"}
+                            />
                             <UserAvatar uid={m.uid} name={m.displayName} email={m.email} size={28} />
                             <View style={{ flex: 1 }}>
                               <Text
@@ -379,13 +360,6 @@ export default function CreateTaskModal({
                                 </Text>
                               ) : null}
                             </View>
-                            {selected && (
-                              <Ionicons
-                                name="checkmark"
-                                size={18}
-                                color="#5B7553"
-                              />
-                            )}
                           </Pressable>
                         );
                       })}

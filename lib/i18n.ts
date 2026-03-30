@@ -330,6 +330,33 @@ const translations = {
   },
   home_member_fallback: { en: "Member", de: "Mitglied", vi: "Thành viên" },
 
+  // Prayer requests
+  prayer_title: { en: "Prayer Requests", de: "Gebetsanliegen", vi: "Nan đề cầu nguyện" },
+  prayer_empty: {
+    en: "No prayer requests yet",
+    de: "Noch keine Gebetsanliegen",
+    vi: "Chưa có nan đề cầu nguyện",
+  },
+  prayer_placeholder: {
+    en: "Share a prayer request...",
+    de: "Teile ein Gebetsanliegen...",
+    vi: "Chia sẻ nan đề cầu nguyện...",
+  },
+  prayer_anonymous: { en: "Post anonymously", de: "Anonym posten", vi: "Đăng ẩn danh" },
+  prayer_anonymous_label: { en: "Anonymous", de: "Anonym", vi: "Ẩn danh" },
+  prayer_delete_msg: {
+    en: "Are you sure you want to delete this prayer request?",
+    de: "Möchtest du dieses Gebetsanliegen wirklich löschen?",
+    vi: "Bạn có chắc chắn muốn xóa nan đề cầu nguyện này không?",
+  },
+  prayer_praying: { en: "Praying", de: "Bete", vi: "Cầu nguyện" },
+  prayer_my_requests: { en: "My Prayer Requests", de: "Meine Gebetsanliegen", vi: "Nan đề của tôi" },
+  prayer_my_empty: {
+    en: "You haven't shared any prayer requests yet",
+    de: "Du hast noch keine Gebetsanliegen geteilt",
+    vi: "Bạn chưa chia sẻ nan đề cầu nguyện nào",
+  },
+
   // Tasks
   tasks_title: { en: "Tasks", de: "Aufgaben", vi: "Công việc" },
   tasks_empty: {
@@ -385,6 +412,71 @@ const translations = {
     de: "Mitglied auswählen...",
     vi: "Chọn thành viên...",
   },
+  tasks_offer_help: { en: "Offer Help", de: "Hilfe anbieten", vi: "Hỗ trợ" },
+  tasks_helping: { en: "Helping", de: "Helfe mit", vi: "Đang hỗ trợ" },
+  tasks_helpers: { en: "helpers", de: "Helfer", vi: "người hỗ trợ" },
+  tasks_helper: { en: "helper", de: "Helfer", vi: "người hỗ trợ" },
+  tasks_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
+  tasks_no_comments: {
+    en: "No comments yet",
+    de: "Noch keine Kommentare",
+    vi: "Chưa có bình luận",
+  },
+  tasks_add_comment: {
+    en: "Write a comment...",
+    de: "Kommentar schreiben...",
+    vi: "Viết bình luận...",
+  },
+  tasks_delete_comment_msg: {
+    en: "Are you sure you want to delete this comment?",
+    de: "Möchtest du diesen Kommentar wirklich löschen?",
+    vi: "Bạn có chắc chắn muốn xóa bình luận này không?",
+  },
+  tasks_created: { en: "Created", de: "Erstellt", vi: "Tạo lúc" },
+
+  // Create choice
+  tasks_add_task: { en: "New Task", de: "Neue Aufgabe", vi: "Công việc mới" },
+  tasks_add_vote: { en: "New Vote", de: "Neue Abstimmung", vi: "Bình chọn mới" },
+
+  // Votes
+  vote_title_label: { en: "Question", de: "Frage", vi: "Câu hỏi" },
+  vote_title_placeholder: {
+    en: "What should we vote on?",
+    de: "Worüber soll abgestimmt werden?",
+    vi: "Bình chọn về điều gì?",
+  },
+  vote_option: { en: "Option", de: "Option", vi: "Lựa chọn" },
+  vote_add_option: { en: "Add option", de: "Option hinzufügen", vi: "Thêm lựa chọn" },
+  vote_deadline: { en: "Deadline", de: "Frist", vi: "Hạn chót" },
+  vote_deadline_placeholder: { en: "YYYY-MM-DD", de: "JJJJ-MM-TT", vi: "YYYY-MM-DD" },
+  vote_no_votes: { en: "No votes yet", de: "Noch keine Abstimmungen", vi: "Chưa có bình chọn" },
+  vote_votes: { en: "votes", de: "Stimmen", vi: "phiếu" },
+  vote_vote: { en: "vote", de: "Stimme", vi: "phiếu" },
+  vote_ended: { en: "Ended", de: "Beendet", vi: "Đã kết thúc" },
+  vote_ends: { en: "Ends", de: "Endet", vi: "Kết thúc" },
+  vote_days_left: { en: "d left", de: "T übrig", vi: "ngày còn" },
+  vote_today: { en: "Today", de: "Heute", vi: "Hôm nay" },
+  vote_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
+  vote_no_comments: {
+    en: "No comments yet",
+    de: "Noch keine Kommentare",
+    vi: "Chưa có bình luận",
+  },
+  vote_add_comment: {
+    en: "Write a comment...",
+    de: "Kommentar schreiben...",
+    vi: "Viết bình luận...",
+  },
+  vote_delete_comment_msg: {
+    en: "Are you sure you want to delete this comment?",
+    de: "Möchtest du diesen Kommentar wirklich löschen?",
+    vi: "Bạn có chắc chắn muốn xóa bình luận này không?",
+  },
+  delete_vote_msg: {
+    en: "Are you sure you want to delete this vote? This cannot be undone.",
+    de: "Möchtest du diese Abstimmung wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+    vi: "Bạn có chắc chắn muốn xóa bình chọn này không? Không thể hoàn tác.",
+  },
 
   // Calendar
   cal_title: { en: "Calendar", de: "Kalender", vi: "Lịch" },
@@ -405,7 +497,11 @@ const translations = {
   cal_all_day: { en: "All day", de: "Ganztägig", vi: "Cả ngày" },
   cal_attend: { en: "Attend", de: "Teilnehmen", vi: "Tham gia" },
   cal_attending: { en: "Attending", de: "Teilnahme", vi: "Đã tham gia" },
+  cal_maybe: { en: "Maybe", de: "Vielleicht", vi: "Có thể" },
+  cal_interested: { en: "Interested", de: "Interessiert", vi: "Quan tâm" },
   cal_attendees: { en: "attendees", de: "Teilnehmer", vi: "người tham gia" },
+  cal_attendees_title: { en: "Attendees", de: "Teilnehmer", vi: "Người tham gia" },
+  cal_upcoming: { en: "Upcoming", de: "Demnächst", vi: "Sắp tới" },
   cal_attendee: { en: "attendee", de: "Teilnehmer", vi: "người tham gia" },
   cal_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
   cal_no_comments: {
@@ -473,9 +569,9 @@ const translations = {
     ],
   },
   cal_days: {
-    en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    de: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
-    vi: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+    en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    de: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+    vi: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
   },
 
   // Profile
@@ -508,6 +604,26 @@ const translations = {
     en: "Leave organization",
     de: "Organisation verlassen",
     vi: "Rời tổ chức",
+  },
+  profile_leave_title: {
+    en: "Leave Organization?",
+    de: "Organisation verlassen?",
+    vi: "Rời tổ chức?",
+  },
+  profile_leave_msg: {
+    en: "Are you sure you want to leave this organization? You will lose access to all shared tasks and events.",
+    de: "Möchtest du diese Organisation wirklich verlassen? Du verlierst den Zugriff auf alle gemeinsamen Aufgaben und Termine.",
+    vi: "Bạn có chắc chắn muốn rời tổ chức? Bạn sẽ mất quyền truy cập vào tất cả công việc và sự kiện chung.",
+  },
+  profile_leave_confirm: {
+    en: "Leave",
+    de: "Verlassen",
+    vi: "Rời",
+  },
+  profile_leave_success: {
+    en: "You have left the organization",
+    de: "Du hast die Organisation verlassen",
+    vi: "Bạn đã rời tổ chức",
   },
   profile_preferences: {
     en: "Preferences",
@@ -623,7 +739,9 @@ const translations = {
   },
 
   // Shared
+  snack_deleted: { en: "Deleted successfully", de: "Erfolgreich gelöscht", vi: "Đã xóa thành công" },
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
+  close: { en: "Close", de: "Schließen", vi: "Đóng" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },
   try_again: { en: "Try Again", de: "Erneut versuchen", vi: "Thử lại" },
   continue: { en: "Continue", de: "Weiter", vi: "Tiếp tục" },

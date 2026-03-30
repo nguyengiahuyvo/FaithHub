@@ -4,6 +4,7 @@ import { auth, db } from "@/lib/firebase";
 import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -603,6 +604,9 @@ export default function ProfileScreen() {
   const [photoURI, setPhotoURI] = useState<string | null>(null);
   const [showEditName, setShowEditName] = useState(false);
   const [savingName, setSavingName] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [snackbar, setSnackbar] = useState<string | null>(null);
+  const snackOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setPendingLang(lang);
@@ -751,6 +755,7 @@ export default function ProfileScreen() {
   }
 
   return (
+    <>
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Pressable onPress={() => setShowPhotoMenu(true)} style={styles.avatarWrapper}>
@@ -890,7 +895,7 @@ export default function ProfileScreen() {
 
           <View style={styles.separator} />
 
-          <Pressable onPress={leaveOrg} style={styles.row}>
+          <Pressable onPress={() => setShowLeaveConfirm(true)} style={styles.row}>
             <Ionicons name="exit-outline" size={20} color="#DC2626" />
             <Text style={[styles.rowLabel, { color: "#DC2626" }]}>
               {t("profile_leave_org", lang)}
@@ -953,7 +958,64 @@ export default function ProfileScreen() {
         <Text style={styles.signOutText}>{t("profile_signout", lang)}</Text>
       </Pressable>
 
-      <Text style={styles.version}>FaithHub v1.2.0</Text>
+      <Text style={styles.version}>{`FaithHub v${Constants.expoConfig?.version ?? "?"}`}</Text>
+
+      {/* Leave org confirmation */}
+      {showLeaveConfirm && (
+        <Modal transparent visible animationType="none">
+          <View style={modalStyles.backdrop}>
+            <View style={modalStyles.card}>
+              <Pressable
+                onPress={() => setShowLeaveConfirm(false)}
+                style={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
+              >
+                <Ionicons name="close" size={24} color="#8A8F84" />
+              </Pressable>
+              <View style={[modalStyles.iconCircle, { backgroundColor: "#FEF2F2" }]}>
+                <Ionicons name="exit-outline" size={28} color="#DC2626" />
+              </View>
+              <Text style={modalStyles.title}>{t("profile_leave_title", lang)}</Text>
+              <Text style={modalStyles.message}>{t("profile_leave_msg", lang)}</Text>
+              <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+                <Pressable
+                  onPress={() => setShowLeaveConfirm(false)}
+                  style={modalStyles.cancelButton}
+                >
+                  <Text style={modalStyles.cancelButtonText}>
+                    {t("cancel", lang)}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    setShowLeaveConfirm(false);
+                    await leaveOrg();
+                    setSnackbar(t("profile_leave_success", lang));
+                    snackOpacity.setValue(0);
+                    Animated.timing(snackOpacity, {
+                      toValue: 1,
+                      duration: 250,
+                      useNativeDriver: true,
+                    }).start(() => {
+                      setTimeout(() => {
+                        Animated.timing(snackOpacity, {
+                          toValue: 0,
+                          duration: 400,
+                          useNativeDriver: true,
+                        }).start(() => setSnackbar(null));
+                      }, 3000);
+                    });
+                  }}
+                  style={[modalStyles.primaryButton, { backgroundColor: "#DC2626" }]}
+                >
+                  <Text style={modalStyles.primaryButtonText}>
+                    {t("profile_leave_confirm", lang)}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       <SignOutModal
         type={modalType}
@@ -986,8 +1048,44 @@ export default function ProfileScreen() {
         lang={lang}
       />
     </ScrollView>
+
+    {/* Snackbar */}
+    {snackbar && (
+      <Animated.View style={[snackStyles.container, { opacity: snackOpacity }]}>
+        <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+        <Text style={snackStyles.text}>{snackbar}</Text>
+      </Animated.View>
+    )}
+    </>
   );
 }
+
+const snackStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    bottom: 40,
+    left: 24,
+    right: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#2C3E2C",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  text: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+  },
+});
 
 const styles = StyleSheet.create({
   content: {

@@ -1,18 +1,11 @@
+import UserAvatar from "@/components/UserAvatar";
+import Snackbar from "@/components/Snackbar";
+import { useAuth } from "@/lib/auth-context";
+import { db } from "@/lib/firebase";
+import { t, tArray } from "@/lib/i18n";
+import { useLanguage } from "@/lib/language-context";
+import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  Keyboard,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
 import {
   addDoc,
   arrayRemove,
@@ -26,12 +19,19 @@ import {
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
-import { useOrg } from "@/lib/org-context";
-import { useLanguage } from "@/lib/language-context";
-import { t, tArray } from "@/lib/i18n";
-import UserAvatar from "@/components/UserAvatar";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Keyboard,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 type Attendee = {
   uid: string;
@@ -55,6 +55,7 @@ type CalEvent = {
   createdBy: string;
   createdByName: string | null;
   attendees: Attendee[];
+  maybe: Attendee[];
 };
 
 function getDaysInMonth(year: number, month: number) {
@@ -62,7 +63,9 @@ function getDaysInMonth(year: number, month: number) {
 }
 
 function getFirstDayOfMonth(year: number, month: number) {
-  return new Date(year, month, 1).getDay();
+  const day = new Date(year, month, 1).getDay();
+  // Convert from Sun=0 to Mon=0: (day + 6) % 7
+  return (day + 6) % 7;
 }
 
 export default function CalendarScreen() {
@@ -75,12 +78,14 @@ export default function CalendarScreen() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  const snackOpacity = useRef(new Animated.Value(0)).current;
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState(
-    today.toISOString().split("T")[0]
+    today.toISOString().split("T")[0],
   );
 
   useEffect(() => {
@@ -98,10 +103,11 @@ export default function CalendarScreen() {
             createdBy: d.data().createdBy || "",
             createdByName: d.data().createdByName || null,
             attendees: d.data().attendees || [],
-          }))
+            maybe: d.data().maybe || [],
+          })),
         );
         setLoading(false);
-      }
+      },
     );
     return unsub;
   }, [org]);
@@ -130,6 +136,17 @@ export default function CalendarScreen() {
 
   const eventsForDate = events.filter((e) => e.date === selectedDate);
 
+  // Find all upcoming events on the nearest future date
+  const upcomingEvents = (() => {
+    const future = events.filter((e) => e.date >= todayStr);
+    if (future.length === 0) return [];
+    const sorted = [...future].sort((a, b) => a.date.localeCompare(b.date));
+    const nearestDate = sorted[0].date;
+    return sorted
+      .filter((e) => e.date === nearestDate)
+      .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+  })();
+
   function dateStr(day: number) {
     const m = String(viewMonth + 1).padStart(2, "0");
     const d = String(day).padStart(2, "0");
@@ -141,30 +158,64 @@ export default function CalendarScreen() {
     return events.filter((e) => e.date === ds).length;
   }
 
-  async function toggleAttend(eventId: string, attendees: Attendee[]) {
+  async function toggleAttend(eventId: string, ev: CalEvent) {
     if (!org || !user) return;
     const ref = doc(db, "organizations", org.orgId, "events", eventId);
-    const already = attendees.some((a) => a.uid === user.uid);
+    const already = ev.attendees.some((a) => a.uid === user.uid);
     const me: Attendee = { uid: user.uid, displayName: user.displayName };
     if (already) {
-      const existing = attendees.find((a) => a.uid === user.uid)!;
+      const existing = ev.attendees.find((a) => a.uid === user.uid)!;
       await updateDoc(ref, { attendees: arrayRemove(existing) });
     } else {
-      await updateDoc(ref, { attendees: arrayUnion(me) });
+      // Remove from maybe if switching to attend
+      const inMaybe = ev.maybe.find((a) => a.uid === user.uid);
+      const updates: Record<string, unknown> = { attendees: arrayUnion(me) };
+      if (inMaybe) updates.maybe = arrayRemove(inMaybe);
+      await updateDoc(ref, updates);
     }
+  }
+
+  async function toggleMaybe(eventId: string, ev: CalEvent) {
+    if (!org || !user) return;
+    const ref = doc(db, "organizations", org.orgId, "events", eventId);
+    const already = ev.maybe.some((a) => a.uid === user.uid);
+    const me: Attendee = { uid: user.uid, displayName: user.displayName };
+    if (already) {
+      const existing = ev.maybe.find((a) => a.uid === user.uid)!;
+      await updateDoc(ref, { maybe: arrayRemove(existing) });
+    } else {
+      // Remove from attendees if switching to maybe
+      const inAttend = ev.attendees.find((a) => a.uid === user.uid);
+      const updates: Record<string, unknown> = { maybe: arrayUnion(me) };
+      if (inAttend) updates.attendees = arrayRemove(inAttend);
+      await updateDoc(ref, updates);
+    }
+  }
+
+  function showSnack(msg: string) {
+    setSnackMsg(msg);
+    snackOpacity.setValue(0);
+    Animated.timing(snackOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start(() => {
+      setTimeout(() => {
+        Animated.timing(snackOpacity, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setSnackMsg(null));
+      }, 3000);
+    });
   }
 
   async function handleDeleteEvent() {
     if (!org || !deleteTarget) return;
-    await deleteDoc(doc(db, "organizations", org.orgId, "events", deleteTarget));
+    await deleteDoc(
+      doc(db, "organizations", org.orgId, "events", deleteTarget),
+    );
     setDeleteTarget(null);
+    showSnack(t("snack_deleted", lang));
   }
 
   if (!org) return null;
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <View style={styles.headerRow}>
           <Text style={styles.title}>{t("cal_title", lang)}</Text>
           <Pressable
@@ -183,6 +234,40 @@ export default function CalendarScreen() {
           />
         ) : (
           <>
+            {/* Upcoming events */}
+            {upcomingEvents.length > 0 && (
+              <View style={{ gap: 8 }}>
+                <Text style={styles.upcomingLabel}>{t("cal_upcoming", lang)}</Text>
+                {upcomingEvents.map((ev) => (
+                  <Pressable
+                    key={ev.id}
+                    onPress={() => {
+                      setSelectedDate(ev.date);
+                      const [y, m] = ev.date.split("-").map(Number);
+                      setViewYear(y);
+                      setViewMonth(m - 1);
+                    }}
+                    style={styles.upcomingCard}
+                  >
+                    <View style={styles.upcomingIconWrap}>
+                      <Ionicons name="calendar" size={20} color="#FFFFFF" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.upcomingTitle} numberOfLines={1}>{ev.title}</Text>
+                      <Text style={styles.upcomingMeta}>
+                        {ev.date}
+                        {ev.time ? ` · ${ev.time}` : ""}
+                        {ev.attendees.length > 0
+                          ? ` · ${ev.attendees.length} ${ev.attendees.length === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}`
+                          : ""}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#5B7553" />
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
             {/* Month navigation */}
             <View style={styles.monthNav}>
               <Pressable onPress={prevMonth} style={styles.navBtn}>
@@ -196,55 +281,66 @@ export default function CalendarScreen() {
               </Pressable>
             </View>
 
-            {/* Day headers */}
-            <View style={styles.dayHeaderRow}>
-              {DAYS.map((d) => (
-                <Text key={d} style={styles.dayHeader}>
-                  {d}
-                </Text>
-              ))}
-            </View>
-
-            {/* Calendar grid */}
-            <View style={styles.calGrid}>
-              {Array.from({ length: firstDay }).map((_, i) => (
-                <View key={`empty-${i}`} style={styles.dayCell} />
-              ))}
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const day = i + 1;
-                const ds = dateStr(day);
-                const isToday = ds === todayStr;
-                const isSelected = ds === selectedDate;
-                const count = eventCountForDay(day);
-                return (
-                  <Pressable
-                    key={day}
-                    onPress={() => setSelectedDate(ds)}
+            {/* Calendar card */}
+            <View style={styles.calCard}>
+              {/* Day headers */}
+              <View style={styles.dayHeaderRow}>
+                {DAYS.map((d, i) => (
+                  <Text
+                    key={d}
                     style={[
-                      styles.dayCell,
-                      isSelected && styles.dayCellSelected,
+                      styles.dayHeader,
+                      i >= 5 && styles.dayHeaderWeekend,
                     ]}
                   >
-                    <Text
+                    {d}
+                  </Text>
+                ))}
+              </View>
+
+              {/* Calendar grid */}
+              <View style={styles.calGrid}>
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <View key={`empty-${i}`} style={styles.dayCell} />
+                ))}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const ds = dateStr(day);
+                  const isToday = ds === todayStr;
+                  const isSelected = ds === selectedDate;
+                  const count = eventCountForDay(day);
+                  // Calculate column index (0-6) for weekend styling
+                  const col = (firstDay + i) % 7;
+                  const isWeekend = col >= 5;
+                  return (
+                    <Pressable
+                      key={day}
+                      onPress={() => setSelectedDate(ds)}
                       style={[
-                        styles.dayText,
-                        isToday && styles.dayTextToday,
-                        isSelected && styles.dayTextSelected,
+                        styles.dayCell,
+                        isSelected && styles.dayCellSelected,
+                        isToday && !isSelected && styles.dayCellToday,
                       ]}
                     >
-                      {day}
-                    </Text>
-                    {count > 0 && (
-                      <View
+                      <Text
                         style={[
-                          styles.dot,
-                          isSelected && styles.dotSelected,
+                          styles.dayText,
+                          isWeekend && styles.dayTextWeekend,
+                          isToday && styles.dayTextToday,
+                          isSelected && styles.dayTextSelected,
                         ]}
-                      />
-                    )}
-                  </Pressable>
-                );
-              })}
+                      >
+                        {day}
+                      </Text>
+                      {count > 0 && (
+                        <View
+                          style={[styles.dot, isSelected && styles.dotSelected]}
+                        />
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
             {/* Events for selected date */}
@@ -263,6 +359,7 @@ export default function CalendarScreen() {
                     user={user}
                     lang={lang}
                     onToggleAttend={toggleAttend}
+                    onToggleMaybe={toggleMaybe}
                     onDelete={setDeleteTarget}
                   />
                 ))}
@@ -291,6 +388,8 @@ export default function CalendarScreen() {
         onConfirm={handleDeleteEvent}
         onDismiss={() => setDeleteTarget(null)}
       />
+
+      <Snackbar message={snackMsg} opacity={snackOpacity} />
     </View>
   );
 }
@@ -313,13 +412,15 @@ function EventCard({
   user,
   lang,
   onToggleAttend,
+  onToggleMaybe,
   onDelete,
 }: {
   event: CalEvent;
   orgId: string;
   user: { uid: string; displayName: string | null } | null;
   lang: "en" | "de" | "vi";
-  onToggleAttend: (eventId: string, attendees: Attendee[]) => void;
+  onToggleAttend: (eventId: string, ev: CalEvent) => void;
+  onToggleMaybe: (eventId: string, ev: CalEvent) => void;
   onDelete: (eventId: string) => void;
 }) {
   const [showComments, setShowComments] = useState(false);
@@ -327,11 +428,21 @@ function EventCard({
   const [commentCount, setCommentCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [sending, setSending] = useState(false);
-  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(null);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(
+    null,
+  );
+  const [showAttendees, setShowAttendees] = useState(false);
 
   // Always listen for comment count
   useEffect(() => {
-    const commentsRef = collection(db, "organizations", orgId, "events", ev.id, "comments");
+    const commentsRef = collection(
+      db,
+      "organizations",
+      orgId,
+      "events",
+      ev.id,
+      "comments",
+    );
     const unsub = onSnapshot(commentsRef, (snap) => {
       setCommentCount(snap.size);
     });
@@ -363,7 +474,15 @@ function EventCard({
     if (!deleteCommentTarget) return;
     try {
       await deleteDoc(
-        doc(db, "organizations", orgId, "events", ev.id, "comments", deleteCommentTarget),
+        doc(
+          db,
+          "organizations",
+          orgId,
+          "events",
+          ev.id,
+          "comments",
+          deleteCommentTarget,
+        ),
       );
     } catch {
       // ignore
@@ -393,6 +512,7 @@ function EventCard({
   }
 
   const isAttending = ev.attendees.some((a) => a.uid === user?.uid);
+  const isMaybe = ev.maybe.some((a) => a.uid === user?.uid);
   const count = ev.attendees.length;
 
   return (
@@ -411,7 +531,11 @@ function EventCard({
           ) : null}
           {ev.createdByName ? (
             <View style={styles.creatorRow}>
-              <UserAvatar uid={ev.createdBy} name={ev.createdByName} size={16} />
+              <UserAvatar
+                uid={ev.createdBy}
+                name={ev.createdByName}
+                size={16}
+              />
               <Text style={styles.eventMeta}>
                 {t("tasks_by", lang)} {ev.createdByName}
               </Text>
@@ -430,7 +554,7 @@ function EventCard({
 
       {/* Attendees — full width */}
       {count > 0 && (
-        <View style={styles.attendeeRow}>
+        <Pressable onPress={() => setShowAttendees(true)} style={styles.attendeeRow}>
           {ev.attendees.slice(0, 5).map((a) => (
             <View key={a.uid} style={styles.attendeeBubbleWrap}>
               <UserAvatar uid={a.uid} name={a.displayName} size={26} />
@@ -440,14 +564,29 @@ function EventCard({
             {count}{" "}
             {count === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}
           </Text>
-        </View>
+          {count > 5 && (
+            <Ionicons name="chevron-forward" size={14} color="#8A8F84" />
+          )}
+        </Pressable>
       )}
 
-      {/* Attend button + Comments toggle — full width */}
-      <View style={{ flexDirection: "row", gap: 8 }}>
+      {/* Attendees list modal */}
+      <AttendeesModal
+        visible={showAttendees}
+        attendees={ev.attendees}
+        lang={lang}
+        onDismiss={() => setShowAttendees(false)}
+      />
+
+      {/* Attend + Maybe + Comments — full width */}
+      <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         <Pressable
-          onPress={() => onToggleAttend(ev.id, ev.attendees)}
-          style={[styles.attendBtn, isAttending && styles.attendBtnActive, { marginTop: 0 }]}
+          onPress={() => onToggleAttend(ev.id, ev)}
+          style={[
+            styles.attendBtn,
+            isAttending && styles.attendBtnActive,
+            { marginTop: 0 },
+          ]}
         >
           <Ionicons
             name={isAttending ? "checkmark-circle" : "hand-right-outline"}
@@ -465,8 +604,36 @@ function EventCard({
         </Pressable>
 
         <Pressable
+          onPress={() => onToggleMaybe(ev.id, ev)}
+          style={[
+            styles.attendBtn,
+            isMaybe && styles.maybeBtnActive,
+            { marginTop: 0 },
+          ]}
+        >
+          <Ionicons
+            name={isMaybe ? "help-circle" : "help-circle-outline"}
+            size={16}
+            color={isMaybe ? "#FFFFFF" : "#C0956C"}
+          />
+          <Text
+            style={[
+              styles.attendBtnText,
+              { color: "#C0956C" },
+              isMaybe && styles.maybeBtnTextActive,
+            ]}
+          >
+            {isMaybe ? t("cal_interested", lang) : t("cal_maybe", lang)}
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={() => setShowComments(!showComments)}
-          style={[styles.attendBtn, showComments && styles.attendBtnActive, { marginTop: 0 }]}
+          style={[
+            styles.attendBtn,
+            showComments && styles.attendBtnActive,
+            { marginTop: 0 },
+          ]}
         >
           <Ionicons
             name="chatbubble-outline"
@@ -479,7 +646,8 @@ function EventCard({
               showComments && styles.attendBtnTextActive,
             ]}
           >
-            {t("cal_comments", lang)}{commentCount > 0 ? ` (${commentCount})` : ""}
+            {t("cal_comments", lang)}
+            {commentCount > 0 ? ` (${commentCount})` : ""}
           </Text>
         </Pressable>
       </View>
@@ -504,7 +672,11 @@ function EventCard({
           ) : (
             comments.map((c) => (
               <View key={c.id} style={commentStyles.comment}>
-                <UserAvatar uid={c.createdBy} name={c.createdByName} size={28} />
+                <UserAvatar
+                  uid={c.createdBy}
+                  name={c.createdByName}
+                  size={28}
+                />
                 <View style={{ flex: 1 }}>
                   <View style={commentStyles.commentHeader}>
                     <Text style={commentStyles.commentAuthor}>
@@ -558,6 +730,106 @@ function EventCard({
     </View>
   );
 }
+
+function AttendeesModal({
+  visible,
+  attendees,
+  lang,
+  onDismiss,
+}: {
+  visible: boolean;
+  attendees: Attendee[];
+  lang: "en" | "de" | "vi";
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => onDismiss());
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[mStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[mStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <Text style={mStyles.modalTitle}>
+            {t("cal_attendees_title", lang)}
+          </Text>
+          <ScrollView style={{ maxHeight: 320 }}>
+            <View style={{ gap: 10 }}>
+              {attendees.map((a) => (
+                <View key={a.uid} style={attendeeModalStyles.row}>
+                  <UserAvatar uid={a.uid} name={a.displayName} size={36} />
+                  <Text style={attendeeModalStyles.name}>
+                    {a.displayName || "?"}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+          <Pressable onPress={handleDismiss} style={attendeeModalStyles.closeBtn}>
+            <Text style={attendeeModalStyles.closeText}>{t("close", lang)}</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const attendeeModalStyles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  name: {
+    color: "#2C3E2C",
+    fontSize: 16,
+    fontWeight: "500",
+    flex: 1,
+  },
+  closeBtn: {
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  closeText: {
+    color: "#4B5563",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
 
 function CreateEventModal({
   visible,
@@ -653,74 +925,74 @@ function CreateEventModal({
           >
             <Text style={mStyles.modalTitle}>{t("cal_new", lang)}</Text>
 
-          <View style={mStyles.field}>
-            <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t("cal_event_name", lang)}
-              placeholderTextColor="#A3A89E"
-              style={mStyles.input}
-            />
-          </View>
-
-          <View style={mStyles.fieldRow}>
-            <View style={[mStyles.field, { flex: 1 }]}>
-              <Text style={mStyles.label}>{t("cal_date", lang)}</Text>
+            <View style={mStyles.field}>
+              <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
               <TextInput
-                value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
+                value={title}
+                onChangeText={setTitle}
+                placeholder={t("cal_event_name", lang)}
                 placeholderTextColor="#A3A89E"
                 style={mStyles.input}
               />
             </View>
-            <View style={[mStyles.field, { flex: 1 }]}>
-              <Text style={mStyles.label}>{t("cal_time", lang)}</Text>
+
+            <View style={mStyles.fieldRow}>
+              <View style={[mStyles.field, { flex: 1 }]}>
+                <Text style={mStyles.label}>{t("cal_date", lang)}</Text>
+                <TextInput
+                  value={date}
+                  onChangeText={setDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#A3A89E"
+                  style={mStyles.input}
+                />
+              </View>
+              <View style={[mStyles.field, { flex: 1 }]}>
+                <Text style={mStyles.label}>{t("cal_time", lang)}</Text>
+                <TextInput
+                  value={time}
+                  onChangeText={setTime}
+                  placeholder={t("cal_time_placeholder", lang)}
+                  placeholderTextColor="#A3A89E"
+                  style={mStyles.input}
+                />
+              </View>
+            </View>
+
+            <View style={mStyles.field}>
+              <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
               <TextInput
-                value={time}
-                onChangeText={setTime}
-                placeholder={t("cal_time_placeholder", lang)}
+                value={description}
+                onChangeText={setDescription}
+                placeholder={t("tasks_desc_placeholder", lang)}
                 placeholderTextColor="#A3A89E"
-                style={mStyles.input}
+                style={[
+                  mStyles.input,
+                  { minHeight: 70, textAlignVertical: "top" },
+                ]}
+                multiline
               />
             </View>
-          </View>
 
-          <View style={mStyles.field}>
-            <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder={t("tasks_desc_placeholder", lang)}
-              placeholderTextColor="#A3A89E"
-              style={[
-                mStyles.input,
-                { minHeight: 70, textAlignVertical: "top" },
-              ]}
-              multiline
-            />
-          </View>
-
-          <View style={mStyles.buttonRow}>
-            <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
-              <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleCreate}
-              disabled={saving || !title.trim()}
-              style={[
-                mStyles.createBtn,
-                (saving || !title.trim()) && { opacity: 0.6 },
-              ]}
-            >
-              {saving ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={mStyles.createText}>{t("create", lang)}</Text>
-              )}
-            </Pressable>
-          </View>
+            <View style={mStyles.buttonRow}>
+              <Pressable onPress={handleDismiss} style={mStyles.cancelBtn}>
+                <Text style={mStyles.cancelText}>{t("cancel", lang)}</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleCreate}
+                disabled={saving || !title.trim()}
+                style={[
+                  mStyles.createBtn,
+                  (saving || !title.trim()) && { opacity: 0.6 },
+                ]}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={mStyles.createText}>{t("create", lang)}</Text>
+                )}
+              </Pressable>
+            </View>
           </Animated.View>
         </Animated.View>
       </Pressable>
@@ -958,16 +1230,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
+  calCard: {
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 20,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+  },
   dayHeaderRow: {
     flexDirection: "row",
+    marginBottom: 4,
   },
   dayHeader: {
     flex: 1,
     textAlign: "center",
-    color: "#A3A89E",
+    color: "#5B7553",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
     paddingVertical: 8,
+  },
+  dayHeaderWeekend: {
+    color: "#C0956C",
   },
   calGrid: {
     flexDirection: "row",
@@ -976,17 +1259,24 @@ const styles = StyleSheet.create({
   dayCell: {
     width: `${100 / 7}%`,
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 10,
     gap: 3,
   },
   dayCellSelected: {
     backgroundColor: "#5B7553",
-    borderRadius: 12,
+    borderRadius: 14,
+  },
+  dayCellToday: {
+    backgroundColor: "rgba(141,91,45,0.1)",
+    borderRadius: 14,
   },
   dayText: {
     color: "#2C3E2C",
     fontSize: 15,
     fontWeight: "500",
+  },
+  dayTextWeekend: {
+    color: "#A3A89E",
   },
   dayTextToday: {
     color: "#8D5B2D",
@@ -1096,6 +1386,9 @@ const styles = StyleSheet.create({
   attendBtnActive: {
     backgroundColor: "#5B7553",
   },
+  maybeBtnActive: {
+    backgroundColor: "#C0956C",
+  },
   attendBtnText: {
     color: "#5B7553",
     fontSize: 13,
@@ -1104,9 +1397,49 @@ const styles = StyleSheet.create({
   attendBtnTextActive: {
     color: "#FFFFFF",
   },
+  maybeBtnTextActive: {
+    color: "#FFFFFF",
+  },
   eventDeleteBtn: {
     padding: 6,
     alignSelf: "flex-start",
+  },
+  upcomingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(91,117,83,0.08)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(91,117,83,0.15)",
+    padding: 14,
+  },
+  upcomingIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  upcomingLabel: {
+    color: "#5B7553",
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  upcomingTitle: {
+    color: "#2C3E2C",
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 1,
+  },
+  upcomingMeta: {
+    color: "#8A8F84",
+    fontSize: 12,
+    marginTop: 2,
   },
 });
 

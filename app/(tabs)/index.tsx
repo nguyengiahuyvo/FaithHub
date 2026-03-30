@@ -11,7 +11,20 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  addDoc,
+  arrayRemove,
+  arrayUnion,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
@@ -20,6 +33,16 @@ import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
 
 type MemberInfo = { uid: string; displayName: string | null; email: string; role: string };
+
+type PrayerRequest = {
+  id: string;
+  text: string;
+  anonymous: boolean;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
+  prayingFor: { uid: string; displayName: string | null }[];
+};
 
 function ErrorModal({
   title,
@@ -346,6 +369,11 @@ function OrgDashboard() {
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showMembers, setShowMembers] = useState(false);
+  const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
+  const [prayerText, setPrayerText] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
+  const [sendingPrayer, setSendingPrayer] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (!org) return;
@@ -378,6 +406,80 @@ function OrgDashboard() {
       cancelled = true;
     };
   }, [org]);
+
+  // Real-time prayer requests
+  useEffect(() => {
+    if (!org) return;
+    const q = query(
+      collection(db, "organizations", org.orgId, "prayers"),
+      orderBy("createdAt", "desc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setPrayers(
+        snap.docs.map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          anonymous: d.data().anonymous || false,
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+          prayingFor: d.data().prayingFor || [],
+        })),
+      );
+    });
+    return unsub;
+  }, [org]);
+
+  async function handlePostPrayer() {
+    if (!prayerText.trim() || !org || !user) return;
+    setSendingPrayer(true);
+    try {
+      await addDoc(collection(db, "organizations", org.orgId, "prayers"), {
+        text: prayerText.trim(),
+        anonymous,
+        createdBy: user.uid,
+        createdByName: user.displayName,
+        createdAt: serverTimestamp(),
+        prayingFor: [],
+      });
+      setPrayerText("");
+      setAnonymous(false);
+    } catch {
+      // ignore
+    } finally {
+      setSendingPrayer(false);
+    }
+  }
+
+  async function handleDeletePrayer() {
+    if (!org || !deleteTarget) return;
+    await deleteDoc(doc(db, "organizations", org.orgId, "prayers", deleteTarget));
+    setDeleteTarget(null);
+  }
+
+  async function togglePraying(prayer: PrayerRequest) {
+    if (!org || !user) return;
+    const ref = doc(db, "organizations", org.orgId, "prayers", prayer.id);
+    const me = { uid: user.uid, displayName: user.displayName };
+    const existing = prayer.prayingFor.find((p) => p.uid === user.uid);
+    if (existing) {
+      await updateDoc(ref, { prayingFor: arrayRemove(existing) });
+    } else {
+      await updateDoc(ref, { prayingFor: arrayUnion(me) });
+    }
+  }
+
+  function timeAgo(date: Date | null): string {
+    if (!date) return "";
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 60) return t("cal_just_now", lang);
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}${t("cal_minutes_ago", lang)}`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}${t("cal_hours_ago", lang)}`;
+    const days = Math.floor(hours / 24);
+    return `${days}${t("cal_days_ago", lang)}`;
+  }
 
   return (
     <View style={{ gap: 16 }}>
@@ -413,9 +515,277 @@ function OrgDashboard() {
         lang={lang}
         onDismiss={() => setShowMembers(false)}
       />
+
+      {/* Prayer Requests */}
+      <View style={styles.prayerSection}>
+        <Text style={styles.prayerSectionTitle}>{t("prayer_title", lang)}</Text>
+
+        {/* Input */}
+        <View style={styles.prayerInputCard}>
+          <TextInput
+            value={prayerText}
+            onChangeText={setPrayerText}
+            placeholder={t("prayer_placeholder", lang)}
+            placeholderTextColor="#A3A89E"
+            style={styles.prayerInput}
+            multiline
+          />
+          <View style={styles.prayerInputActions}>
+            <Pressable
+              onPress={() => setAnonymous(!anonymous)}
+              style={styles.anonToggle}
+            >
+              <Ionicons
+                name={anonymous ? "checkbox" : "square-outline"}
+                size={20}
+                color={anonymous ? "#5B7553" : "#A3A89E"}
+              />
+              <Text style={[styles.anonText, anonymous && { color: "#5B7553" }]}>
+                {t("prayer_anonymous", lang)}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handlePostPrayer}
+              disabled={sendingPrayer || !prayerText.trim()}
+              style={[
+                styles.prayerSendBtn,
+                (!prayerText.trim() || sendingPrayer) && { opacity: 0.4 },
+              ]}
+            >
+              {sendingPrayer ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Ionicons name="send" size={16} color="#FFFFFF" />
+              )}
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Prayer list */}
+        {prayers.length === 0 ? (
+          <View style={styles.prayerEmpty}>
+            <Ionicons name="heart-outline" size={32} color="#A3A89E" />
+            <Text style={styles.prayerEmptyText}>{t("prayer_empty", lang)}</Text>
+          </View>
+        ) : (
+          <View style={{ gap: 10 }}>
+            {prayers.map((p) => {
+              const isPraying = p.prayingFor.some((x) => x.uid === user?.uid);
+              return (
+                <View key={p.id} style={styles.prayerCard}>
+                  <View style={styles.prayerHeader}>
+                    {p.anonymous ? (
+                      <View style={styles.anonAvatar}>
+                        <Ionicons name="person" size={16} color="#A3A89E" />
+                      </View>
+                    ) : (
+                      <UserAvatar uid={p.createdBy} name={p.createdByName} size={32} />
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.prayerAuthor}>
+                        {p.anonymous ? t("prayer_anonymous_label", lang) : (p.createdByName || "?")}
+                      </Text>
+                      <Text style={styles.prayerTime}>{timeAgo(p.createdAt)}</Text>
+                    </View>
+                    {p.createdBy === user?.uid && (
+                      <Pressable onPress={() => setDeleteTarget(p.id)} style={{ padding: 4 }}>
+                        <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                      </Pressable>
+                    )}
+                  </View>
+                  <Text style={styles.prayerText}>{p.text}</Text>
+                  <View style={styles.prayerFooter}>
+                    <Pressable
+                      onPress={() => togglePraying(p)}
+                      style={[
+                        styles.prayingBtn,
+                        isPraying && styles.prayingBtnActive,
+                      ]}
+                    >
+                      <Ionicons
+                        name={isPraying ? "heart" : "heart-outline"}
+                        size={14}
+                        color={isPraying ? "#FFFFFF" : "#C0956C"}
+                      />
+                      <Text
+                        style={[
+                          styles.prayingBtnText,
+                          isPraying && styles.prayingBtnTextActive,
+                        ]}
+                      >
+                        {t("prayer_praying", lang)}
+                        {p.prayingFor.length > 0 ? ` (${p.prayingFor.length})` : ""}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+      </View>
+
+      {/* Delete prayer confirm */}
+      <DeleteConfirmModal
+        visible={!!deleteTarget}
+        title={t("delete_title", lang)}
+        message={t("prayer_delete_msg", lang)}
+        confirmText={t("delete", lang)}
+        cancelText={t("cancel", lang)}
+        onConfirm={handleDeletePrayer}
+        onDismiss={() => setDeleteTarget(null)}
+      />
     </View>
   );
 }
+
+function DeleteConfirmModal({
+  visible,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  onConfirm,
+  onDismiss,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => onDismiss());
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[delStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[delStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={delStyles.iconCircle}>
+            <Ionicons name="trash-outline" size={28} color="#DC2626" />
+          </View>
+          <Text style={delStyles.title}>{title}</Text>
+          <Text style={delStyles.message}>{message}</Text>
+          <View style={delStyles.buttonRow}>
+            <Pressable onPress={handleDismiss} style={delStyles.cancelBtn}>
+              <Text style={delStyles.cancelText}>{cancelText}</Text>
+            </Pressable>
+            <Pressable onPress={onConfirm} style={delStyles.deleteBtn}>
+              <Text style={delStyles.deleteBtnText}>{confirmText}</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const delStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    gap: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FEF2F2",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  title: {
+    color: "#1F2A1F",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  message: {
+    color: "#5C625C",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4,
+  },
+  cancelBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  cancelText: {
+    color: "#4B5563",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  deleteBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#DC2626",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  deleteBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
 
 export default function HomeScreen() {
   const { org, isLoading } = useOrg();
@@ -535,5 +905,119 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",
+  },
+  prayerSection: {
+    gap: 12,
+  },
+  prayerSectionTitle: {
+    color: "#2C3E2C",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  prayerInputCard: {
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.06)",
+    padding: 14,
+    gap: 10,
+  },
+  prayerInput: {
+    color: "#111827",
+    fontSize: 15,
+    minHeight: 60,
+    textAlignVertical: "top",
+  },
+  prayerInputActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  anonToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  anonText: {
+    color: "#A3A89E",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  prayerSendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#5B7553",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  prayerEmpty: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.55)",
+    borderRadius: 16,
+    padding: 32,
+    gap: 8,
+  },
+  prayerEmptyText: {
+    color: "#A3A89E",
+    fontSize: 15,
+  },
+  prayerCard: {
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.06)",
+    padding: 16,
+    gap: 10,
+  },
+  prayerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  anonAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.06)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  prayerAuthor: {
+    color: "#2C3E2C",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  prayerTime: {
+    color: "#A3A89E",
+    fontSize: 11,
+  },
+  prayerText: {
+    color: "#4B5563",
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  prayerFooter: {
+    flexDirection: "row",
+  },
+  prayingBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "rgba(192,149,108,0.1)",
+  },
+  prayingBtnActive: {
+    backgroundColor: "#C0956C",
+  },
+  prayingBtnText: {
+    color: "#C0956C",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  prayingBtnTextActive: {
+    color: "#FFFFFF",
   },
 });

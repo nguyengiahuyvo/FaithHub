@@ -330,6 +330,27 @@ const translations = {
   },
   home_member_fallback: { en: "Member", de: "Mitglied", vi: "Thành viên" },
 
+  // Prayer requests
+  prayer_title: { en: "Prayer Requests", de: "Gebetsanliegen", vi: "Nan đề cầu nguyện" },
+  prayer_empty: {
+    en: "No prayer requests yet",
+    de: "Noch keine Gebetsanliegen",
+    vi: "Chưa có nan đề cầu nguyện",
+  },
+  prayer_placeholder: {
+    en: "Share a prayer request...",
+    de: "Teile ein Gebetsanliegen...",
+    vi: "Chia sẻ nan đề cầu nguyện...",
+  },
+  prayer_anonymous: { en: "Post anonymously", de: "Anonym posten", vi: "Đăng ẩn danh" },
+  prayer_anonymous_label: { en: "Anonymous", de: "Anonym", vi: "Ẩn danh" },
+  prayer_delete_msg: {
+    en: "Are you sure you want to delete this prayer request?",
+    de: "Möchtest du dieses Gebetsanliegen wirklich löschen?",
+    vi: "Bạn có chắc chắn muốn xóa nan đề cầu nguyện này không?",
+  },
+  prayer_praying: { en: "Praying", de: "Bete", vi: "Cầu nguyện" },
+
   // Tasks
   tasks_title: { en: "Tasks", de: "Aufgaben", vi: "Công việc" },
   tasks_empty: {

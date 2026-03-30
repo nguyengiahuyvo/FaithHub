@@ -18,7 +18,9 @@
       "Bash(grep -rn \"appContext\\\\|bridge\" /d/Person/FaithHub/node_modules/expo-apple-authentication/ios/*.swift)",
       "Bash(xargs ls:*)",
       "Bash(grep -rn \"RCT_EXPORT_MODULE\\\\|RCT_EXPORT_METHOD\" /d/Person/FaithHub/node_modules/@react-native-community/datetimepicker/ios/*.m)",
-      "Bash(find /d/Person/FaithHub -name *generated* -o -name *Spec.h -o -name *Spec.cpp)"
+      "Bash(find /d/Person/FaithHub -name *generated* -o -name *Spec.h -o -name *Spec.cpp)",
+      "Bash(grep -r assets/images/icon.png node_modules/expo-router/ node_modules/expo/ --include=*.js --include=*.json -l)",
+      "Bash(grep -r images/icon.png /Users/nguyengiahuyvo/Desktop/Privat/FaithHub/.expo/ --include=*.js --include=*.json -l)"
     ]
   }
 }

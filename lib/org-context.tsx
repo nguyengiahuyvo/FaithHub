@@ -51,6 +51,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setIsLoading(true);
     let cancelled = false;
 
     async function findUserOrg() {

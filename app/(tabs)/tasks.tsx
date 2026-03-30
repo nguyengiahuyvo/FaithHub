@@ -49,6 +49,22 @@ type Comment = {
   createdAt: Date | null;
 };
 
+type VoteOption = {
+  label: string;
+  voters: { uid: string; displayName: string | null }[];
+};
+
+type Vote = {
+  id: string;
+  title: string;
+  description: string;
+  options: VoteOption[];
+  deadline: string; // YYYY-MM-DD
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
+};
+
 type Task = {
   id: string;
   title: string;
@@ -67,10 +83,15 @@ export default function TasksScreen() {
   const { org } = useOrg();
   const { lang } = useLanguage();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingVotes, setLoadingVotes] = useState(true);
+  const [showChoiceMenu, setShowChoiceMenu] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showCreateVote, setShowCreateVote] = useState(false);
   const [editingTask, setEditingTask] = useState<EditTask | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteVoteTarget, setDeleteVoteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (!org) return;
@@ -98,6 +119,31 @@ export default function TasksScreen() {
         setLoading(false);
       },
     );
+    return unsub;
+  }, [org]);
+
+  // Votes listener
+  useEffect(() => {
+    if (!org) return;
+    const q = query(
+      collection(db, "organizations", org.orgId, "votes"),
+      orderBy("createdAt", "desc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setVotes(
+        snap.docs.map((d) => ({
+          id: d.id,
+          title: d.data().title || "",
+          description: d.data().description || "",
+          options: d.data().options || [],
+          deadline: d.data().deadline || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+      setLoadingVotes(false);
+    });
     return unsub;
   }, [org]);
 
@@ -129,6 +175,34 @@ export default function TasksScreen() {
     setDeleteTarget(null);
   }
 
+  async function handleDeleteVote() {
+    if (!org || !deleteVoteTarget) return;
+    await deleteDoc(
+      doc(db, "organizations", org.orgId, "votes", deleteVoteTarget),
+    );
+    setDeleteVoteTarget(null);
+  }
+
+  async function handleVote(voteId: string, optionIndex: number) {
+    if (!org || !user) return;
+    const voteDoc = votes.find((v) => v.id === voteId);
+    if (!voteDoc) return;
+    const ref = doc(db, "organizations", org.orgId, "votes", voteId);
+    const me = { uid: user.uid, displayName: user.displayName };
+
+    // Build updated options: remove user from all options, then add to selected
+    const updatedOptions = voteDoc.options.map((opt, i) => {
+      const filtered = opt.voters.filter((v) => v.uid !== user.uid);
+      if (i === optionIndex) {
+        // Toggle: if already voted for this option, just remove
+        const wasVoted = opt.voters.some((v) => v.uid === user.uid);
+        return { ...opt, voters: wasVoted ? filtered : [...filtered, me] };
+      }
+      return { ...opt, voters: filtered };
+    });
+    await updateDoc(ref, { options: updatedOptions });
+  }
+
   const sorted = [...tasks].sort((a, b) => {
     // Done tasks go to bottom
     if (a.status === "done" && b.status !== "done") return 1;
@@ -145,7 +219,7 @@ export default function TasksScreen() {
         <View style={styles.headerRow}>
           <Text style={styles.title}>{t("tasks_title", lang)}</Text>
           <Pressable
-            onPress={() => setShowCreate(true)}
+            onPress={() => setShowChoiceMenu(true)}
             style={styles.addButton}
           >
             <Ionicons name="add" size={22} color="#FFFFFF" />
@@ -183,7 +257,111 @@ export default function TasksScreen() {
             ))}
           </View>
         )}
+
+        {/* Votes */}
+        {!loading && votes.length > 0 && (
+          <View style={{ gap: 10, marginTop: 8 }}>
+            {votes.map((vote) => {
+              const totalVotes = vote.options.reduce((sum, o) => sum + o.voters.length, 0);
+              const todayStr = new Date().toISOString().split("T")[0];
+              const isEnded = vote.deadline && vote.deadline < todayStr;
+              return (
+                <View key={vote.id} style={styles.voteCard}>
+                  <View style={styles.voteHeader}>
+                    <Ionicons name="podium-outline" size={18} color="#5B7553" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.voteTitle}>{vote.title}</Text>
+                      {vote.description ? (
+                        <Text style={styles.voteDesc}>{vote.description}</Text>
+                      ) : null}
+                    </View>
+                    {vote.createdBy === user?.uid && (
+                      <Pressable onPress={() => setDeleteVoteTarget(vote.id)} style={{ padding: 4 }}>
+                        <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {/* Options */}
+                  <View style={{ gap: 6 }}>
+                    {vote.options.map((opt, i) => {
+                      const count = opt.voters.length;
+                      const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                      const myVote = opt.voters.some((v) => v.uid === user?.uid);
+                      return (
+                        <Pressable
+                          key={i}
+                          onPress={() => !isEnded && handleVote(vote.id, i)}
+                          style={[styles.voteOption, myVote && styles.voteOptionSelected]}
+                        >
+                          <View style={[styles.voteBar, { width: `${pct}%` }]} />
+                          <Text style={[styles.voteOptionText, myVote && styles.voteOptionTextSelected]}>
+                            {opt.label}
+                          </Text>
+                          <Text style={styles.votePct}>
+                            {count} {count === 1 ? t("vote_vote", lang) : t("vote_votes", lang)} ({pct}%)
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  {/* Footer */}
+                  <View style={styles.voteFooter}>
+                    {vote.createdByName && (
+                      <Text style={styles.voteMeta}>
+                        {t("tasks_by", lang)} {vote.createdByName}
+                      </Text>
+                    )}
+                    {vote.deadline ? (
+                      <Text style={[styles.voteMeta, isEnded && { color: "#DC2626" }]}>
+                        {isEnded ? t("vote_ended", lang) : t("vote_ends", lang)}: {vote.deadline}
+                      </Text>
+                    ) : null}
+                    <Text style={styles.voteMeta}>
+                      {totalVotes} {totalVotes === 1 ? t("vote_vote", lang) : t("vote_votes", lang)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
+
+      {/* Choice menu: Task or Vote */}
+      {showChoiceMenu && (
+        <Modal transparent visible animationType="none">
+          <Pressable
+            style={styles.choiceBackdrop}
+            onPress={() => setShowChoiceMenu(false)}
+          >
+            <View style={styles.choiceMenu}>
+              <Pressable
+                onPress={() => {
+                  setShowChoiceMenu(false);
+                  setShowCreate(true);
+                }}
+                style={styles.choiceItem}
+              >
+                <Ionicons name="checkbox-outline" size={22} color="#5B7553" />
+                <Text style={styles.choiceText}>{t("tasks_add_task", lang)}</Text>
+              </Pressable>
+              <View style={styles.choiceDivider} />
+              <Pressable
+                onPress={() => {
+                  setShowChoiceMenu(false);
+                  setShowCreateVote(true);
+                }}
+                style={styles.choiceItem}
+              >
+                <Ionicons name="podium-outline" size={22} color="#5B7553" />
+                <Text style={styles.choiceText}>{t("tasks_add_vote", lang)}</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
 
       <CreateTaskModal
         visible={showCreate || !!editingTask}
@@ -207,9 +385,310 @@ export default function TasksScreen() {
         onConfirm={handleDeleteTask}
         onDismiss={() => setDeleteTarget(null)}
       />
+
+      <CreateVoteModal
+        visible={showCreateVote}
+        orgId={org.orgId}
+        userId={user?.uid ?? ""}
+        userName={user?.displayName ?? null}
+        lang={lang}
+        onDismiss={() => setShowCreateVote(false)}
+      />
+
+      <DeleteConfirmModal
+        visible={!!deleteVoteTarget}
+        title={t("delete_title", lang)}
+        message={t("delete_vote_msg", lang)}
+        confirmText={t("delete", lang)}
+        cancelText={t("cancel", lang)}
+        onConfirm={handleDeleteVote}
+        onDismiss={() => setDeleteVoteTarget(null)}
+      />
     </View>
   );
 }
+
+function CreateVoteModal({
+  visible,
+  orgId,
+  userId,
+  userName,
+  lang,
+  onDismiss,
+}: {
+  visible: boolean;
+  orgId: string;
+  userId: string;
+  userName: string | null;
+  lang: "en" | "de" | "vi";
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [options, setOptions] = useState(["", ""]);
+  const [deadline, setDeadline] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setTitle("");
+      setDescription("");
+      setOptions(["", ""]);
+      setDeadline("");
+      onDismiss();
+    });
+  }
+
+  async function handleCreate() {
+    const validOptions = options.filter((o) => o.trim());
+    if (!title.trim() || validOptions.length < 2) return;
+    setSaving(true);
+    try {
+      await addDoc(collection(db, "organizations", orgId, "votes"), {
+        title: title.trim(),
+        description: description.trim(),
+        options: validOptions.map((label) => ({ label: label.trim(), voters: [] })),
+        deadline: deadline.trim(),
+        createdBy: userId,
+        createdByName: userName,
+        createdAt: serverTimestamp(),
+      });
+      setTitle("");
+      setDescription("");
+      setOptions(["", ""]);
+      setDeadline("");
+      onDismiss();
+    } catch {
+      // ignore
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[voteModalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[voteModalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <Text style={voteModalStyles.modalTitle}>{t("tasks_add_vote", lang)}</Text>
+
+          <View style={voteModalStyles.field}>
+            <Text style={voteModalStyles.label}>{t("vote_title_label", lang)}</Text>
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder={t("vote_title_placeholder", lang)}
+              placeholderTextColor="#A3A89E"
+              style={voteModalStyles.input}
+            />
+          </View>
+
+          <View style={voteModalStyles.field}>
+            <Text style={voteModalStyles.label}>{t("tasks_desc_label", lang)}</Text>
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              placeholder={t("tasks_desc_placeholder", lang)}
+              placeholderTextColor="#A3A89E"
+              style={[voteModalStyles.input, { minHeight: 60, textAlignVertical: "top" }]}
+              multiline
+            />
+          </View>
+
+          <View style={voteModalStyles.field}>
+            <Text style={voteModalStyles.label}>{t("vote_option", lang)}</Text>
+            <ScrollView style={{ maxHeight: 160 }} nestedScrollEnabled>
+              {options.map((opt, i) => (
+                <View key={i} style={voteModalStyles.optionRow}>
+                  <TextInput
+                    value={opt}
+                    onChangeText={(val) => {
+                      const updated = [...options];
+                      updated[i] = val;
+                      setOptions(updated);
+                    }}
+                    placeholder={`${t("vote_option", lang)} ${i + 1}`}
+                    placeholderTextColor="#A3A89E"
+                    style={[voteModalStyles.input, { flex: 1 }]}
+                  />
+                  {options.length > 2 && (
+                    <Pressable
+                      onPress={() => setOptions(options.filter((_, j) => j !== i))}
+                      style={voteModalStyles.removeBtn}
+                    >
+                      <Ionicons name="close-circle" size={22} color="#DC2626" />
+                    </Pressable>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+            <Pressable
+              onPress={() => setOptions([...options, ""])}
+              style={voteModalStyles.addOptionBtn}
+            >
+              <Ionicons name="add-circle-outline" size={18} color="#5B7553" />
+              <Text style={voteModalStyles.addOptionText}>{t("vote_add_option", lang)}</Text>
+            </Pressable>
+          </View>
+
+          <View style={voteModalStyles.field}>
+            <Text style={voteModalStyles.label}>{t("vote_deadline", lang)}</Text>
+            <TextInput
+              value={deadline}
+              onChangeText={setDeadline}
+              placeholder={t("vote_deadline_placeholder", lang)}
+              placeholderTextColor="#A3A89E"
+              style={voteModalStyles.input}
+            />
+          </View>
+
+          <View style={voteModalStyles.buttonRow}>
+            <Pressable onPress={handleDismiss} style={voteModalStyles.cancelBtn}>
+              <Text style={voteModalStyles.cancelText}>{t("cancel", lang)}</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleCreate}
+              disabled={saving || !title.trim() || options.filter((o) => o.trim()).length < 2}
+              style={[
+                voteModalStyles.createBtn,
+                (saving || !title.trim() || options.filter((o) => o.trim()).length < 2) && { opacity: 0.6 },
+              ]}
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={voteModalStyles.createText}>{t("create", lang)}</Text>
+              )}
+            </Pressable>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const voteModalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    gap: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  modalTitle: {
+    color: "#2C3E2C",
+    fontSize: 22,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  field: { gap: 6 },
+  label: {
+    color: "#2C3E2C",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  input: {
+    backgroundColor: "#F9F7F4",
+    borderColor: "rgba(0,0,0,0.08)",
+    borderRadius: 14,
+    borderWidth: 1,
+    color: "#111827",
+    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+  },
+  removeBtn: {
+    padding: 2,
+  },
+  addOptionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+  },
+  addOptionText: {
+    color: "#5B7553",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4,
+  },
+  cancelBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  cancelText: {
+    color: "#4B5563",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  createBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#5B7553",
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  createText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
 
 function formatDate(date: Date | null, lang: "en" | "de" | "vi"): string {
   if (!date) return "";
@@ -901,6 +1380,118 @@ const styles = StyleSheet.create({
     color: "#A3A89E",
     fontSize: 11,
     marginLeft: 2,
+  },
+  // Choice menu
+  choiceBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  choiceMenu: {
+    width: "100%",
+    maxWidth: 280,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  choiceItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+  },
+  choiceText: {
+    color: "#2C3E2C",
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  choiceDivider: {
+    height: 1,
+    backgroundColor: "rgba(0,0,0,0.06)",
+    marginHorizontal: 16,
+  },
+  // Vote card
+  voteCard: {
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(91,117,83,0.15)",
+    padding: 16,
+    gap: 12,
+  },
+  voteHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  voteTitle: {
+    color: "#2C3E2C",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  voteDesc: {
+    color: "#6B7264",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 2,
+  },
+  voteOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    overflow: "hidden",
+    position: "relative",
+  },
+  voteOptionSelected: {
+    backgroundColor: "rgba(91,117,83,0.12)",
+    borderWidth: 1,
+    borderColor: "#5B7553",
+  },
+  voteBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "rgba(91,117,83,0.08)",
+    borderRadius: 12,
+  },
+  voteOptionText: {
+    color: "#2C3E2C",
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+    zIndex: 1,
+  },
+  voteOptionTextSelected: {
+    color: "#5B7553",
+    fontWeight: "700",
+  },
+  votePct: {
+    color: "#8A8F84",
+    fontSize: 12,
+    fontWeight: "600",
+    zIndex: 1,
+  },
+  voteFooter: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    alignItems: "center",
+  },
+  voteMeta: {
+    color: "#A3A89E",
+    fontSize: 12,
   },
 });
 

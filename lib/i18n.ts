@@ -434,6 +434,32 @@ const translations = {
   },
   tasks_created: { en: "Created", de: "Erstellt", vi: "Tạo lúc" },
 
+  // Create choice
+  tasks_add_task: { en: "New Task", de: "Neue Aufgabe", vi: "Công việc mới" },
+  tasks_add_vote: { en: "New Vote", de: "Neue Abstimmung", vi: "Bình chọn mới" },
+
+  // Votes
+  vote_title_label: { en: "Question", de: "Frage", vi: "Câu hỏi" },
+  vote_title_placeholder: {
+    en: "What should we vote on?",
+    de: "Worüber soll abgestimmt werden?",
+    vi: "Bình chọn về điều gì?",
+  },
+  vote_option: { en: "Option", de: "Option", vi: "Lựa chọn" },
+  vote_add_option: { en: "Add option", de: "Option hinzufügen", vi: "Thêm lựa chọn" },
+  vote_deadline: { en: "Deadline", de: "Frist", vi: "Hạn chót" },
+  vote_deadline_placeholder: { en: "YYYY-MM-DD", de: "JJJJ-MM-TT", vi: "YYYY-MM-DD" },
+  vote_no_votes: { en: "No votes yet", de: "Noch keine Abstimmungen", vi: "Chưa có bình chọn" },
+  vote_votes: { en: "votes", de: "Stimmen", vi: "phiếu" },
+  vote_vote: { en: "vote", de: "Stimme", vi: "phiếu" },
+  vote_ended: { en: "Ended", de: "Beendet", vi: "Đã kết thúc" },
+  vote_ends: { en: "Ends", de: "Endet", vi: "Kết thúc" },
+  delete_vote_msg: {
+    en: "Are you sure you want to delete this vote? This cannot be undone.",
+    de: "Möchtest du diese Abstimmung wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+    vi: "Bạn có chắc chắn muốn xóa bình chọn này không? Không thể hoàn tác.",
+  },
+
   // Calendar
   cal_title: { en: "Calendar", de: "Kalender", vi: "Lịch" },
   cal_new: { en: "New Event", de: "Neues Ereignis", vi: "Sự kiện mới" },

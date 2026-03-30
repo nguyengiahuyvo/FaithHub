@@ -28,6 +28,7 @@ import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
+import Snackbar from "@/components/Snackbar";
 import {
   arrayRemove,
   arrayUnion,
@@ -92,6 +93,8 @@ export default function TasksScreen() {
   const [editingTask, setEditingTask] = useState<EditTask | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleteVoteTarget, setDeleteVoteTarget] = useState<string | null>(null);
+  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  const snackOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!org) return;
@@ -167,12 +170,23 @@ export default function TasksScreen() {
     }
   }
 
+  function showSnack(msg: string) {
+    setSnackMsg(msg);
+    snackOpacity.setValue(0);
+    Animated.timing(snackOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start(() => {
+      setTimeout(() => {
+        Animated.timing(snackOpacity, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setSnackMsg(null));
+      }, 3000);
+    });
+  }
+
   async function handleDeleteTask() {
     if (!org || !deleteTarget) return;
     await deleteDoc(
       doc(db, "organizations", org.orgId, "tasks", deleteTarget),
     );
     setDeleteTarget(null);
+    showSnack(t("snack_deleted", lang));
   }
 
   async function handleDeleteVote() {
@@ -181,6 +195,7 @@ export default function TasksScreen() {
       doc(db, "organizations", org.orgId, "votes", deleteVoteTarget),
     );
     setDeleteVoteTarget(null);
+    showSnack(t("snack_deleted", lang));
   }
 
   async function handleVote(voteId: string, optionIndex: number) {
@@ -404,6 +419,8 @@ export default function TasksScreen() {
         onConfirm={handleDeleteVote}
         onDismiss={() => setDeleteVoteTarget(null)}
       />
+
+      <Snackbar message={snackMsg} opacity={snackOpacity} />
     </View>
   );
 }

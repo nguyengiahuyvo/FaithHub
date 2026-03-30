@@ -31,6 +31,7 @@ import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
+import Snackbar from "@/components/Snackbar";
 
 type MemberInfo = { uid: string; displayName: string | null; email: string; role: string };
 
@@ -524,6 +525,8 @@ function OrgDashboard() {
   const [sendingPrayer, setSendingPrayer] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [showMyPrayers, setShowMyPrayers] = useState(false);
+  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  const snackOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!org) return;
@@ -601,10 +604,21 @@ function OrgDashboard() {
     }
   }
 
+  function showSnack(msg: string) {
+    setSnackMsg(msg);
+    snackOpacity.setValue(0);
+    Animated.timing(snackOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start(() => {
+      setTimeout(() => {
+        Animated.timing(snackOpacity, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setSnackMsg(null));
+      }, 3000);
+    });
+  }
+
   async function handleDeletePrayer() {
     if (!org || !deleteTarget) return;
     await deleteDoc(doc(db, "organizations", org.orgId, "prayers", deleteTarget));
     setDeleteTarget(null);
+    showSnack(t("snack_deleted", lang));
   }
 
   async function togglePraying(prayer: PrayerRequest) {
@@ -691,7 +705,10 @@ function OrgDashboard() {
         user={user}
         lang={lang}
         timeAgo={timeAgo}
-        onDelete={setDeleteTarget}
+        onDelete={(id) => {
+          setShowMyPrayers(false);
+          setTimeout(() => setDeleteTarget(id), 300);
+        }}
         onTogglePraying={togglePraying}
         onDismiss={() => setShowMyPrayers(false)}
       />
@@ -815,6 +832,8 @@ function OrgDashboard() {
         onConfirm={handleDeletePrayer}
         onDismiss={() => setDeleteTarget(null)}
       />
+
+      <Snackbar message={snackMsg} opacity={snackOpacity} />
     </View>
   );
 }

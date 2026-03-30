@@ -721,6 +721,7 @@ const translations = {
   },
 
   // Shared
+  snack_deleted: { en: "Deleted successfully", de: "Erfolgreich gelöscht", vi: "Đã xóa thành công" },
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
   close: { en: "Close", de: "Schließen", vi: "Đóng" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },

@@ -1,4 +1,5 @@
 import UserAvatar from "@/components/UserAvatar";
+import Snackbar from "@/components/Snackbar";
 import { useAuth } from "@/lib/auth-context";
 import { db } from "@/lib/firebase";
 import { t, tArray } from "@/lib/i18n";
@@ -77,6 +78,8 @@ export default function CalendarScreen() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  const snackOpacity = useRef(new Animated.Value(0)).current;
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -189,12 +192,23 @@ export default function CalendarScreen() {
     }
   }
 
+  function showSnack(msg: string) {
+    setSnackMsg(msg);
+    snackOpacity.setValue(0);
+    Animated.timing(snackOpacity, { toValue: 1, duration: 250, useNativeDriver: true }).start(() => {
+      setTimeout(() => {
+        Animated.timing(snackOpacity, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setSnackMsg(null));
+      }, 3000);
+    });
+  }
+
   async function handleDeleteEvent() {
     if (!org || !deleteTarget) return;
     await deleteDoc(
       doc(db, "organizations", org.orgId, "events", deleteTarget),
     );
     setDeleteTarget(null);
+    showSnack(t("snack_deleted", lang));
   }
 
   if (!org) return null;
@@ -374,6 +388,8 @@ export default function CalendarScreen() {
         onConfirm={handleDeleteEvent}
         onDismiss={() => setDeleteTarget(null)}
       />
+
+      <Snackbar message={snackMsg} opacity={snackOpacity} />
     </View>
   );
 }

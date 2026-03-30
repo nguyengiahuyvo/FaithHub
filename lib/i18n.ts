@@ -454,6 +454,24 @@ const translations = {
   vote_vote: { en: "vote", de: "Stimme", vi: "phiếu" },
   vote_ended: { en: "Ended", de: "Beendet", vi: "Đã kết thúc" },
   vote_ends: { en: "Ends", de: "Endet", vi: "Kết thúc" },
+  vote_days_left: { en: "d left", de: "T übrig", vi: "ngày còn" },
+  vote_today: { en: "Today", de: "Heute", vi: "Hôm nay" },
+  vote_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
+  vote_no_comments: {
+    en: "No comments yet",
+    de: "Noch keine Kommentare",
+    vi: "Chưa có bình luận",
+  },
+  vote_add_comment: {
+    en: "Write a comment...",
+    de: "Kommentar schreiben...",
+    vi: "Viết bình luận...",
+  },
+  vote_delete_comment_msg: {
+    en: "Are you sure you want to delete this comment?",
+    de: "Möchtest du diesen Kommentar wirklich löschen?",
+    vi: "Bạn có chắc chắn muốn xóa bình luận này không?",
+  },
   delete_vote_msg: {
     en: "Are you sure you want to delete this vote? This cannot be undone.",
     de: "Möchtest du diese Abstimmung wirklich löschen? Dies kann nicht rückgängig gemacht werden.",

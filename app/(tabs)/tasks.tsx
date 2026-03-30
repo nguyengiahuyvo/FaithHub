@@ -1,3 +1,4 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -5,6 +6,7 @@ import {
   Animated,
   Keyboard,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -206,15 +208,16 @@ export default function TasksScreen() {
     const ref = doc(db, "organizations", org.orgId, "votes", voteId);
     const me = { uid: user.uid, displayName: user.displayName };
 
-    // Build updated options: remove user from all options, then add to selected
+    // Toggle only the clicked option (multi-vote allowed)
     const updatedOptions = voteDoc.options.map((opt, i) => {
-      const filtered = opt.voters.filter((v) => v.uid !== user.uid);
-      if (i === optionIndex) {
-        // Toggle: if already voted for this option, just remove
-        const wasVoted = opt.voters.some((v) => v.uid === user.uid);
-        return { ...opt, voters: wasVoted ? filtered : [...filtered, me] };
-      }
-      return { ...opt, voters: filtered };
+      if (i !== optionIndex) return opt;
+      const wasVoted = opt.voters.some((v) => v.uid === user.uid);
+      return {
+        ...opt,
+        voters: wasVoted
+          ? opt.voters.filter((v) => v.uid !== user.uid)
+          : [...opt.voters, me],
+      };
     });
     await updateDoc(ref, { options: updatedOptions });
   }
@@ -277,70 +280,17 @@ export default function TasksScreen() {
         {/* Votes */}
         {!loading && votes.length > 0 && (
           <View style={{ gap: 10, marginTop: 8 }}>
-            {votes.map((vote) => {
-              const totalVotes = vote.options.reduce((sum, o) => sum + o.voters.length, 0);
-              const todayStr = new Date().toISOString().split("T")[0];
-              const isEnded = vote.deadline && vote.deadline < todayStr;
-              return (
-                <View key={vote.id} style={styles.voteCard}>
-                  <View style={styles.voteHeader}>
-                    <Ionicons name="podium-outline" size={18} color="#5B7553" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.voteTitle}>{vote.title}</Text>
-                      {vote.description ? (
-                        <Text style={styles.voteDesc}>{vote.description}</Text>
-                      ) : null}
-                    </View>
-                    {vote.createdBy === user?.uid && (
-                      <Pressable onPress={() => setDeleteVoteTarget(vote.id)} style={{ padding: 4 }}>
-                        <Ionicons name="trash-outline" size={16} color="#DC2626" />
-                      </Pressable>
-                    )}
-                  </View>
-
-                  {/* Options */}
-                  <View style={{ gap: 6 }}>
-                    {vote.options.map((opt, i) => {
-                      const count = opt.voters.length;
-                      const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                      const myVote = opt.voters.some((v) => v.uid === user?.uid);
-                      return (
-                        <Pressable
-                          key={i}
-                          onPress={() => !isEnded && handleVote(vote.id, i)}
-                          style={[styles.voteOption, myVote && styles.voteOptionSelected]}
-                        >
-                          <View style={[styles.voteBar, { width: `${pct}%` }]} />
-                          <Text style={[styles.voteOptionText, myVote && styles.voteOptionTextSelected]}>
-                            {opt.label}
-                          </Text>
-                          <Text style={styles.votePct}>
-                            {count} {count === 1 ? t("vote_vote", lang) : t("vote_votes", lang)} ({pct}%)
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  {/* Footer */}
-                  <View style={styles.voteFooter}>
-                    {vote.createdByName && (
-                      <Text style={styles.voteMeta}>
-                        {t("tasks_by", lang)} {vote.createdByName}
-                      </Text>
-                    )}
-                    {vote.deadline ? (
-                      <Text style={[styles.voteMeta, isEnded && { color: "#DC2626" }]}>
-                        {isEnded ? t("vote_ended", lang) : t("vote_ends", lang)}: {vote.deadline}
-                      </Text>
-                    ) : null}
-                    <Text style={styles.voteMeta}>
-                      {totalVotes} {totalVotes === 1 ? t("vote_vote", lang) : t("vote_votes", lang)}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
+            {votes.map((vote) => (
+              <VoteCard
+                key={vote.id}
+                vote={vote}
+                orgId={org.orgId}
+                user={user}
+                lang={lang}
+                onVote={handleVote}
+                onDelete={setDeleteVoteTarget}
+              />
+            ))}
           </View>
         )}
       </ScrollView>
@@ -446,7 +396,8 @@ function CreateVoteModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [options, setOptions] = useState(["", ""]);
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -478,7 +429,8 @@ function CreateVoteModal({
       setTitle("");
       setDescription("");
       setOptions(["", ""]);
-      setDeadline("");
+      setDeadline(null);
+      setShowDatePicker(false);
       onDismiss();
     });
   }
@@ -492,7 +444,7 @@ function CreateVoteModal({
         title: title.trim(),
         description: description.trim(),
         options: validOptions.map((label) => ({ label: label.trim(), voters: [] })),
-        deadline: deadline.trim(),
+        deadline: deadline ? deadline.toISOString().split("T")[0] : "",
         createdBy: userId,
         createdByName: userName,
         createdAt: serverTimestamp(),
@@ -500,7 +452,8 @@ function CreateVoteModal({
       setTitle("");
       setDescription("");
       setOptions(["", ""]);
-      setDeadline("");
+      setDeadline(null);
+      setShowDatePicker(false);
       onDismiss();
     } catch {
       // ignore
@@ -587,14 +540,55 @@ function CreateVoteModal({
 
           <View style={voteModalStyles.field}>
             <Text style={voteModalStyles.label}>{t("vote_deadline", lang)}</Text>
-            <TextInput
-              value={deadline}
-              onChangeText={setDeadline}
-              placeholder={t("vote_deadline_placeholder", lang)}
-              placeholderTextColor="#A3A89E"
-              style={voteModalStyles.input}
-            />
+            <Pressable
+              onPress={() => setShowDatePicker(true)}
+              style={[voteModalStyles.input, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+            >
+              <Ionicons name="calendar-outline" size={18} color={deadline ? "#5B7553" : "#A3A89E"} />
+              <Text style={{ color: deadline ? "#111827" : "#A3A89E", fontSize: 16, flex: 1 }}>
+                {deadline ? deadline.toISOString().split("T")[0] : t("vote_deadline_placeholder", lang)}
+              </Text>
+              {deadline && (
+                <Pressable onPress={() => setDeadline(null)} hitSlop={8}>
+                  <Ionicons name="close-circle" size={18} color="#A3A89E" />
+                </Pressable>
+              )}
+            </Pressable>
           </View>
+
+          {/* Date picker modal */}
+          {showDatePicker && (
+            <Modal transparent visible animationType="fade">
+              <View style={datePickerStyles.backdrop}>
+                <View style={datePickerStyles.card}>
+                  <DateTimePicker
+                    value={deadline || new Date()}
+                    mode="date"
+                    display="inline"
+                    minimumDate={new Date()}
+                    themeVariant="light"
+                    accentColor="#5B7553"
+                    onChange={(_: unknown, date?: Date) => {
+                      if (Platform.OS === "android") {
+                        setShowDatePicker(false);
+                        if (date) setDeadline(date);
+                      } else {
+                        if (date) setDeadline(date);
+                      }
+                    }}
+                  />
+                  {Platform.OS === "ios" && (
+                    <Pressable
+                      onPress={() => setShowDatePicker(false)}
+                      style={datePickerStyles.doneBtn}
+                    >
+                      <Text style={datePickerStyles.doneText}>{t("save", lang)}</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            </Modal>
+          )}
 
           <View style={voteModalStyles.buttonRow}>
             <Pressable onPress={handleDismiss} style={voteModalStyles.cancelBtn}>
@@ -712,6 +706,40 @@ const voteModalStyles = StyleSheet.create({
     paddingVertical: 14,
   },
   createText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
+
+const datePickerStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 20,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  doneBtn: {
+    alignItems: "center",
+    backgroundColor: "#5B7553",
+    borderRadius: 14,
+    paddingVertical: 12,
+  },
+  doneText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
@@ -1074,6 +1102,261 @@ function TaskCard({
               value={commentText}
               onChangeText={setCommentText}
               placeholder={t("tasks_add_comment", lang)}
+              placeholderTextColor="#A3A89E"
+              style={commentStyles.input}
+              multiline
+            />
+            <Pressable
+              onPress={handleSendComment}
+              disabled={sending || !commentText.trim()}
+              style={[
+                commentStyles.sendBtn,
+                (!commentText.trim() || sending) && { opacity: 0.4 },
+              ]}
+            >
+              {sending ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Ionicons name="send" size={16} color="#FFFFFF" />
+              )}
+            </Pressable>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function VoteCard({
+  vote,
+  orgId,
+  user,
+  lang,
+  onVote,
+  onDelete,
+}: {
+  vote: Vote;
+  orgId: string;
+  user: { uid: string; displayName: string | null } | null;
+  lang: "en" | "de" | "vi";
+  onVote: (voteId: string, optionIndex: number) => void;
+  onDelete: (voteId: string) => void;
+}) {
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [commentText, setCommentText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ref = collection(db, "organizations", orgId, "votes", vote.id, "comments");
+    const unsub = onSnapshot(ref, (snap) => setCommentCount(snap.size));
+    return unsub;
+  }, [orgId, vote.id]);
+
+  useEffect(() => {
+    if (!showComments) return;
+    const q = query(
+      collection(db, "organizations", orgId, "votes", vote.id, "comments"),
+      orderBy("createdAt", "asc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setComments(
+        snap.docs.map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+    });
+    return unsub;
+  }, [showComments, orgId, vote.id]);
+
+  async function handleDeleteComment() {
+    if (!deleteCommentTarget) return;
+    await deleteDoc(doc(db, "organizations", orgId, "votes", vote.id, "comments", deleteCommentTarget));
+    setDeleteCommentTarget(null);
+  }
+
+  async function handleSendComment() {
+    if (!commentText.trim() || !user) return;
+    setSending(true);
+    try {
+      await addDoc(
+        collection(db, "organizations", orgId, "votes", vote.id, "comments"),
+        {
+          text: commentText.trim(),
+          createdBy: user.uid,
+          createdByName: user.displayName,
+          createdAt: serverTimestamp(),
+        },
+      );
+      setCommentText("");
+    } catch {
+      // ignore
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const totalVotes = vote.options.reduce((sum, o) => sum + o.voters.length, 0);
+  const todayStr = new Date().toISOString().split("T")[0];
+  const isEnded = vote.deadline && vote.deadline < todayStr;
+
+  return (
+    <View style={styles.voteCard}>
+      <View style={styles.voteHeader}>
+        <Ionicons name="podium-outline" size={18} color="#5B7553" />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.voteTitle}>{vote.title}</Text>
+          {vote.description ? (
+            <Text style={styles.voteDesc}>{vote.description}</Text>
+          ) : null}
+        </View>
+        {vote.createdBy === user?.uid && (
+          <Pressable onPress={() => onDelete(vote.id)} style={{ padding: 4 }}>
+            <Ionicons name="trash-outline" size={16} color="#DC2626" />
+          </Pressable>
+        )}
+      </View>
+
+      {/* Options */}
+      <View style={{ gap: 6 }}>
+        {vote.options.map((opt, i) => {
+          const count = opt.voters.length;
+          const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+          const myVote = opt.voters.some((v) => v.uid === user?.uid);
+          return (
+            <Pressable
+              key={i}
+              onPress={() => !isEnded && onVote(vote.id, i)}
+              style={[styles.voteOption, myVote && styles.voteOptionSelected]}
+            >
+              <View style={[styles.voteBar, { width: `${pct}%` }]} />
+              <Text style={[styles.voteOptionText, myVote && styles.voteOptionTextSelected]}>
+                {opt.label}
+              </Text>
+              <Text style={styles.votePct}>
+                {count} {count === 1 ? t("vote_vote", lang) : t("vote_votes", lang)} ({pct}%)
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Footer */}
+      <View style={styles.voteFooter}>
+        {vote.createdByName && (
+          <Text style={styles.voteMeta}>
+            {t("tasks_by", lang)} {vote.createdByName}
+          </Text>
+        )}
+        {vote.deadline ? (() => {
+          const deadlineDate = new Date(vote.deadline + "T23:59:59");
+          const now = new Date();
+          const diffDays = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return (
+            <View style={[
+              styles.countdownBadge,
+              isEnded ? styles.countdownEnded : diffDays <= 1 ? styles.countdownUrgent : styles.countdownActive,
+            ]}>
+              <Ionicons name="time-outline" size={12} color={isEnded ? "#DC2626" : diffDays <= 1 ? "#EA580C" : "#5B7553"} />
+              <Text style={[
+                styles.countdownText,
+                isEnded ? { color: "#DC2626" } : diffDays <= 1 ? { color: "#EA580C" } : { color: "#5B7553" },
+              ]}>
+                {isEnded
+                  ? t("vote_ended", lang)
+                  : diffDays === 0
+                    ? t("vote_today", lang)
+                    : `${diffDays}${t("vote_days_left", lang)}`}
+              </Text>
+            </View>
+          );
+        })() : null}
+        <Text style={styles.voteMeta}>
+          {totalVotes} {totalVotes === 1 ? t("vote_vote", lang) : t("vote_votes", lang)}
+        </Text>
+      </View>
+
+      {/* Comments toggle */}
+      <Pressable
+        onPress={() => setShowComments(!showComments)}
+        style={[
+          styles.commentToggleBtn,
+          showComments && styles.commentToggleBtnActive,
+        ]}
+      >
+        <Ionicons
+          name="chatbubble-outline"
+          size={14}
+          color={showComments ? "#FFFFFF" : "#5B7553"}
+        />
+        <Text
+          style={[
+            styles.commentToggleText,
+            showComments && styles.commentToggleTextActive,
+          ]}
+        >
+          {t("vote_comments", lang)}
+          {commentCount > 0 ? ` (${commentCount})` : ""}
+        </Text>
+      </Pressable>
+
+      {/* Delete comment confirm */}
+      <DeleteConfirmModal
+        visible={!!deleteCommentTarget}
+        title={t("delete_title", lang)}
+        message={t("vote_delete_comment_msg", lang)}
+        confirmText={t("delete", lang)}
+        cancelText={t("cancel", lang)}
+        onConfirm={handleDeleteComment}
+        onDismiss={() => setDeleteCommentTarget(null)}
+      />
+
+      {/* Comments section */}
+      {showComments && (
+        <View style={commentStyles.container}>
+          {comments.length === 0 ? (
+            <Text style={commentStyles.empty}>
+              {t("vote_no_comments", lang)}
+            </Text>
+          ) : (
+            comments.map((c) => (
+              <View key={c.id} style={commentStyles.comment}>
+                <UserAvatar uid={c.createdBy} name={c.createdByName} size={28} />
+                <View style={{ flex: 1 }}>
+                  <View style={commentStyles.commentHeader}>
+                    <Text style={commentStyles.commentAuthor}>
+                      {c.createdByName || "?"}
+                    </Text>
+                    <Text style={commentStyles.commentTime}>
+                      {timeAgo(c.createdAt, lang)}
+                    </Text>
+                  </View>
+                  <Text style={commentStyles.commentText}>{c.text}</Text>
+                </View>
+                {c.createdBy === user?.uid && (
+                  <Pressable
+                    onPress={() => setDeleteCommentTarget(c.id)}
+                    style={commentStyles.deleteBtn}
+                  >
+                    <Ionicons name="trash-outline" size={14} color="#DC2626" />
+                  </Pressable>
+                )}
+              </View>
+            ))
+          )}
+
+          {/* Comment input */}
+          <View style={commentStyles.inputRow}>
+            <TextInput
+              value={commentText}
+              onChangeText={setCommentText}
+              placeholder={t("vote_add_comment", lang)}
               placeholderTextColor="#A3A89E"
               style={commentStyles.input}
               multiline
@@ -1520,6 +1803,27 @@ const styles = StyleSheet.create({
   voteMeta: {
     color: "#A3A89E",
     fontSize: 12,
+  },
+  countdownBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  countdownActive: {
+    backgroundColor: "rgba(91,117,83,0.1)",
+  },
+  countdownUrgent: {
+    backgroundColor: "rgba(234,88,12,0.1)",
+  },
+  countdownEnded: {
+    backgroundColor: "rgba(220,38,38,0.1)",
+  },
+  countdownText: {
+    fontSize: 12,
+    fontWeight: "700",
   },
 });
 

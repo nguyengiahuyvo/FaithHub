@@ -25,6 +25,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { t, type Language } from "@/lib/i18n";
 import { LanguageProvider, useLanguage } from "@/lib/language-context";
+import { useNotifications } from "@/lib/notifications";
 import { OrgProvider } from "@/lib/org-context";
 import { db } from "@/lib/firebase";
 
@@ -285,6 +286,9 @@ function RootNavigator() {
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const checkedRef = useRef(false);
+
+  // Register push notifications when user is authenticated and verified
+  useNotifications(user?.emailVerified ? user.uid : undefined);
 
   useEffect(() => {
     if (isLoading) return;

@@ -1,4 +1,3 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -44,6 +43,12 @@ import CreateTaskModal, {
   priorityColor,
   priorityBg,
 } from "@/components/CreateTaskModal";
+
+function LazyDateTimePicker(props: Record<string, unknown>) {
+  const DateTimePicker =
+    require("@react-native-community/datetimepicker").default;
+  return <DateTimePicker {...props} />;
+}
 
 type Comment = {
   id: string;
@@ -556,12 +561,12 @@ function CreateVoteModal({
             </Pressable>
           </View>
 
-          {/* Date picker modal */}
+          {/* Date picker modal — lazy-loaded to avoid TurboModule crash at startup */}
           {showDatePicker && (
             <Modal transparent visible animationType="fade">
               <View style={datePickerStyles.backdrop}>
                 <View style={datePickerStyles.card}>
-                  <DateTimePicker
+                  <LazyDateTimePicker
                     value={deadline || new Date()}
                     mode="date"
                     display="inline"

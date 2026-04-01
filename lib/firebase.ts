@@ -1,9 +1,7 @@
-import { initializeApp } from "firebase/app";
-import {
-  getAuth,
-  initializeAuth,
-  getReactNativePersistence,
-} from "firebase/auth";
+import { getApps, initializeApp } from "firebase/app";
+import { type Auth, getAuth, initializeAuth } from "firebase/auth";
+// @ts-expect-error: exported from RN entry point, not in default browser types
+import { getReactNativePersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { Platform } from "react-native";
 
@@ -16,9 +14,9 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-let auth;
+let auth: Auth;
 if (Platform.OS === "web") {
   auth = getAuth(app);
 } else {

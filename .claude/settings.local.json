@@ -7,7 +7,20 @@
       "Read(//c/Program Files/Eclipse Adoptium//**)",
       "Read(//c/Program Files/**)",
       "Read(//c/Program Files/Microsoft//**)",
-      "Read(//c/Program Files/Android/Android Studio/jbr//**)"
+      "Read(//c/Program Files/Android/Android Studio/jbr//**)",
+      "Bash(find /d/Person/FaithHub/ios -type f \\\\\\(-name *.m -o -name *.mm -o -name *.swift \\\\\\))",
+      "Bash(find /d/Person/FaithHub -path *Pods* -o -type d -name ios)",
+      "Bash(grep -r \"performVoidMethodInvocation\\\\|TurboModule\\\\|initWithBridge\" /d/Person/FaithHub/node_modules/@react-native-async-storage /d/Person/FaithHub/node_modules/@react-native-community/datetimepicker --include=*.m --include=*.mm --include=*.swift)",
+      "Bash(find /d/Person/FaithHub/node_modules -name *Firebase* -type d)",
+      "Bash(find /d/Person/FaithHub/node_modules/expo*/ios -name \"*.swift\" -type f)",
+      "Bash(xargs grep:*)",
+      "Bash(find /d/Person/FaithHub/node_modules/expo*/ios -type f \\\\\\( -name \"*.swift\" -o -name \"*.m\" -o -name \"*.mm\" \\\\\\))",
+      "Bash(grep -rn \"appContext\\\\|bridge\" /d/Person/FaithHub/node_modules/expo-apple-authentication/ios/*.swift)",
+      "Bash(xargs ls:*)",
+      "Bash(grep -rn \"RCT_EXPORT_MODULE\\\\|RCT_EXPORT_METHOD\" /d/Person/FaithHub/node_modules/@react-native-community/datetimepicker/ios/*.m)",
+      "Bash(find /d/Person/FaithHub -name *generated* -o -name *Spec.h -o -name *Spec.cpp)",
+      "Bash(grep -r assets/images/icon.png node_modules/expo-router/ node_modules/expo/ --include=*.js --include=*.json -l)",
+      "Bash(grep -r images/icon.png /Users/nguyengiahuyvo/Desktop/Privat/FaithHub/.expo/ --include=*.js --include=*.json -l)"
     ]
   }
 }

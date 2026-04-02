@@ -2,7 +2,7 @@
   "expo": {
     "name": "FaithHub",
     "slug": "FaithHub",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon/ios/AppIcon~ios-marketing.png",
     "scheme": "faithhub",
@@ -11,7 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/images/icon/ios/AppIcon~ios-marketing.png",
-      "bundleIdentifier": "com.nguyengiahuy.vo.FaithHub"
+      "bundleIdentifier": "com.nguyengiahuy.vo.FaithHub",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +25,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.nguyengiahuy.vo.FaithHub",
-      "versionCode": 3
+      "versionCode": 4,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -43,11 +47,25 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon/android/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+          "color": "#5B7553"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "982c36e4-13fe-4ed4-adf7-482e715dda00"
+      }
+    },
+    "owner": "nguyengiahuy.vo"
   }
 }

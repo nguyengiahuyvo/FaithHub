@@ -2,6 +2,7 @@ import UserAvatar from "@/components/UserAvatar";
 import Snackbar from "@/components/Snackbar";
 import TasksScreen from "./tasks";
 import { useAuth } from "@/lib/auth-context";
+import { notifyOrgOfNewEvent } from "@/lib/notifications";
 import { db } from "@/lib/firebase";
 import { t, tArray } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
@@ -1007,18 +1008,44 @@ function CreateEventModal({
       repeatUntil = `${yr}-12-31`;
     }
     try {
-      await addDoc(collection(db, "organizations", orgId, "events"), {
-        title: title.trim(),
-        description: description.trim(),
-        date: date.trim(),
-        time: isBirthday ? "" : time.trim(),
-        repeat: effectiveRepeat,
-        repeatUntil,
-        isBirthday,
-        createdBy: userId,
-        createdByName: userName,
-        createdAt: serverTimestamp(),
+      const evRef = await addDoc(
+        collection(db, "organizations", orgId, "events"),
+        {
+          title: title.trim(),
+          description: description.trim(),
+          date: date.trim(),
+          time: isBirthday ? "" : time.trim(),
+          repeat: effectiveRepeat,
+          repeatUntil,
+          isBirthday,
+          createdBy: userId,
+          createdByName: userName,
+          createdAt: serverTimestamp(),
+        },
+      );
+
+      // Fire push notification to every other org member. Best-effort —
+      // never blocks the UI, never throws.
+      const when =
+        date.trim() + (!isBirthday && time.trim() ? ` · ${time.trim()}` : "");
+      const notifTitle = isBirthday
+        ? t("notif_new_birthday_title", lang)
+        : t("notif_new_event_title", lang);
+      const actor = userName || t("notif_someone", lang);
+      const body = `${actor}: ${title.trim()}${when ? ` — ${when}` : ""}`;
+      notifyOrgOfNewEvent({
+        orgId,
+        creatorUid: userId,
+        title: notifTitle,
+        body,
+        data: {
+          type: isBirthday ? "new_birthday" : "new_event",
+          orgId,
+          eventId: evRef.id,
+          screen: "calendar",
+        },
       });
+
       setTitle("");
       setDescription("");
       setTime("");

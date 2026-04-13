@@ -513,6 +513,17 @@ const translations = {
     de: "Wiederholt sich bis zum Ende des laufenden Jahres.",
     vi: "Lặp lại đến hết năm hiện tại.",
   },
+  notif_new_event_title: {
+    en: "New event",
+    de: "Neues Ereignis",
+    vi: "Sự kiện mới",
+  },
+  notif_new_birthday_title: {
+    en: "New birthday",
+    de: "Neuer Geburtstag",
+    vi: "Sinh nhật mới",
+  },
+  notif_someone: { en: "Someone", de: "Jemand", vi: "Ai đó" },
   cal_no_events: {
     en: "No events",
     de: "Keine Ereignisse",

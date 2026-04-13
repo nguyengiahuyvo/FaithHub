@@ -293,60 +293,65 @@ function StartView({
   });
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.startContent}
-      showsVerticalScrollIndicator={false}
-    >
-      <Animated.View
-        style={[styles.startIconWrap, { transform: [{ translateY }] }]}
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={styles.startContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.startIconCircle}>
-          <Text style={styles.startIconText}>✞</Text>
+        <Animated.View
+          style={[styles.startIconWrap, { transform: [{ translateY }] }]}
+        >
+          <View style={styles.startIconCircle}>
+            <Text style={styles.startIconText}>✞</Text>
+          </View>
+        </Animated.View>
+
+        <Text style={styles.startTitle}>{t("game_title", lang)}</Text>
+        <Text style={styles.startSubtitle}>{t("game_subtitle", lang)}</Text>
+
+        <View style={styles.statsGrid}>
+          <StatCard
+            icon="trophy"
+            iconColor={C.gold}
+            label={t("game_best_score", lang)}
+            value={String(bestScore)}
+          />
+          <StatCard
+            icon="help-circle"
+            iconColor={C.primary}
+            label={t("game_questions", lang)}
+            value={String(QUESTIONS_PER_ROUND)}
+          />
+          <StatCard
+            icon="heart"
+            iconColor={C.heart}
+            label={t("game_hearts", lang)}
+            value={String(STARTING_HEARTS)}
+          />
+          <StatCard
+            icon="flash"
+            iconColor={C.accent}
+            label={t("game_time", lang)}
+            value={`${TIME_PER_QUESTION_MS / 1000}s`}
+          />
         </View>
-      </Animated.View>
 
-      <Text style={styles.startTitle}>{t("game_title", lang)}</Text>
-      <Text style={styles.startSubtitle}>{t("game_subtitle", lang)}</Text>
+        <View style={styles.howCard}>
+          <Text style={styles.howTitle}>{t("game_how_title", lang)}</Text>
+          <HowRow icon="checkmark-circle" color={C.correct} text={t("game_how_1", lang)} />
+          <HowRow icon="flame" color={C.gold} text={t("game_how_2", lang)} />
+          <HowRow icon="timer" color={C.primary} text={t("game_how_3", lang)} />
+        </View>
+      </ScrollView>
 
-      <View style={styles.statsGrid}>
-        <StatCard
-          icon="trophy"
-          iconColor={C.gold}
-          label={t("game_best_score", lang)}
-          value={String(bestScore)}
-        />
-        <StatCard
-          icon="help-circle"
-          iconColor={C.primary}
-          label={t("game_questions", lang)}
-          value={String(QUESTIONS_PER_ROUND)}
-        />
-        <StatCard
-          icon="heart"
-          iconColor={C.heart}
-          label={t("game_hearts", lang)}
-          value={String(STARTING_HEARTS)}
-        />
-        <StatCard
-          icon="flash"
-          iconColor={C.accent}
-          label={t("game_time", lang)}
-          value={`${TIME_PER_QUESTION_MS / 1000}s`}
-        />
+      {/* Bottom-docked action, matches the Calendar/Tasks switcher pill */}
+      <View style={styles.bottomBar}>
+        <Pressable onPress={onStart} style={styles.playBtn}>
+          <Ionicons name="play" size={20} color="#FFFFFF" />
+          <Text style={styles.playBtnText}>{t("game_play", lang)}</Text>
+        </Pressable>
       </View>
-
-      <View style={styles.howCard}>
-        <Text style={styles.howTitle}>{t("game_how_title", lang)}</Text>
-        <HowRow icon="checkmark-circle" color={C.correct} text={t("game_how_1", lang)} />
-        <HowRow icon="flame" color={C.gold} text={t("game_how_2", lang)} />
-        <HowRow icon="timer" color={C.primary} text={t("game_how_3", lang)} />
-      </View>
-
-      <Pressable onPress={onStart} style={styles.playBtn}>
-        <Ionicons name="play" size={20} color="#FFFFFF" />
-        <Text style={styles.playBtnText}>{t("game_play", lang)}</Text>
-      </Pressable>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -672,67 +677,72 @@ function DoneView({
   }, [correctCount, total]);
 
   return (
-    <ScrollView contentContainerStyle={styles.doneContent}>
-      <Animated.View
-        style={[styles.doneHero, { opacity, transform: [{ scale }] }]}
-      >
-        {isNewBest ? (
-          <View style={[styles.doneIconCircle, { backgroundColor: "#FEF3C7" }]}>
-            <Ionicons name="trophy" size={44} color={C.gold} />
-          </View>
-        ) : (
-          <View style={styles.doneIconCircle}>
-            <Ionicons name="ribbon" size={44} color={C.primary} />
-          </View>
-        )}
-        <Text style={styles.doneTitle}>{t(titleKey, lang)}</Text>
-        {isNewBest && (
-          <View style={styles.newBestPill}>
-            <Ionicons name="sparkles" size={12} color={C.gold} />
-            <Text style={styles.newBestPillText}>
-              {t("game_new_best", lang)}
-            </Text>
-          </View>
-        )}
-        <Text style={styles.doneScore}>{score}</Text>
-        <Text style={styles.doneScoreLabel}>{t("game_points", lang)}</Text>
-      </Animated.View>
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.doneContent}>
+        <Animated.View
+          style={[styles.doneHero, { opacity, transform: [{ scale }] }]}
+        >
+          {isNewBest ? (
+            <View style={[styles.doneIconCircle, { backgroundColor: "#FEF3C7" }]}>
+              <Ionicons name="trophy" size={44} color={C.gold} />
+            </View>
+          ) : (
+            <View style={styles.doneIconCircle}>
+              <Ionicons name="ribbon" size={44} color={C.primary} />
+            </View>
+          )}
+          <Text style={styles.doneTitle}>{t(titleKey, lang)}</Text>
+          {isNewBest && (
+            <View style={styles.newBestPill}>
+              <Ionicons name="sparkles" size={12} color={C.gold} />
+              <Text style={styles.newBestPillText}>
+                {t("game_new_best", lang)}
+              </Text>
+            </View>
+          )}
+          <Text style={styles.doneScore}>{score}</Text>
+          <Text style={styles.doneScoreLabel}>{t("game_points", lang)}</Text>
+        </Animated.View>
 
-      <View style={styles.resultGrid}>
-        <StatCard
-          icon="checkmark-done"
-          iconColor={C.correct}
-          label={t("game_correct", lang)}
-          value={`${correctCount}/${total}`}
-        />
-        <StatCard
-          icon="flame"
-          iconColor={C.gold}
-          label={t("game_best_streak", lang)}
-          value={String(bestStreak)}
-        />
-        <StatCard
-          icon="trophy"
-          iconColor={C.accent}
-          label={t("game_best_score", lang)}
-          value={String(bestScore)}
-        />
+        <View style={styles.resultGrid}>
+          <StatCard
+            icon="checkmark-done"
+            iconColor={C.correct}
+            label={t("game_correct", lang)}
+            value={`${correctCount}/${total}`}
+          />
+          <StatCard
+            icon="flame"
+            iconColor={C.gold}
+            label={t("game_best_streak", lang)}
+            value={String(bestStreak)}
+          />
+          <StatCard
+            icon="trophy"
+            iconColor={C.accent}
+            label={t("game_best_score", lang)}
+            value={String(bestScore)}
+          />
+        </View>
+
+        <View style={styles.verseCard}>
+          <Ionicons name="book" size={20} color={C.primary} />
+          <Text style={styles.verseText}>{t(verseKey, lang)}</Text>
+        </View>
+
+        <Pressable onPress={onClose} style={styles.secondaryBtn}>
+          <Text style={styles.secondaryBtnText}>{t("game_done", lang)}</Text>
+        </Pressable>
+      </ScrollView>
+
+      {/* Bottom-docked primary action */}
+      <View style={styles.bottomBar}>
+        <Pressable onPress={onPlayAgain} style={styles.playBtn}>
+          <Ionicons name="refresh" size={18} color="#FFFFFF" />
+          <Text style={styles.playBtnText}>{t("game_play_again", lang)}</Text>
+        </Pressable>
       </View>
-
-      <View style={styles.verseCard}>
-        <Ionicons name="book" size={20} color={C.primary} />
-        <Text style={styles.verseText}>{t(verseKey, lang)}</Text>
-      </View>
-
-      <Pressable onPress={onPlayAgain} style={styles.playBtn}>
-        <Ionicons name="refresh" size={18} color="#FFFFFF" />
-        <Text style={styles.playBtnText}>{t("game_play_again", lang)}</Text>
-      </Pressable>
-
-      <Pressable onPress={onClose} style={styles.secondaryBtn}>
-        <Text style={styles.secondaryBtnText}>{t("game_done", lang)}</Text>
-      </Pressable>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -742,7 +752,7 @@ const styles = StyleSheet.create({
   startContent: {
     padding: 24,
     paddingTop: 56,
-    paddingBottom: 48,
+    paddingBottom: 16,
     gap: 16,
   },
   startIconWrap: { alignItems: "center", marginTop: 8 },
@@ -815,22 +825,25 @@ const styles = StyleSheet.create({
   },
   howRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   howText: { fontSize: 14, color: C.text, flex: 1 },
+  // Bottom-docked container — matches the Calendar/Tasks segmented switcher:
+  // same horizontal margin, bottom margin, padding, and light-green wrapper tint.
+  bottomBar: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+    padding: 4,
+    backgroundColor: "rgba(91,117,83,0.08)",
+    borderRadius: 14,
+  },
   playBtn: {
     flexDirection: "row",
     gap: 8,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: C.primary,
-    paddingVertical: 16,
-    borderRadius: 18,
-    marginTop: 8,
-    shadowColor: C.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
-  playBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  playBtnText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 
   playRoot: { flex: 1, padding: 20, paddingTop: 56, gap: 14 },
   hudRow: {
@@ -947,7 +960,7 @@ const styles = StyleSheet.create({
   doneContent: {
     padding: 24,
     paddingTop: 56,
-    paddingBottom: 48,
+    paddingBottom: 16,
     gap: 16,
   },
   doneHero: { alignItems: "center", gap: 6, marginBottom: 8 },

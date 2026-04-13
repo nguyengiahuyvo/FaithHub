@@ -1538,7 +1538,7 @@ const dStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   content: {
     padding: 24,
-    paddingTop: 16,
+    paddingTop: 60,
     gap: 16,
   },
   headerRow: {

@@ -1190,7 +1190,7 @@ const mStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   content: {
     padding: 24,
-    paddingTop: 16,
+    paddingTop: 60,
     gap: 16,
   },
   headerRow: {
@@ -1527,6 +1527,10 @@ export default function CalendarScreen() {
 
   return (
     <View style={mergedStyles.root}>
+      <View style={{ flex: 1 }}>
+        {tab === "events" ? <CalendarEventsView /> : <TasksScreen />}
+      </View>
+
       <View style={mergedStyles.segmentWrap}>
         <Pressable
           onPress={() => setTab("events")}
@@ -1571,10 +1575,6 @@ export default function CalendarScreen() {
           </Text>
         </Pressable>
       </View>
-
-      <View style={{ flex: 1 }}>
-        {tab === "events" ? <CalendarEventsView /> : <TasksScreen />}
-      </View>
     </View>
   );
 }
@@ -1588,7 +1588,7 @@ const mergedStyles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
     marginHorizontal: 20,
-    marginTop: 52,
+    marginBottom: 10,
     padding: 4,
     backgroundColor: "rgba(91,117,83,0.08)",
     borderRadius: 14,

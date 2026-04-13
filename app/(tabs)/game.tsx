@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +21,7 @@ const BASE_POINTS = 100;
 const MAX_TIME_BONUS = 50;
 const STARTING_HEARTS = 3;
 const BEST_SCORE_KEY = "@faithhub/verseQuest/bestScore";
+const ONBOARDING_KEY = "@faithhub/verseQuest/onboardingSeen";
 
 // ===== Colors =====
 const C = {
@@ -115,6 +117,7 @@ export default function GameScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [bestScore, setBestScore] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(BEST_SCORE_KEY)
@@ -122,7 +125,20 @@ export default function GameScreen() {
         if (v) setBestScore(parseInt(v, 10) || 0);
       })
       .catch(() => {});
+    // First-time visitors see the how-to-play onboarding automatically.
+    AsyncStorage.getItem(ONBOARDING_KEY)
+      .then((v) => {
+        if (!v) setShowOnboarding(true);
+      })
+      .catch(() => {});
   }, []);
+
+  async function dismissOnboarding() {
+    setShowOnboarding(false);
+    try {
+      await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+    } catch {}
+  }
 
   function startGame() {
     setRound(buildRound());
@@ -224,7 +240,12 @@ export default function GameScreen() {
   return (
     <View style={styles.screen}>
       {mode === "idle" && (
-        <StartView bestScore={bestScore} onStart={startGame} lang={lang} />
+        <StartView
+          bestScore={bestScore}
+          onStart={startGame}
+          onShowHelp={() => setShowOnboarding(true)}
+          lang={lang}
+        />
       )}
       {mode === "playing" && (
         <PlayView
@@ -255,6 +276,12 @@ export default function GameScreen() {
           lang={lang}
         />
       )}
+
+      <QuestOnboarding
+        visible={showOnboarding}
+        onDone={dismissOnboarding}
+        lang={lang}
+      />
     </View>
   );
 }
@@ -262,10 +289,12 @@ export default function GameScreen() {
 function StartView({
   bestScore,
   onStart,
+  onShowHelp,
   lang,
 }: {
   bestScore: number;
   onStart: () => void;
+  onShowHelp: () => void;
   lang: Language;
 }) {
   const float = useRef(new Animated.Value(0)).current;
@@ -349,6 +378,14 @@ function StartView({
         <Pressable onPress={onStart} style={styles.playBtn}>
           <Ionicons name="play" size={20} color="#FFFFFF" />
           <Text style={styles.playBtnText}>{t("game_play", lang)}</Text>
+        </Pressable>
+        <Pressable
+          onPress={onShowHelp}
+          style={styles.helpBtn}
+          accessibilityLabel={t("onboard_help", lang)}
+          hitSlop={6}
+        >
+          <Ionicons name="help-circle-outline" size={22} color={C.primary} />
         </Pressable>
       </View>
     </View>
@@ -746,6 +783,267 @@ function DoneView({
   );
 }
 
+// ===== Onboarding =====
+type OnboardStep = {
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  bgColor: string;
+  titleKey:
+    | "onboard_1_title"
+    | "onboard_2_title"
+    | "onboard_3_title"
+    | "onboard_4_title";
+  descKey:
+    | "onboard_1_desc"
+    | "onboard_2_desc"
+    | "onboard_3_desc"
+    | "onboard_4_desc";
+};
+
+const ONBOARD_STEPS: OnboardStep[] = [
+  {
+    icon: "help-circle",
+    color: C.primary,
+    bgColor: "#E8F0E5",
+    titleKey: "onboard_1_title",
+    descKey: "onboard_1_desc",
+  },
+  {
+    icon: "flash",
+    color: C.accent,
+    bgColor: "#F7EDE0",
+    titleKey: "onboard_2_title",
+    descKey: "onboard_2_desc",
+  },
+  {
+    icon: "flame",
+    color: C.gold,
+    bgColor: "#FEF3C7",
+    titleKey: "onboard_3_title",
+    descKey: "onboard_3_desc",
+  },
+  {
+    icon: "heart",
+    color: C.heart,
+    bgColor: "#FEE2E2",
+    titleKey: "onboard_4_title",
+    descKey: "onboard_4_desc",
+  },
+];
+
+function QuestOnboarding({
+  visible,
+  onDone,
+  lang,
+}: {
+  visible: boolean;
+  onDone: () => void;
+  lang: Language;
+}) {
+  const [step, setStep] = useState(0);
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(16)).current;
+
+  useEffect(() => {
+    if (!visible) return;
+    fade.setValue(0);
+    slide.setValue(16);
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slide, {
+        toValue: 0,
+        damping: 16,
+        stiffness: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [step, visible, fade, slide]);
+
+  // Reset to first step when the modal is opened fresh.
+  useEffect(() => {
+    if (visible) setStep(0);
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const cur = ONBOARD_STEPS[step];
+  const isLast = step === ONBOARD_STEPS.length - 1;
+
+  return (
+    <Modal transparent visible animationType="fade" onRequestClose={onDone}>
+      <View style={onbStyles.backdrop}>
+        <View style={onbStyles.card}>
+          <Pressable onPress={onDone} style={onbStyles.skipBtn} hitSlop={10}>
+            <Text style={onbStyles.skipText}>{t("onboard_skip", lang)}</Text>
+          </Pressable>
+
+          <Animated.View
+            style={[
+              onbStyles.body,
+              { opacity: fade, transform: [{ translateY: slide }] },
+            ]}
+          >
+            <View
+              style={[onbStyles.iconCircle, { backgroundColor: cur.bgColor }]}
+            >
+              <Ionicons name={cur.icon} size={56} color={cur.color} />
+            </View>
+            <Text style={onbStyles.title}>{t(cur.titleKey, lang)}</Text>
+            <Text style={onbStyles.desc}>{t(cur.descKey, lang)}</Text>
+          </Animated.View>
+
+          <View style={onbStyles.dotsRow}>
+            {ONBOARD_STEPS.map((_, i) => (
+              <View
+                key={i}
+                style={[onbStyles.dot, i === step && onbStyles.dotActive]}
+              />
+            ))}
+          </View>
+
+          <View style={onbStyles.actions}>
+            {step > 0 && (
+              <Pressable
+                onPress={() => setStep((s) => Math.max(0, s - 1))}
+                style={onbStyles.backBtn}
+                hitSlop={8}
+              >
+                <Ionicons name="chevron-back" size={20} color={C.textMuted} />
+                <Text style={onbStyles.backText}>
+                  {t("onboard_back", lang)}
+                </Text>
+              </Pressable>
+            )}
+            <View style={{ flex: 1 }} />
+            <Pressable
+              onPress={() => (isLast ? onDone() : setStep((s) => s + 1))}
+              style={onbStyles.nextBtn}
+            >
+              <Text style={onbStyles.nextText}>
+                {isLast ? t("onboard_start", lang) : t("onboard_next", lang)}
+              </Text>
+              {!isLast && (
+                <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const onbStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  skipBtn: {
+    alignSelf: "flex-end",
+    padding: 4,
+  },
+  skipText: {
+    color: C.textMuted,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  body: {
+    alignItems: "center",
+    paddingVertical: 12,
+    gap: 12,
+  },
+  iconCircle: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: C.primaryDark,
+    textAlign: "center",
+  },
+  desc: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: C.textMuted,
+    textAlign: "center",
+    paddingHorizontal: 4,
+  },
+  dotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#E5E7EB",
+  },
+  dotActive: {
+    backgroundColor: C.primary,
+    width: 20,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+  },
+  backText: {
+    color: C.textMuted,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  nextBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: C.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  nextText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+});
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
 
@@ -754,6 +1052,13 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 16,
     gap: 16,
+  },
+  helpBtn: {
+    width: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
   },
   startIconWrap: { alignItems: "center", marginTop: 8 },
   startIconCircle: {
@@ -828,6 +1133,8 @@ const styles = StyleSheet.create({
   // Bottom-docked container — matches the Calendar/Tasks segmented switcher:
   // same horizontal margin, bottom margin, padding, and light-green wrapper tint.
   bottomBar: {
+    flexDirection: "row",
+    gap: 4,
     marginHorizontal: 20,
     marginBottom: 10,
     padding: 4,
@@ -835,6 +1142,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   playBtn: {
+    flex: 1,
     flexDirection: "row",
     gap: 8,
     justifyContent: "center",

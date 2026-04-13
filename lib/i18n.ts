@@ -813,6 +813,61 @@ const translations = {
     de: "„Sei mutig und stark... denn der Herr, dein Gott, ist mit dir.\" — Josua 1:9",
     vi: "„Hãy vững lòng bền chí... vì Giê-hô-va Đức Chúa Trời ngươi vẫn ở cùng ngươi.\" — Giô-suê 1:9",
   },
+
+  // Verse Quest — onboarding (how to play)
+  onboard_help: {
+    en: "How to play",
+    de: "Spielanleitung",
+    vi: "Cách chơi",
+  },
+  onboard_skip: { en: "Skip", de: "Überspringen", vi: "Bỏ qua" },
+  onboard_next: { en: "Next", de: "Weiter", vi: "Tiếp" },
+  onboard_back: { en: "Back", de: "Zurück", vi: "Quay lại" },
+  onboard_start: {
+    en: "Let's play!",
+    de: "Los geht's!",
+    vi: "Bắt đầu!",
+  },
+  onboard_1_title: {
+    en: "Answer Bible Trivia",
+    de: "Beantworte Bibel-Fragen",
+    vi: "Trả lời câu hỏi Kinh Thánh",
+  },
+  onboard_1_desc: {
+    en: "Each round has 10 questions with 4 choices. Tap the right answer to earn 100 points.",
+    de: "Jede Runde hat 10 Fragen mit 4 Optionen. Tippe die richtige Antwort an und erhalte 100 Punkte.",
+    vi: "Mỗi vòng có 10 câu hỏi, mỗi câu 4 lựa chọn. Chọn đúng để nhận 100 điểm.",
+  },
+  onboard_2_title: {
+    en: "Race the Clock",
+    de: "Schlag die Uhr",
+    vi: "Chạy đua với thời gian",
+  },
+  onboard_2_desc: {
+    en: "You get 15 seconds per question. Answer quickly to earn up to 50 bonus points — watch the runner along the timer bar!",
+    de: "Du hast 15 Sekunden pro Frage. Antworte schnell für bis zu 50 Bonuspunkte — beobachte den Läufer auf der Zeitleiste!",
+    vi: "Bạn có 15 giây mỗi câu. Trả lời nhanh để nhận đến 50 điểm thưởng — xem chú chạy trên thanh thời gian!",
+  },
+  onboard_3_title: {
+    en: "Build Streaks",
+    de: "Baue Serien auf",
+    vi: "Tạo chuỗi thắng",
+  },
+  onboard_3_desc: {
+    en: "Answer correctly in a row to build a streak. Each streak level adds +10 bonus points per correct answer.",
+    de: "Richtige Antworten in Folge bauen eine Serie auf. Jede Stufe gibt +10 Bonuspunkte pro richtiger Antwort.",
+    vi: "Trả lời đúng liên tiếp để tạo chuỗi. Mỗi cấp chuỗi thêm +10 điểm thưởng mỗi câu đúng.",
+  },
+  onboard_4_title: {
+    en: "Don't Lose Your Hearts",
+    de: "Verliere keine Leben",
+    vi: "Đừng mất mạng",
+  },
+  onboard_4_desc: {
+    en: "You start with 3 hearts. Wrong answers or running out of time cost a heart. Lose them all and the round ends.",
+    de: "Du startest mit 3 Leben. Falsche Antworten oder Zeitablauf kosten ein Leben. Sind alle weg, endet die Runde.",
+    vi: "Bạn bắt đầu với 3 mạng. Câu sai hoặc hết giờ sẽ mất 1 mạng. Mất hết mạng là kết thúc vòng.",
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

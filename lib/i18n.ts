@@ -1043,6 +1043,45 @@ const translations = {
     de: "Nicht genug Schekel zum sofort Spielen. Erstelle Fragen, um mehr zu verdienen!",
     vi: "Không đủ Shekel để chơi ngay. Tạo câu hỏi để kiếm thêm!",
   },
+
+  // Pay-to-override confirm dialog
+  game_pay_confirm_title: {
+    en: "Pay 10 Shekel to play now?",
+    de: "10 Schekel bezahlen, um jetzt zu spielen?",
+    vi: "Trả 10 Shekel để chơi ngay?",
+  },
+  game_pay_confirm_msg: {
+    en: "This will charge 10 Shekel from your balance and unlock a round right away — bypassing the cooldown or daily limit.",
+    de: "Das bucht 10 Schekel von deinem Guthaben ab und schaltet sofort eine Runde frei — ohne Abklingzeit oder Tageslimit.",
+    vi: "Sẽ trừ 10 Shekel khỏi số dư và mở khóa một lượt chơi ngay — bỏ qua thời gian chờ hoặc giới hạn hàng ngày.",
+  },
+  game_paid_msg: {
+    en: "Let the round begin!",
+    de: "Die Runde beginnt!",
+    vi: "Bắt đầu lượt chơi!",
+  },
+
+  // Quit-round confirm dialog
+  game_quit_confirm_title: {
+    en: "Quit this round?",
+    de: "Runde beenden?",
+    vi: "Bỏ vòng chơi này?",
+  },
+  game_quit_confirm_msg: {
+    en: "If you quit now, you'll lose the points earned this round, this play still counts toward your daily limit, and any Shekel you paid to start the round will not be refunded.",
+    de: "Wenn du jetzt aufhörst, verlierst du die Punkte dieser Runde, die Runde zählt weiter zum Tageslimit, und bezahlte Schekel werden nicht erstattet.",
+    vi: "Nếu bạn bỏ ngay, bạn mất điểm đã kiếm trong vòng này, lượt chơi vẫn tính vào giới hạn hàng ngày, và Shekel đã trả sẽ không được hoàn lại.",
+  },
+  game_quit_confirm_yes: {
+    en: "Quit anyway",
+    de: "Trotzdem beenden",
+    vi: "Vẫn bỏ",
+  },
+  game_quit_confirm_no: {
+    en: "Keep playing",
+    de: "Weiterspielen",
+    vi: "Tiếp tục chơi",
+  },
   game_cooldown_msg: {
     en: "You ran out of lives. Come back in",
     de: "Du hast alle Leben verloren. Komm zurück in",

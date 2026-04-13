@@ -2,21 +2,28 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {Animated,
+import {
+  ActivityIndicator,
+  Animated,
   Easing,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
-  View,} from "react-native";
+  TextInput,
+  View,
+} from "react-native";
 import { Pressable } from "@/components/HapticPressable";
 import {
+  addDoc,
   collection,
+  deleteDoc,
   doc,
   limit,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -24,6 +31,7 @@ import { useOrg } from "@/lib/org-context";
 import { t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import UserAvatar from "@/components/UserAvatar";
+import Snackbar, { useSnackbar } from "@/components/Snackbar";
 import {
   addToLeaderboard,
   type CommunityQuestion,
@@ -177,6 +185,13 @@ export default function GameScreen() {
   const [totalScore, setTotalScore] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [community, setCommunity] = useState<CommunityQuestion[]>([]);
+  // Confirmation dialogs
+  const [showPayConfirm, setShowPayConfirm] = useState(false);
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  // Snackbar (for the "−10 Shekel paid" notification after override)
+  const snack = useSnackbar();
+  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  snack.setMessage.current = setSnackMsg;
   // Language filter for the round — defaults to the player's profile lang.
   const [playLang, setPlayLang] = useState<Language>(lang);
   // Keep playLang in sync if the user changes their profile language.
@@ -472,7 +487,7 @@ export default function GameScreen() {
           maxPlays={MAX_ROUNDS_PER_DAY}
           cooldownMsLeft={cooldownUntil ? Math.max(0, cooldownUntil - now) : 0}
           onStart={() => startGame(false)}
-          onPayToPlayNow={() => startGame(true)}
+          onPayToPlayNow={() => setShowPayConfirm(true)}
           onShowHelp={() => setShowOnboarding(true)}
           onManageQuestions={() => router.push("/quest-questions")}
           hasOrg={!!org}
@@ -519,9 +534,12 @@ export default function GameScreen() {
           locked={locked}
           onAnswer={handleAnswer}
           onTimeout={handleTimeout}
-          onQuit={goToStart}
+          onQuit={() => setShowQuitConfirm(true)}
           onNext={advance}
           isLast={qIndex + 1 >= round.length}
+          orgId={org?.orgId}
+          userId={user?.uid}
+          userName={user?.displayName ?? null}
           lang={lang}
         />
       )}
@@ -548,6 +566,44 @@ export default function GameScreen() {
         onDone={dismissOnboarding}
         lang={lang}
       />
+
+      {/* Pay-to-override confirm — charges 10 Shekel, skips cooldown/limit. */}
+      <ConfirmDialog
+        visible={showPayConfirm}
+        title={t("game_pay_confirm_title", lang)}
+        message={t("game_pay_confirm_msg", lang)}
+        confirmText={`${t("game_play_now", lang)} · −${PLAY_COST_SHEKEL} ${t("game_points", lang)}`}
+        cancelText={t("cancel", lang)}
+        tone="accent"
+        onCancel={() => setShowPayConfirm(false)}
+        onConfirm={async () => {
+          setShowPayConfirm(false);
+          await startGame(true);
+          snack.show(
+            `−${PLAY_COST_SHEKEL} ${t("game_points", lang)} · ${t(
+              "game_paid_msg",
+              lang,
+            )}`,
+          );
+        }}
+      />
+
+      {/* Quit-round confirm — warns the player they'll lose progress. */}
+      <ConfirmDialog
+        visible={showQuitConfirm}
+        title={t("game_quit_confirm_title", lang)}
+        message={t("game_quit_confirm_msg", lang)}
+        confirmText={t("game_quit_confirm_yes", lang)}
+        cancelText={t("game_quit_confirm_no", lang)}
+        tone="danger"
+        onCancel={() => setShowQuitConfirm(false)}
+        onConfirm={() => {
+          setShowQuitConfirm(false);
+          goToStart();
+        }}
+      />
+
+      <Snackbar message={snackMsg} opacity={snack.opacity} />
     </View>
   );
 }
@@ -943,6 +999,9 @@ function PlayView({
   onQuit,
   onNext,
   isLast,
+  orgId,
+  userId,
+  userName,
   lang,
 }: {
   question: Question;
@@ -958,6 +1017,9 @@ function PlayView({
   onQuit: () => void;
   onNext: () => void;
   isLast: boolean;
+  orgId: string | undefined;
+  userId: string | undefined;
+  userName: string | null;
   lang: Language;
 }) {
   const timerAnim = useRef(new Animated.Value(1)).current;
@@ -1047,7 +1109,11 @@ function PlayView({
 
   return (
     <View style={{ flex: 1 }}>
-    <View style={styles.playRoot}>
+    <ScrollView
+      contentContainerStyle={styles.playRootContent}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.hudRow}>
         <Pressable onPress={onQuit} hitSlop={12} style={styles.hudBtn}>
           <Ionicons name="close" size={22} color={C.textMuted} />
@@ -1255,7 +1321,18 @@ function PlayView({
           );
         })}
       </View>
-    </View>
+
+      {/* Per-question comments — visible after the answer is revealed. */}
+      {locked && (
+        <QuestionComments
+          orgId={orgId}
+          questionId={question.id}
+          userId={userId}
+          userName={userName}
+          lang={lang}
+        />
+      )}
+    </ScrollView>
 
     {/* Bottom-docked Next button — appears once the player has answered */}
     {locked && (
@@ -1424,6 +1501,408 @@ function DoneView({
     </View>
   );
 }
+
+// ===== Confirm dialog (reused for pay-to-play + quit-round flows) =====
+function ConfirmDialog({
+  visible,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  tone = "primary",
+  onConfirm,
+  onCancel,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  tone?: "primary" | "danger" | "accent";
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+  useEffect(() => {
+    if (!visible) return;
+    opacity.setValue(0);
+    scale.setValue(0.9);
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        damping: 20,
+        stiffness: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [visible, opacity, scale]);
+
+  if (!visible) return null;
+
+  const confirmBg =
+    tone === "danger"
+      ? C.wrong
+      : tone === "accent"
+      ? C.gold
+      : C.primary;
+
+  return (
+    <Modal transparent visible animationType="fade" onRequestClose={onCancel}>
+      <Animated.View style={[confirmStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[confirmStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <Text style={confirmStyles.title}>{title}</Text>
+          <Text style={confirmStyles.message}>{message}</Text>
+          <View style={confirmStyles.actions}>
+            <Pressable onPress={onCancel} style={confirmStyles.cancelBtn}>
+              <Text style={confirmStyles.cancelText}>{cancelText}</Text>
+            </Pressable>
+            <Pressable
+              onPress={onConfirm}
+              style={[confirmStyles.confirmBtn, { backgroundColor: confirmBg }]}
+            >
+              <Text style={confirmStyles.confirmText}>{confirmText}</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const confirmStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 22,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: C.primaryDark,
+    textAlign: "center",
+  },
+  message: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: C.textMuted,
+    textAlign: "center",
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 6,
+  },
+  cancelBtn: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  cancelText: {
+    color: C.textMuted,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  confirmBtn: {
+    flex: 1,
+    alignItems: "center",
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  confirmText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+});
+
+// ===== Per-question comment thread (shown after the answer is revealed) =====
+type QuestionComment = {
+  id: string;
+  text: string;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
+};
+
+function QuestionComments({
+  orgId,
+  questionId,
+  userId,
+  userName,
+  lang,
+}: {
+  orgId: string | undefined;
+  questionId: string | undefined;
+  userId: string | undefined;
+  userName: string | null;
+  lang: Language;
+}) {
+  const [comments, setComments] = useState<QuestionComment[]>([]);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!orgId || !questionId) return;
+    const q = query(
+      collection(
+        db,
+        "organizations",
+        orgId,
+        "questQuestions",
+        questionId,
+        "comments",
+      ),
+      orderBy("createdAt", "asc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setComments(
+        snap.docs.map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+    });
+    return unsub;
+  }, [orgId, questionId]);
+
+  async function handleSend() {
+    if (!orgId || !questionId || !userId || !text.trim() || sending) return;
+    const body = text.trim();
+    setSending(true);
+    setText("");
+    try {
+      await addDoc(
+        collection(
+          db,
+          "organizations",
+          orgId,
+          "questQuestions",
+          questionId,
+          "comments",
+        ),
+        {
+          text: body,
+          createdBy: userId,
+          createdByName: userName,
+          createdAt: serverTimestamp(),
+        },
+      );
+    } catch {
+      // restore input on failure so user can retry
+      setText(body);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleDelete(cid: string) {
+    if (!orgId || !questionId) return;
+    try {
+      await deleteDoc(
+        doc(
+          db,
+          "organizations",
+          orgId,
+          "questQuestions",
+          questionId,
+          "comments",
+          cid,
+        ),
+      );
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <View style={commentStyles.card}>
+      <Pressable
+        onPress={() => setExpanded((x) => !x)}
+        style={commentStyles.header}
+      >
+        <Ionicons name="chatbubble-ellipses" size={16} color={C.primary} />
+        <Text style={commentStyles.headerTitle}>
+          {t("quest_comments_title", lang)} ({comments.length})
+        </Text>
+        <Ionicons
+          name={expanded ? "chevron-up" : "chevron-down"}
+          size={18}
+          color={C.textMuted}
+        />
+      </Pressable>
+
+      {expanded && (
+        <>
+          {comments.length === 0 ? (
+            <Text style={commentStyles.empty}>
+              {t("quest_comments_empty", lang)}
+            </Text>
+          ) : (
+            <View style={{ gap: 8 }}>
+              {comments.map((c) => (
+                <View key={c.id} style={commentStyles.row}>
+                  <UserAvatar
+                    uid={c.createdBy}
+                    name={c.createdByName}
+                    size={26}
+                  />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={commentStyles.name} numberOfLines={1}>
+                      {c.createdByName || t("notif_someone", lang)}
+                    </Text>
+                    <Text style={commentStyles.text}>{c.text}</Text>
+                  </View>
+                  {c.createdBy === userId && (
+                    <Pressable
+                      onPress={() => handleDelete(c.id)}
+                      hitSlop={6}
+                      style={{ padding: 4 }}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={14}
+                        color={C.wrong}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Input */}
+          <View style={commentStyles.inputRow}>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder={t("quest_comments_placeholder", lang)}
+              placeholderTextColor="#A3A89E"
+              style={commentStyles.input}
+              multiline
+              maxLength={280}
+            />
+            <Pressable
+              onPress={handleSend}
+              disabled={!text.trim() || sending}
+              style={[
+                commentStyles.sendBtn,
+                (!text.trim() || sending) && { opacity: 0.5 },
+              ]}
+            >
+              {sending ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Ionicons name="send" size={16} color="#FFFFFF" />
+              )}
+            </Pressable>
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+const commentStyles = StyleSheet.create({
+  card: {
+    backgroundColor: C.card,
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: C.border,
+    gap: 10,
+    marginTop: 4,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "800",
+    color: C.primaryDark,
+  },
+  empty: {
+    fontSize: 12,
+    fontStyle: "italic",
+    color: C.textMuted,
+    paddingVertical: 4,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+    backgroundColor: "#F9F7F4",
+    borderRadius: 10,
+    padding: 8,
+  },
+  name: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: C.textMuted,
+  },
+  text: {
+    fontSize: 13,
+    color: C.text,
+    lineHeight: 18,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    marginTop: 2,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: "#F9F7F4",
+    borderColor: "rgba(0,0,0,0.08)",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    color: C.text,
+    maxHeight: 80,
+  },
+  sendBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
 
 // ===== Onboarding =====
 type OnboardStep = {
@@ -1934,6 +2413,15 @@ const styles = StyleSheet.create({
   playBtnText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 
   playRoot: { flex: 1, padding: 20, paddingTop: 56, gap: 14 },
+  // Same look as playRoot but shaped for ScrollView's contentContainerStyle
+  // (flex:1 doesn't apply there; use paddingBottom to leave space above the
+  // fixed Next button bottom bar).
+  playRootContent: {
+    padding: 20,
+    paddingTop: 56,
+    paddingBottom: 24,
+    gap: 14,
+  },
   hudRow: {
     flexDirection: "row",
     alignItems: "center",

@@ -33,6 +33,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="game"
+        options={{
+          title: t("tab_game", lang),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="game-controller" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="tasks"
         options={{
           title: t("tab_tasks", lang),
@@ -49,15 +58,6 @@ export default function TabLayout() {
           href: hasOrg ? "/(tabs)/calendar" : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="game"
-        options={{
-          title: t("tab_game", lang),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="game-controller" size={size} color={color} />
           ),
         }}
       />

@@ -12,7 +12,7 @@ const translations = {
   tab_tasks: { en: "Tasks", de: "Aufgaben", vi: "Công việc" },
   tab_calendar: { en: "Calendar", de: "Kalender", vi: "Lịch" },
   tab_profile: { en: "Profile", de: "Profil", vi: "Hồ sơ" },
-  tab_game: { en: "Game", de: "Spiel", vi: "Trò chơi" },
+  tab_game: { en: "Quest", de: "Quest", vi: "Thử thách" },
 
   // Auth screen
   auth_brand: { en: "✞ ​FaithHub", de: "✞ FaithHub", vi: "✞ FaithHub" },

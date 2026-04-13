@@ -12,6 +12,7 @@ const translations = {
   tab_tasks: { en: "Tasks", de: "Aufgaben", vi: "Công việc" },
   tab_calendar: { en: "Calendar", de: "Kalender", vi: "Lịch" },
   tab_profile: { en: "Profile", de: "Profil", vi: "Hồ sơ" },
+  tab_game: { en: "Game", de: "Spiel", vi: "Trò chơi" },
 
   // Auth screen
   auth_brand: { en: "✞ ​FaithHub", de: "✞ FaithHub", vi: "✞ FaithHub" },
@@ -757,6 +758,60 @@ const translations = {
     en: "Are you sure you want to delete this event? This cannot be undone.",
     de: "Möchtest du dieses Ereignis wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
     vi: "Bạn có chắc chắn muốn xóa sự kiện này không? Không thể hoàn tác.",
+  },
+
+  // Verse Quest (Bible trivia game)
+  game_title: { en: "Verse Quest", de: "Verse Quest", vi: "Verse Quest" },
+  game_subtitle: {
+    en: "Answer Bible trivia, build streaks, and chase your best score.",
+    de: "Beantworte Bibel-Quizfragen, baue Serien auf und jage deinen Bestwert.",
+    vi: "Trả lời câu hỏi Kinh Thánh, xây chuỗi thắng và phá kỷ lục của bạn.",
+  },
+  game_best_score: { en: "Best score", de: "Bestwert", vi: "Điểm cao nhất" },
+  game_questions: { en: "Questions", de: "Fragen", vi: "Câu hỏi" },
+  game_hearts: { en: "Hearts", de: "Leben", vi: "Mạng" },
+  game_time: { en: "Per question", de: "Pro Frage", vi: "Mỗi câu" },
+  game_how_title: { en: "How to play", de: "So geht's", vi: "Cách chơi" },
+  game_how_1: {
+    en: "Pick the right answer to earn points.",
+    de: "Wähle die richtige Antwort, um Punkte zu sammeln.",
+    vi: "Chọn câu trả lời đúng để ghi điểm.",
+  },
+  game_how_2: {
+    en: "Answer in a row to build a streak bonus.",
+    de: "Richtige Antworten in Folge geben einen Serien-Bonus.",
+    vi: "Trả lời liên tiếp để nhận thưởng chuỗi.",
+  },
+  game_how_3: {
+    en: "Answer fast — speed gives bonus points.",
+    de: "Antworte schnell — Tempo bringt Bonuspunkte.",
+    vi: "Trả lời nhanh — tốc độ cho điểm thưởng.",
+  },
+  game_play: { en: "Play", de: "Spielen", vi: "Chơi" },
+  game_play_again: { en: "Play again", de: "Nochmal spielen", vi: "Chơi lại" },
+  game_done: { en: "Done", de: "Fertig", vi: "Xong" },
+  game_streak: { en: "Streak", de: "Serie", vi: "Chuỗi" },
+  game_correct: { en: "Correct", de: "Richtig", vi: "Đúng" },
+  game_best_streak: { en: "Best streak", de: "Beste Serie", vi: "Chuỗi tốt nhất" },
+  game_points: { en: "Points", de: "Punkte", vi: "Điểm" },
+  game_new_best: { en: "New best score!", de: "Neuer Bestwert!", vi: "Kỷ lục mới!" },
+  game_result_great: { en: "Outstanding!", de: "Ausgezeichnet!", vi: "Tuyệt vời!" },
+  game_result_good: { en: "Well done!", de: "Gut gemacht!", vi: "Làm tốt lắm!" },
+  game_result_try: { en: "Keep going!", de: "Weitermachen!", vi: "Cố lên!" },
+  game_verse_great: {
+    en: "\"Well done, good and faithful servant.\" — Matthew 25:21",
+    de: "„Wohl, du treuer und getreuer Knecht.\" — Matthäus 25:21",
+    vi: "„Hỡi đầy tớ ngay lành trung tín kia, được lắm.\" — Ma-thi-ơ 25:21",
+  },
+  game_verse_good: {
+    en: "\"Your word is a lamp to my feet and a light to my path.\" — Psalm 119:105",
+    de: "„Dein Wort ist meines Fußes Leuchte und ein Licht auf meinem Wege.\" — Psalm 119:105",
+    vi: "„Lời Chúa là ngọn đèn cho chân tôi, ánh sáng cho đường lối tôi.\" — Thi thiên 119:105",
+  },
+  game_verse_try: {
+    en: "\"Be strong and courageous... for the Lord your God is with you.\" — Joshua 1:9",
+    de: "„Sei mutig und stark... denn der Herr, dein Gott, ist mit dir.\" — Josua 1:9",
+    vi: "„Hãy vững lòng bền chí... vì Giê-hô-va Đức Chúa Trời ngươi vẫn ở cùng ngươi.\" — Giô-suê 1:9",
   },
 } as const;
 

@@ -6,16 +6,14 @@ import {
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
+import {ActivityIndicator,
   Animated,
   Modal,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 import "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { updateProfile } from "firebase/auth";

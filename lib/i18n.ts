@@ -1135,6 +1135,25 @@ const translations = {
     de: "Frage erstellen",
     vi: "Tạo câu hỏi",
   },
+
+  // Quest play screen — snackbar + next-button
+  quest_correct_title: {
+    en: "Correct!",
+    de: "Richtig!",
+    vi: "Chính xác!",
+  },
+  quest_wrong_title: {
+    en: "Wrong answer",
+    de: "Falsche Antwort",
+    vi: "Trả lời sai",
+  },
+  quest_timeout_title: {
+    en: "Out of time",
+    de: "Zeit abgelaufen",
+    vi: "Hết giờ",
+  },
+  quest_next: { en: "Next", de: "Weiter", vi: "Tiếp theo" },
+  quest_finish: { en: "Finish", de: "Beenden", vi: "Kết thúc" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

@@ -2,16 +2,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
+import {Animated,
   Easing,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 import {
   collection,
   doc,
@@ -388,8 +386,7 @@ export default function GameScreen() {
         return nh;
       });
     }
-
-    setTimeout(advance, 900);
+    // No auto-advance — the player taps "Next" to move on.
   }
 
   function handleTimeout() {
@@ -402,7 +399,7 @@ export default function GameScreen() {
       heartsRef.current = nh;
       return nh;
     });
-    setTimeout(advance, 900);
+    // No auto-advance — the player taps "Next" to move on.
   }
 
   function advance() {
@@ -459,6 +456,8 @@ export default function GameScreen() {
           onAnswer={handleAnswer}
           onTimeout={handleTimeout}
           onQuit={goToStart}
+          onNext={advance}
+          isLast={qIndex + 1 >= round.length}
           lang={lang}
         />
       )}
@@ -788,6 +787,8 @@ function PlayView({
   onAnswer,
   onTimeout,
   onQuit,
+  onNext,
+  isLast,
   lang,
 }: {
   question: Question;
@@ -801,6 +802,8 @@ function PlayView({
   onAnswer: (idx: number, remainingMs: number) => void;
   onTimeout: () => void;
   onQuit: () => void;
+  onNext: () => void;
+  isLast: boolean;
   lang: Language;
 }) {
   const timerAnim = useRef(new Animated.Value(1)).current;
@@ -879,6 +882,7 @@ function PlayView({
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <View style={styles.playRoot}>
       <View style={styles.hudRow}>
         <Pressable onPress={onQuit} hitSlop={12} style={styles.hudBtn}>
@@ -965,44 +969,71 @@ function PlayView({
         )}
       </Animated.View>
 
-      {/* Trash-talk bubble — author's reaction to the player's answer */}
+      {/* Result snackbar — appears above the choices once the answer is locked */}
       {locked &&
         (() => {
           const answeredCorrectly =
             selected !== null && selected === question.answer;
-          const msg = answeredCorrectly
+          const timedOut = selected === null;
+          const tone = answeredCorrectly ? "success" : "fail";
+          const customMsg = answeredCorrectly
             ? question.successMsg
             : question.failMsg;
-          if (!msg) return null;
-          const tone = answeredCorrectly ? "success" : "fail";
+          const defaultMsg = answeredCorrectly
+            ? t("quest_correct_title", lang)
+            : timedOut
+            ? t("quest_timeout_title", lang)
+            : t("quest_wrong_title", lang);
           return (
             <View
               style={[
-                styles.reactionBubble,
+                styles.snackbar,
                 tone === "success"
-                  ? styles.reactionBubbleSuccess
-                  : styles.reactionBubbleFail,
+                  ? styles.snackbarSuccess
+                  : styles.snackbarFail,
               ]}
             >
-              <Text style={styles.reactionEmoji}>
-                {tone === "success" ? "🎉" : "😈"}
-              </Text>
+              <View
+                style={[
+                  styles.snackbarIconWrap,
+                  tone === "success"
+                    ? { backgroundColor: "#DCFCE7" }
+                    : { backgroundColor: "#FEE2E2" },
+                ]}
+              >
+                <Ionicons
+                  name={answeredCorrectly ? "checkmark" : "close"}
+                  size={18}
+                  color={answeredCorrectly ? C.correct : C.wrong}
+                />
+              </View>
               <View style={{ flex: 1 }}>
-                {question.createdByName && (
-                  <Text style={styles.reactionAuthor}>
-                    {question.createdByName}
-                  </Text>
-                )}
                 <Text
                   style={[
-                    styles.reactionText,
+                    styles.snackbarTitle,
                     tone === "success"
-                      ? styles.reactionTextSuccess
-                      : styles.reactionTextFail,
+                      ? { color: "#14532D" }
+                      : { color: "#7F1D1D" },
                   ]}
                 >
-                  {msg}
+                  {defaultMsg}
+                  {question.createdByName && customMsg
+                    ? ` · ${question.createdByName}`
+                    : ""}
                 </Text>
+                {customMsg && (
+                  <Text
+                    style={[
+                      styles.snackbarText,
+                      tone === "success"
+                        ? { color: "#166534" }
+                        : { color: "#991B1B" },
+                    ]}
+                  >
+                    {tone === "success" ? "🎉 " : "😈 "}
+                    {customMsg}
+                  </Text>
+                )}
               </View>
             </View>
           );
@@ -1060,6 +1091,25 @@ function PlayView({
           );
         })}
       </View>
+    </View>
+
+    {/* Bottom-docked Next button — appears once the player has answered */}
+    {locked && (
+      <View style={styles.bottomBar}>
+        <Pressable onPress={onNext} style={styles.playBtn}>
+          <Text style={styles.playBtnText}>
+            {isLast
+              ? t("quest_finish", lang)
+              : t("quest_next", lang)}
+          </Text>
+          <Ionicons
+            name={isLast ? "flag" : "arrow-forward"}
+            size={18}
+            color="#FFFFFF"
+          />
+        </Pressable>
+      </View>
+    )}
     </View>
   );
 }
@@ -1781,7 +1831,7 @@ const styles = StyleSheet.create({
   },
   refPillText: { fontSize: 11, color: C.primary, fontWeight: "600" },
 
-  reactionBubble: {
+  snackbar: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
@@ -1789,29 +1839,31 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
   },
-  reactionBubbleSuccess: {
+  snackbarSuccess: {
     backgroundColor: "#F0FDF4",
     borderColor: "#BBF7D0",
   },
-  reactionBubbleFail: {
+  snackbarFail: {
     backgroundColor: "#FEF2F2",
     borderColor: "#FECACA",
   },
-  reactionEmoji: { fontSize: 22 },
-  reactionAuthor: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: C.textMuted,
-    marginBottom: 2,
+  snackbarIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  reactionText: {
+  snackbarTitle: {
     fontSize: 13,
-    fontWeight: "600",
-    lineHeight: 18,
-    fontStyle: "italic",
+    fontWeight: "800",
   },
-  reactionTextSuccess: { color: "#14532D" },
-  reactionTextFail: { color: "#7F1D1D" },
+  snackbarText: {
+    fontSize: 12,
+    fontStyle: "italic",
+    marginTop: 2,
+    lineHeight: 16,
+  },
 
   choicesWrap: { gap: 10, marginTop: 4 },
   choiceBtn: {

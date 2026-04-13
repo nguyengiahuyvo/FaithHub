@@ -1,5 +1,6 @@
 import UserAvatar from "@/components/UserAvatar";
 import Snackbar from "@/components/Snackbar";
+import TasksScreen from "./tasks";
 import { useAuth } from "@/lib/auth-context";
 import { db } from "@/lib/firebase";
 import { t, tArray } from "@/lib/i18n";
@@ -68,7 +69,7 @@ function getFirstDayOfMonth(year: number, month: number) {
   return (day + 6) % 7;
 }
 
-export default function CalendarScreen() {
+function CalendarEventsView() {
   const { user } = useAuth();
   const { org } = useOrg();
   const { lang } = useLanguage();
@@ -1189,7 +1190,7 @@ const mStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   content: {
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 16,
     gap: 16,
   },
   headerRow: {
@@ -1512,5 +1513,109 @@ const commentStyles = StyleSheet.create({
     padding: 4,
     alignSelf: "flex-start",
     marginTop: 2,
+  },
+});
+
+// ===== Merged Calendar screen: segmented control that switches =====
+// between the events calendar view and the tasks view.
+
+type PlanTab = "events" | "tasks";
+
+export default function CalendarScreen() {
+  const { lang } = useLanguage();
+  const [tab, setTab] = useState<PlanTab>("events");
+
+  return (
+    <View style={mergedStyles.root}>
+      <View style={mergedStyles.segmentWrap}>
+        <Pressable
+          onPress={() => setTab("events")}
+          style={[
+            mergedStyles.segment,
+            tab === "events" && mergedStyles.segmentActive,
+          ]}
+        >
+          <Ionicons
+            name="calendar-outline"
+            size={16}
+            color={tab === "events" ? "#FFFFFF" : "#5B7553"}
+          />
+          <Text
+            style={[
+              mergedStyles.segmentText,
+              tab === "events" && mergedStyles.segmentTextActive,
+            ]}
+          >
+            {t("tab_calendar", lang)}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setTab("tasks")}
+          style={[
+            mergedStyles.segment,
+            tab === "tasks" && mergedStyles.segmentActive,
+          ]}
+        >
+          <Ionicons
+            name="checkbox-outline"
+            size={16}
+            color={tab === "tasks" ? "#FFFFFF" : "#5B7553"}
+          />
+          <Text
+            style={[
+              mergedStyles.segmentText,
+              tab === "tasks" && mergedStyles.segmentTextActive,
+            ]}
+          >
+            {t("tab_tasks", lang)}
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={{ flex: 1 }}>
+        {tab === "events" ? <CalendarEventsView /> : <TasksScreen />}
+      </View>
+    </View>
+  );
+}
+
+const mergedStyles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: "#F9F7F4",
+  },
+  segmentWrap: {
+    flexDirection: "row",
+    gap: 6,
+    marginHorizontal: 20,
+    marginTop: 52,
+    padding: 4,
+    backgroundColor: "rgba(91,117,83,0.08)",
+    borderRadius: 14,
+  },
+  segment: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  segmentActive: {
+    backgroundColor: "#5B7553",
+    shadowColor: "#5B7553",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  segmentText: {
+    color: "#5B7553",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  segmentTextActive: {
+    color: "#FFFFFF",
   },
 });

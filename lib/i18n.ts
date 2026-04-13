@@ -827,7 +827,7 @@ const translations = {
   game_streak: { en: "Streak", de: "Serie", vi: "Chuỗi" },
   game_correct: { en: "Correct", de: "Richtig", vi: "Đúng" },
   game_best_streak: { en: "Best streak", de: "Beste Serie", vi: "Chuỗi tốt nhất" },
-  game_points: { en: "Points", de: "Punkte", vi: "Điểm" },
+  game_points: { en: "Shekel", de: "Schekel", vi: "Shekel" },
   game_new_best: { en: "New best score!", de: "Neuer Bestwert!", vi: "Kỷ lục mới!" },
   game_result_great: { en: "Outstanding!", de: "Ausgezeichnet!", vi: "Tuyệt vời!" },
   game_result_good: { en: "Well done!", de: "Gut gemacht!", vi: "Làm tốt lắm!" },
@@ -868,9 +868,9 @@ const translations = {
     vi: "Thử thách từ cộng đồng",
   },
   onboard_1_desc: {
-    en: "Answer trivia questions written by other members of your community. Each correct answer earns you 5 points.",
-    de: "Beantworte Fragen, die andere Mitglieder deiner Gemeinschaft erstellt haben. Jede richtige Antwort bringt 5 Punkte.",
-    vi: "Trả lời câu hỏi do các thành viên khác trong cộng đồng tạo ra. Mỗi câu đúng được 5 điểm.",
+    en: "Answer trivia questions written by other members of your community. Each correct answer earns you 5 Shekel. Each round costs 10 Shekel to play.",
+    de: "Beantworte Fragen, die andere Mitglieder deiner Gemeinschaft erstellt haben. Jede richtige Antwort bringt 5 Schekel. Eine Runde kostet 10 Schekel.",
+    vi: "Trả lời câu hỏi do các thành viên khác trong cộng đồng tạo ra. Mỗi câu đúng được 5 Shekel. Mỗi lượt chơi tốn 10 Shekel.",
   },
   onboard_2_title: {
     en: "Three Lives. Use Them Well.",
@@ -898,9 +898,9 @@ const translations = {
     vi: "Thách thức ngược lại",
   },
   onboard_4_desc: {
-    en: "Create your own questions to challenge other members. You earn 2 points per question — and your own questions won't appear in your rounds.",
-    de: "Erstelle eigene Fragen, um andere herauszufordern. Du bekommst 2 Punkte pro Frage — und deine eigenen Fragen erscheinen nicht in deinen Runden.",
-    vi: "Tạo câu hỏi của riêng bạn để thách thức người khác. Bạn nhận 2 điểm mỗi câu — và câu hỏi của bạn sẽ không xuất hiện trong vòng chơi của bạn.",
+    en: "Create your own questions to challenge other members. You earn 2 Shekel per question — and your own questions won't appear in your rounds.",
+    de: "Erstelle eigene Fragen, um andere herauszufordern. Du bekommst 2 Schekel pro Frage — und deine eigenen Fragen erscheinen nicht in deinen Runden.",
+    vi: "Tạo câu hỏi của riêng bạn để thách thức người khác. Bạn nhận 2 Shekel mỗi câu — và câu hỏi của bạn sẽ không xuất hiện trong vòng chơi của bạn.",
   },
 
   // Verse Quest — community-authored questions (Challenge Mode)
@@ -1014,9 +1014,9 @@ const translations = {
 
   // Verse Quest — totals, limits & leaderboard
   game_total_score: {
-    en: "Total score",
-    de: "Gesamtpunkte",
-    vi: "Tổng điểm",
+    en: "Your Shekel",
+    de: "Deine Schekel",
+    vi: "Shekel của bạn",
   },
   game_plays_today: {
     en: "Plays left today",
@@ -1027,6 +1027,16 @@ const translations = {
     en: "Per correct",
     de: "Pro richtig",
     vi: "Mỗi câu đúng",
+  },
+  game_play_cost: {
+    en: "Cost per play",
+    de: "Preis pro Runde",
+    vi: "Giá mỗi lượt",
+  },
+  game_insufficient_shekel: {
+    en: "You need 10 Shekel to play. Create questions to earn more!",
+    de: "Du brauchst 10 Schekel zum Spielen. Erstelle Fragen, um mehr zu verdienen!",
+    vi: "Bạn cần 10 Shekel để chơi. Tạo câu hỏi để kiếm thêm!",
   },
   game_cooldown_msg: {
     en: "You ran out of lives. Come back in",
@@ -1093,6 +1103,11 @@ const translations = {
     de: "Fragen verwalten",
     vi: "Quản lý câu hỏi",
   },
+  game_language_label: {
+    en: "Language",
+    de: "Sprache",
+    vi: "Ngôn ngữ",
+  },
 
   // Quest Questions management page
   qq_title: {
@@ -1134,6 +1149,31 @@ const translations = {
     en: "Create a Question",
     de: "Frage erstellen",
     vi: "Tạo câu hỏi",
+  },
+  qq_form_edit_title: {
+    en: "Edit Question",
+    de: "Frage bearbeiten",
+    vi: "Sửa câu hỏi",
+  },
+  qq_form_language: {
+    en: "Language",
+    de: "Sprache",
+    vi: "Ngôn ngữ",
+  },
+  qq_created_msg: {
+    en: "Question saved — +2 Shekel!",
+    de: "Frage gespeichert — +2 Schekel!",
+    vi: "Đã lưu câu hỏi — +2 Shekel!",
+  },
+  qq_updated_msg: {
+    en: "Question updated",
+    de: "Frage aktualisiert",
+    vi: "Đã cập nhật câu hỏi",
+  },
+  qq_filter_all: {
+    en: "All",
+    de: "Alle",
+    vi: "Tất cả",
   },
 
   // Quest play screen — snackbar + next-button

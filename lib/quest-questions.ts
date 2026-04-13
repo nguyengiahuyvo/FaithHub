@@ -9,6 +9,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import type { Language } from "./i18n";
 
 // Per the rules:
 //   +5 points per correct answer
@@ -20,6 +21,9 @@ export type Question = {
   choices: string[];
   answer: number;
   ref?: string;
+  // Language the question was authored in — used to filter the pool
+  // so players answer questions in a language they understand.
+  language?: Language;
   // Community-authored question metadata (undefined for legacy/built-in questions).
   id?: string;
   createdBy?: string;

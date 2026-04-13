@@ -33,12 +33,21 @@ import {
 // ===== Game constants =====
 const QUESTIONS_PER_ROUND = 10;
 const TIME_PER_QUESTION_MS = 15000;
-// Scoring (per the rules):
-//   +5 points per correct answer
-//   +2 points per question authored
+// Scoring — all balances are in Shekel, the in-game currency:
+//   +5 Shekel per correct answer
+//   +2 Shekel per question authored
+//   -10 Shekel cost to start a round
 const POINTS_PER_CORRECT = 5;
 const POINTS_PER_QUESTION_CREATED = 2;
+const PLAY_COST_SHEKEL = 10;
 const STARTING_HEARTS = 3;
+
+// Flag emojis used for the language chips.
+const LANG_FLAGS: Record<Language, string> = {
+  en: "🇬🇧",
+  de: "🇩🇪",
+  vi: "🇻🇳",
+};
 // Play limits: max 5 rounds/day; 30-minute cooldown if you lose all hearts.
 const MAX_ROUNDS_PER_DAY = 10;
 const COOLDOWN_AFTER_FAIL_MS = 30 * 60 * 1000;
@@ -168,6 +177,12 @@ export default function GameScreen() {
   const [totalScore, setTotalScore] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [community, setCommunity] = useState<CommunityQuestion[]>([]);
+  // Language filter for the round — defaults to the player's profile lang.
+  const [playLang, setPlayLang] = useState<Language>(lang);
+  // Keep playLang in sync if the user changes their profile language.
+  useEffect(() => {
+    setPlayLang(lang);
+  }, [lang]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [playsToday, setPlaysToday] = useState(0);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
@@ -267,6 +282,7 @@ export default function GameScreen() {
               ref: data.ref || undefined,
               successMsg: data.successMsg || undefined,
               failMsg: data.failMsg || undefined,
+              language: (data.language as Language) || undefined,
               createdBy: data.createdBy || "",
               createdByName: data.createdByName || null,
             };
@@ -290,10 +306,17 @@ export default function GameScreen() {
     if (cooldownUntil && Date.now() < cooldownUntil) return;
     if (playsToday >= MAX_ROUNDS_PER_DAY) return;
 
+    // Must have enough Shekel to pay the entry fee.
+    if (totalScore < PLAY_COST_SHEKEL) return;
+
     // The player cannot face their own questions.
-    const eligible = user
-      ? community.filter((c) => c.createdBy !== user.uid)
-      : community;
+    // Filter by language too (questions without a language are treated as
+    // matching, so legacy questions remain playable).
+    const eligible = community.filter((c) => {
+      if (user && c.createdBy === user.uid) return false;
+      if (c.language && c.language !== playLang) return false;
+      return true;
+    });
 
     // Per the rules, no questions = no game.
     if (eligible.length === 0) return;
@@ -301,6 +324,23 @@ export default function GameScreen() {
     // Burn one of today's plays.
     const next = await bumpPlaysToday();
     setPlaysToday(next);
+
+    // Deduct the Shekel entry fee. Org users deduct from the leaderboard;
+    // solo/no-org users deduct from the local fallback score.
+    if (org && user) {
+      await addToLeaderboard(
+        org.orgId,
+        user.uid,
+        user.displayName ?? null,
+        -PLAY_COST_SHEKEL,
+      );
+    } else {
+      const nextScore = Math.max(0, totalScore - PLAY_COST_SHEKEL);
+      setTotalScore(nextScore);
+      try {
+        await AsyncStorage.setItem(LOCAL_SCORE_KEY, String(nextScore));
+      } catch {}
+    }
 
     setRound(buildRound(eligible));
     setQIndex(0);
@@ -431,10 +471,26 @@ export default function GameScreen() {
           hasOrg={!!org}
           communityCount={community.length}
           eligibleCount={
-            user
-              ? community.filter((c) => c.createdBy !== user.uid).length
-              : community.length
+            community.filter((c) => {
+              if (user && c.createdBy === user.uid) return false;
+              if (c.language && c.language !== playLang) return false;
+              return true;
+            }).length
           }
+          playLang={playLang}
+          onChangePlayLang={setPlayLang}
+          playCost={PLAY_COST_SHEKEL}
+          questionCountByLang={(["en", "de", "vi"] as Language[]).reduce(
+            (acc, l) => {
+              acc[l] = community.filter((c) => {
+                if (user && c.createdBy === user.uid) return false;
+                const qLang = c.language || "en";
+                return qLang === l;
+              }).length;
+              return acc;
+            },
+            { en: 0, de: 0, vi: 0 } as Record<Language, number>,
+          )}
           myCount={
             user ? community.filter((c) => c.createdBy === user.uid).length : 0
           }
@@ -503,6 +559,10 @@ function StartView({
   myCount,
   leaderboard,
   currentUid,
+  playLang,
+  onChangePlayLang,
+  playCost,
+  questionCountByLang,
   lang,
 }: {
   totalScore: number;
@@ -518,6 +578,10 @@ function StartView({
   myCount: number;
   leaderboard: LeaderboardEntry[];
   currentUid: string | undefined;
+  playLang: Language;
+  onChangePlayLang: (l: Language) => void;
+  playCost: number;
+  questionCountByLang: Record<Language, number>;
   lang: Language;
 }) {
   const playsLeft = Math.max(0, maxPlays - playsToday);
@@ -526,7 +590,13 @@ function StartView({
   // Per the rules, you can only play if community questions exist (excluding
   // your own). When the org has none, the round can't be built.
   const noEligibleQuestions = !cooldownActive && !noPlaysLeft && eligibleCount === 0;
-  const playDisabled = cooldownActive || noPlaysLeft || noEligibleQuestions || !hasOrg;
+  const insufficientShekel = totalScore < playCost;
+  const playDisabled =
+    cooldownActive ||
+    noPlaysLeft ||
+    noEligibleQuestions ||
+    insufficientShekel ||
+    !hasOrg;
   const cooldownLabel = formatCooldown(cooldownMsLeft);
   const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -568,6 +638,40 @@ function StartView({
 
         <Text style={styles.startTitle}>{t("game_title", lang)}</Text>
         <Text style={styles.startSubtitle}>{t("game_subtitle", lang)}</Text>
+
+        {/* Language filter — flag + question count for each language */}
+        {hasOrg && (
+          <View style={styles.langFilterCard}>
+            <Text style={styles.langFilterLabel}>
+              {t("game_language_label", lang)}
+            </Text>
+            <View style={styles.langFilterRow}>
+              {(["en", "de", "vi"] as Language[]).map((l) => {
+                const count = questionCountByLang[l];
+                return (
+                  <Pressable
+                    key={l}
+                    onPress={() => onChangePlayLang(l)}
+                    style={[
+                      styles.langFilterChip,
+                      playLang === l && styles.langFilterChipActive,
+                    ]}
+                  >
+                    <Text style={styles.langFlag}>{LANG_FLAGS[l]}</Text>
+                    <Text
+                      style={[
+                        styles.langFilterChipCount,
+                        playLang === l && styles.langFilterChipTextActive,
+                      ]}
+                    >
+                      {count}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* Cooldown / daily-limit / no-questions notice */}
         {cooldownActive && (
@@ -614,6 +718,23 @@ function StartView({
             </Text>
           </View>
         )}
+        {!cooldownActive &&
+          !noPlaysLeft &&
+          hasOrg &&
+          !noEligibleQuestions &&
+          insufficientShekel && (
+            <View
+              style={[
+                styles.noticeCard,
+                { backgroundColor: "rgba(192,149,108,0.15)" },
+              ]}
+            >
+              <Ionicons name="cash-outline" size={18} color={C.accent} />
+              <Text style={[styles.noticeText, { color: C.accent }]}>
+                {t("game_insufficient_shekel", lang)}
+              </Text>
+            </View>
+          )}
 
         <View style={styles.statsGrid}>
           <StatCard
@@ -719,7 +840,7 @@ function StartView({
           <Text style={styles.playBtnText}>
             {cooldownActive
               ? `${t("game_play", lang)}  ·  ${cooldownLabel}`
-              : t("game_play", lang)}
+              : `${t("game_play", lang)}  ·  −${playCost} ${t("game_points", lang)}`}
           </Text>
         </Pressable>
         <Pressable
@@ -853,6 +974,16 @@ function PlayView({
     return () => anim.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qIndex]);
+
+  // Freeze the timer (and the running character) the moment the player
+  // picks an answer or the question times out. The bar visibly stops
+  // wherever it was, so the player isn't pressured while reading the
+  // result snackbar.
+  useEffect(() => {
+    if (locked) {
+      timerAnim.stopAnimation();
+    }
+  }, [locked, timerAnim]);
 
   useEffect(() => {
     if (selected !== null && selected !== question.answer) {
@@ -1619,6 +1750,56 @@ const styles = StyleSheet.create({
   howRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   howText: { fontSize: 14, color: C.text, flex: 1 },
 
+  langFilterCard: {
+    backgroundColor: C.card,
+    borderRadius: 14,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    gap: 8,
+  },
+  langFilterLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  langFilterRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  langFilterChip: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  langFilterChipActive: {
+    backgroundColor: C.primary,
+  },
+  langFlag: {
+    fontSize: 18,
+  },
+  langFilterChipCount: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: C.textMuted,
+  },
+  langFilterChipText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: C.textMuted,
+    letterSpacing: 0.5,
+  },
+  langFilterChipTextActive: {
+    color: "#FFFFFF",
+  },
   noticeCard: {
     flexDirection: "row",
     alignItems: "center",

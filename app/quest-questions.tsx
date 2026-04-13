@@ -24,17 +24,19 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
-import { t } from "@/lib/i18n";
+import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import {
   POINTS_PER_QUESTION_CREATED,
   addToLeaderboard,
   type CommunityQuestion,
 } from "@/lib/quest-questions";
+import Snackbar, { useSnackbar } from "@/components/Snackbar";
 
 const C = {
   bg: "#F9F7F4",
@@ -49,6 +51,12 @@ const C = {
   wrong: "#DC2626",
 };
 
+const LANG_FLAGS: Record<Language, string> = {
+  en: "🇬🇧",
+  de: "🇩🇪",
+  vi: "🇻🇳",
+};
+
 export default function QuestQuestionsScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -57,6 +65,10 @@ export default function QuestQuestionsScreen() {
 
   const [community, setCommunity] = useState<CommunityQuestion[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<CommunityQuestion | null>(null);
+  const snack = useSnackbar();
+  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  snack.setMessage.current = setSnackMsg;
 
   // Live-subscribe to community questions in the org.
   useEffect(() => {
@@ -82,6 +94,7 @@ export default function QuestQuestionsScreen() {
               ref: data.ref || undefined,
               successMsg: data.successMsg || undefined,
               failMsg: data.failMsg || undefined,
+              language: (data.language as Language) || undefined,
               createdBy: data.createdBy || "",
               createdByName: data.createdByName || null,
             };
@@ -102,9 +115,17 @@ export default function QuestQuestionsScreen() {
     return unsub;
   }, [org]);
 
-  const myQuestions = user
+  // Filter chip for the My Questions list. "all" shows every language.
+  const [myLangFilter, setMyLangFilter] = useState<Language | "all">("all");
+  const myQuestionsAll = user
     ? community.filter((c) => c.createdBy === user.uid)
     : [];
+  const myQuestions =
+    myLangFilter === "all"
+      ? myQuestionsAll
+      : myQuestionsAll.filter(
+          (c) => (c.language || "en") === myLangFilter,
+        );
 
   async function handleDelete(qid: string) {
     if (!org) return;
@@ -149,13 +170,27 @@ export default function QuestQuestionsScreen() {
             </View>
           ) : (
             <>
-              {/* New-question form (collapsible) */}
-              {showForm ? (
+              {/* Form: shown either when creating or editing. */}
+              {showForm || editing ? (
                 <NewQuestionForm
                   orgId={org.orgId}
                   userId={user?.uid}
                   userName={user?.displayName ?? null}
-                  onClose={() => setShowForm(false)}
+                  profileLang={lang}
+                  editing={editing}
+                  onClose={() => {
+                    setShowForm(false);
+                    setEditing(null);
+                  }}
+                  onSaved={(wasEdit) => {
+                    setShowForm(false);
+                    setEditing(null);
+                    snack.show(
+                      wasEdit
+                        ? t("qq_updated_msg", lang)
+                        : t("qq_created_msg", lang),
+                    );
+                  }}
                   lang={lang}
                 />
               ) : (
@@ -171,8 +206,59 @@ export default function QuestQuestionsScreen() {
               {/* My questions */}
               <Section
                 title={t("qq_mine", lang)}
-                count={myQuestions.length}
+                count={myQuestionsAll.length}
               >
+                {/* Language filter chips */}
+                {myQuestionsAll.length > 0 && (
+                  <View style={styles.myLangFilterRow}>
+                    <Pressable
+                      onPress={() => setMyLangFilter("all")}
+                      style={[
+                        styles.myLangChip,
+                        myLangFilter === "all" && styles.myLangChipActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.myLangChipText,
+                          myLangFilter === "all" &&
+                            styles.myLangChipTextActive,
+                        ]}
+                      >
+                        {t("qq_filter_all", lang)} ({myQuestionsAll.length})
+                      </Text>
+                    </Pressable>
+                    {(["en", "de", "vi"] as Language[]).map((l) => {
+                      const n = myQuestionsAll.filter(
+                        (c) => (c.language || "en") === l,
+                      ).length;
+                      if (n === 0) return null;
+                      return (
+                        <Pressable
+                          key={l}
+                          onPress={() => setMyLangFilter(l)}
+                          style={[
+                            styles.myLangChip,
+                            myLangFilter === l && styles.myLangChipActive,
+                          ]}
+                        >
+                          <Text style={styles.myLangFlag}>
+                            {LANG_FLAGS[l]}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.myLangChipText,
+                              myLangFilter === l &&
+                                styles.myLangChipTextActive,
+                            ]}
+                          >
+                            {n}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
                 {myQuestions.length === 0 ? (
                   <Text style={styles.emptyHint}>
                     {t("qq_mine_empty", lang)}
@@ -184,6 +270,10 @@ export default function QuestQuestionsScreen() {
                       question={q}
                       ownedByMe
                       onDelete={() => handleDelete(q.id)}
+                      onEdit={() => {
+                        setShowForm(false);
+                        setEditing(q);
+                      }}
                       lang={lang}
                     />
                   ))
@@ -193,6 +283,7 @@ export default function QuestQuestionsScreen() {
             </>
           )}
         </ScrollView>
+        <Snackbar message={snackMsg} opacity={snack.opacity} />
       </KeyboardAvoidingView>
     </>
   );
@@ -224,11 +315,13 @@ function QuestionItem({
   question,
   ownedByMe,
   onDelete,
+  onEdit,
   lang,
 }: {
   question: CommunityQuestion;
   ownedByMe: boolean;
   onDelete?: () => void;
+  onEdit?: () => void;
   lang: ReturnType<typeof useLanguage>["lang"];
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -241,6 +334,18 @@ function QuestionItem({
         <Text style={styles.qText} numberOfLines={expanded ? undefined : 2}>
           {question.q}
         </Text>
+        {ownedByMe && onEdit && (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            hitSlop={8}
+            style={styles.qEdit}
+          >
+            <Ionicons name="create-outline" size={18} color={C.primary} />
+          </Pressable>
+        )}
         {ownedByMe && onDelete && (
           <Pressable
             onPress={(e) => {
@@ -260,6 +365,19 @@ function QuestionItem({
             <Ionicons name="person" size={10} color={C.accent} />
             <Text style={styles.qMetaPillText}>
               {question.createdByName}
+            </Text>
+          </View>
+        )}
+        {question.language && (
+          <View
+            style={[
+              styles.qMetaPill,
+              { backgroundColor: "rgba(91,117,83,0.10)" },
+            ]}
+          >
+            <Ionicons name="language" size={10} color={C.primary} />
+            <Text style={[styles.qMetaPillText, { color: C.primary }]}>
+              {question.language.toUpperCase()}
             </Text>
           </View>
         )}
@@ -333,21 +451,33 @@ function NewQuestionForm({
   orgId,
   userId,
   userName,
+  profileLang,
+  editing,
   onClose,
+  onSaved,
   lang,
 }: {
   orgId: string;
   userId: string | undefined;
   userName: string | null;
+  profileLang: Language;
+  editing: CommunityQuestion | null;
   onClose: () => void;
+  onSaved: (wasEdit: boolean) => void;
   lang: ReturnType<typeof useLanguage>["lang"];
 }) {
-  const [q, setQ] = useState("");
-  const [choices, setChoices] = useState<string[]>(["", "", "", ""]);
-  const [answer, setAnswer] = useState(0);
-  const [ref, setRef] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [failMsg, setFailMsg] = useState("");
+  const isEdit = editing !== null;
+  const [q, setQ] = useState(editing?.q ?? "");
+  const [choices, setChoices] = useState<string[]>(
+    editing?.choices ?? ["", "", "", ""],
+  );
+  const [answer, setAnswer] = useState(editing?.answer ?? 0);
+  const [ref, setRef] = useState(editing?.ref ?? "");
+  const [successMsg, setSuccessMsg] = useState(editing?.successMsg ?? "");
+  const [failMsg, setFailMsg] = useState(editing?.failMsg ?? "");
+  const [language, setLanguage] = useState<Language>(
+    editing?.language ?? profileLang,
+  );
   const [saving, setSaving] = useState(false);
 
   // Slide-in animation
@@ -380,28 +510,40 @@ function NewQuestionForm({
     Keyboard.dismiss();
     setSaving(true);
     try {
-      await addDoc(
-        collection(db, "organizations", orgId, "questQuestions"),
-        {
-          q: q.trim(),
-          choices: choices.map((c) => c.trim()),
-          answer,
-          ref: ref.trim() || null,
-          successMsg: successMsg.trim() || null,
-          failMsg: failMsg.trim() || null,
-          createdBy: userId,
-          createdByName: userName,
-          createdAt: serverTimestamp(),
-        },
-      );
-      // Reward the author for contributing.
-      await addToLeaderboard(
-        orgId,
-        userId,
-        userName,
-        POINTS_PER_QUESTION_CREATED,
-      );
-      onClose();
+      const payload = {
+        q: q.trim(),
+        choices: choices.map((c) => c.trim()),
+        answer,
+        ref: ref.trim() || null,
+        successMsg: successMsg.trim() || null,
+        failMsg: failMsg.trim() || null,
+        language,
+      };
+      if (isEdit && editing) {
+        // Editing — just update the existing doc; no points awarded.
+        await updateDoc(
+          doc(db, "organizations", orgId, "questQuestions", editing.id),
+          { ...payload, updatedAt: serverTimestamp() },
+        );
+      } else {
+        await addDoc(
+          collection(db, "organizations", orgId, "questQuestions"),
+          {
+            ...payload,
+            createdBy: userId,
+            createdByName: userName,
+            createdAt: serverTimestamp(),
+          },
+        );
+        // Reward the author for contributing (only on fresh creation).
+        await addToLeaderboard(
+          orgId,
+          userId,
+          userName,
+          POINTS_PER_QUESTION_CREATED,
+        );
+      }
+      onSaved(isEdit);
     } catch {
       // ignore
     } finally {
@@ -417,10 +559,37 @@ function NewQuestionForm({
       ]}
     >
       <View style={styles.formHeader}>
-        <Text style={styles.formTitle}>{t("qq_form_title", lang)}</Text>
+        <Text style={styles.formTitle}>
+          {isEdit ? t("qq_form_edit_title", lang) : t("qq_form_title", lang)}
+        </Text>
         <Pressable onPress={onClose} hitSlop={8}>
           <Ionicons name="close" size={22} color={C.textMuted} />
         </Pressable>
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>{t("qq_form_language", lang)}</Text>
+        <View style={styles.langRow}>
+          {(["en", "de", "vi"] as Language[]).map((l) => (
+            <Pressable
+              key={l}
+              onPress={() => setLanguage(l)}
+              style={[
+                styles.langChip,
+                language === l && styles.langChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.langChipText,
+                  language === l && styles.langChipTextActive,
+                ]}
+              >
+                {LANG_FLAGS[l]}  {languageLabels[l]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
       <View style={styles.field}>
@@ -652,6 +821,58 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   qDelete: { padding: 4 },
+  qEdit: { padding: 4 },
+
+  langRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  myLangFilterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 4,
+  },
+  myLangChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+  },
+  myLangChipActive: {
+    backgroundColor: C.primary,
+  },
+  myLangFlag: {
+    fontSize: 14,
+  },
+  myLangChipText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.textMuted,
+  },
+  myLangChipTextActive: {
+    color: "#FFFFFF",
+  },
+  langChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+  },
+  langChipActive: {
+    backgroundColor: C.primary,
+  },
+  langChipText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.textMuted,
+  },
+  langChipTextActive: {
+    color: "#FFFFFF",
+  },
   qMeta: {
     flexDirection: "row",
     flexWrap: "wrap",

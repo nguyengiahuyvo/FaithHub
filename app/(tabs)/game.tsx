@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -11,17 +12,99 @@ import {
   Text,
   View,
 } from "react-native";
+import {
+  collection,
+  doc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth-context";
+import { useOrg } from "@/lib/org-context";
 import { t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
+import {
+  addToLeaderboard,
+  type CommunityQuestion,
+  type Question,
+} from "@/lib/quest-questions";
 
 // ===== Game constants =====
 const QUESTIONS_PER_ROUND = 10;
 const TIME_PER_QUESTION_MS = 15000;
-const BASE_POINTS = 100;
-const MAX_TIME_BONUS = 50;
+// Scoring (per the rules):
+//   +5 points per correct answer
+//   +2 points per question authored
+const POINTS_PER_CORRECT = 5;
+const POINTS_PER_QUESTION_CREATED = 2;
 const STARTING_HEARTS = 3;
-const BEST_SCORE_KEY = "@faithhub/verseQuest/bestScore";
+// Play limits: max 5 rounds/day; 30-minute cooldown if you lose all hearts.
+const MAX_ROUNDS_PER_DAY = 5;
+const COOLDOWN_AFTER_FAIL_MS = 30 * 60 * 1000;
 const ONBOARDING_KEY = "@faithhub/verseQuest/onboardingSeen";
+const DAILY_PLAYS_KEY = "@faithhub/verseQuest/dailyPlays";
+const COOLDOWN_KEY = "@faithhub/verseQuest/cooldownUntil";
+// Local fallback score (used only when the player isn't in an organization).
+const LOCAL_SCORE_KEY = "@faithhub/verseQuest/localScore";
+
+// ===== Play-limit & cooldown helpers (AsyncStorage) =====
+type DailyPlays = { date: string; count: number };
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function readPlaysToday(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(DAILY_PLAYS_KEY);
+    if (!raw) return 0;
+    const parsed: DailyPlays = JSON.parse(raw);
+    return parsed.date === todayStr() ? parsed.count : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function bumpPlaysToday(): Promise<number> {
+  const today = todayStr();
+  const current = await readPlaysToday();
+  const next = current + 1;
+  try {
+    await AsyncStorage.setItem(
+      DAILY_PLAYS_KEY,
+      JSON.stringify({ date: today, count: next }),
+    );
+  } catch {}
+  return next;
+}
+
+async function readCooldownUntil(): Promise<number | null> {
+  try {
+    const raw = await AsyncStorage.getItem(COOLDOWN_KEY);
+    if (!raw) return null;
+    const ts = parseInt(raw, 10);
+    if (!Number.isFinite(ts) || ts <= Date.now()) return null;
+    return ts;
+  } catch {
+    return null;
+  }
+}
+
+async function writeCooldownUntil(ts: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(COOLDOWN_KEY, String(ts));
+  } catch {}
+}
+
+// "29:42" / "00:08" — minutes:seconds remaining.
+function formatCooldown(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
 // ===== Colors =====
 const C = {
@@ -42,51 +125,12 @@ const C = {
   neutral: "#E5E7EB",
 };
 
-// ===== Question pool =====
-type Question = {
-  q: string;
-  choices: string[];
-  answer: number;
-  ref?: string;
+// ===== Local helper types =====
+type LeaderboardEntry = {
+  uid: string;
+  displayName: string | null;
+  score: number;
 };
-
-const QUESTIONS: Question[] = [
-  { q: "Who built the ark?", choices: ["Moses", "Noah", "Abraham", "Jonah"], answer: 1, ref: "Genesis 6" },
-  { q: "How many days did it rain during the Flood?", choices: ["7", "12", "40", "100"], answer: 2, ref: "Genesis 7:12" },
-  { q: "In which town was Jesus born?", choices: ["Nazareth", "Jerusalem", "Bethlehem", "Capernaum"], answer: 2, ref: "Luke 2:4-7" },
-  { q: "What is the first book of the Bible?", choices: ["Exodus", "Genesis", "Job", "Psalms"], answer: 1 },
-  { q: "What is the last book of the Bible?", choices: ["Revelation", "Jude", "Malachi", "Acts"], answer: 0 },
-  { q: "How many disciples did Jesus have?", choices: ["7", "10", "12", "24"], answer: 2 },
-  { q: "Who denied Jesus three times?", choices: ["Judas", "Peter", "John", "Thomas"], answer: 1, ref: "Luke 22" },
-  { q: "What did God create on the first day?", choices: ["Stars", "Animals", "Light", "Man"], answer: 2, ref: "Genesis 1:3" },
-  { q: "Who was swallowed by a great fish?", choices: ["Jonah", "Job", "Joshua", "Joseph"], answer: 0 },
-  { q: "How many books are in the New Testament?", choices: ["24", "27", "39", "66"], answer: 1 },
-  { q: "Who led the Israelites out of Egypt?", choices: ["Aaron", "Joshua", "Moses", "David"], answer: 2 },
-  { q: "What did David use to defeat Goliath?", choices: ["Spear", "Sword", "Sling and stone", "Bow"], answer: 2, ref: "1 Samuel 17" },
-  { q: "Who was thrown into the lions' den?", choices: ["Daniel", "Elijah", "Elisha", "Ezekiel"], answer: 0 },
-  { q: "How many plagues struck Egypt?", choices: ["7", "10", "12", "40"], answer: 1 },
-  { q: "What is the shortest verse in the Bible?", choices: ["God is love.", "Jesus wept.", "Pray always.", "Do not fear."], answer: 1, ref: "John 11:35" },
-  { q: "Who betrayed Jesus with a kiss?", choices: ["Peter", "John", "Judas Iscariot", "Thomas"], answer: 2 },
-  { q: "Which Gospel comes first in the New Testament?", choices: ["Mark", "Luke", "John", "Matthew"], answer: 3 },
-  { q: "How many days was Jesus in the tomb?", choices: ["1", "3", "7", "40"], answer: 1 },
-  { q: "Who baptized Jesus?", choices: ["Peter", "Paul", "John the Baptist", "Andrew"], answer: 2 },
-  { q: "What was Paul's name before his conversion?", choices: ["Simon", "Saul", "Silas", "Stephen"], answer: 1 },
-  { q: "On what mountain did Moses receive the Ten Commandments?", choices: ["Mount Zion", "Mount Sinai", "Mount Ararat", "Mount Carmel"], answer: 1 },
-  { q: "Who was the strongest man in the Bible?", choices: ["Samson", "David", "Goliath", "Saul"], answer: 0 },
-  { q: "Who was the father of John the Baptist?", choices: ["Joseph", "Zacharias", "Elijah", "Herod"], answer: 1 },
-  { q: "What did Jesus turn water into at Cana?", choices: ["Oil", "Wine", "Milk", "Honey"], answer: 1, ref: "John 2" },
-  { q: "Who wrote most of the Psalms?", choices: ["Solomon", "David", "Moses", "Asaph"], answer: 1 },
-  { q: "How many people were saved on the ark?", choices: ["4", "8", "12", "40"], answer: 1 },
-  { q: "Who was the first man?", choices: ["Cain", "Abel", "Adam", "Seth"], answer: 2 },
-  { q: "What fruit is commonly associated with the Fall?", choices: ["Apple", "Fig", "Not specified", "Grape"], answer: 2 },
-  { q: "Who was the wisest king of Israel?", choices: ["David", "Saul", "Solomon", "Hezekiah"], answer: 2 },
-  { q: "What does \"Immanuel\" mean?", choices: ["Prince of Peace", "God with us", "Holy One", "Chosen Son"], answer: 1, ref: "Matthew 1:23" },
-  { q: "How many chapters are in the book of Psalms?", choices: ["100", "120", "150", "176"], answer: 2 },
-  { q: "Who climbed a tree to see Jesus?", choices: ["Nicodemus", "Zacchaeus", "Bartimaeus", "Lazarus"], answer: 1, ref: "Luke 19" },
-  { q: "Where did Jesus perform His first miracle?", choices: ["Jerusalem", "Bethany", "Cana", "Nazareth"], answer: 2 },
-  { q: "How many books are in the Bible (Protestant)?", choices: ["54", "66", "73", "81"], answer: 1 },
-  { q: "Who was the mother of Jesus?", choices: ["Martha", "Mary", "Elizabeth", "Ruth"], answer: 1 },
-];
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -97,14 +141,20 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildRound(): Question[] {
-  return shuffle(QUESTIONS).slice(0, QUESTIONS_PER_ROUND);
+// Per the rules: a round only uses questions written by other community
+// members. Built-in questions are not part of the pool. Round size is
+// capped at QUESTIONS_PER_ROUND but shrinks if the pool is small.
+function buildRound(community: CommunityQuestion[]): Question[] {
+  return shuffle(community).slice(0, QUESTIONS_PER_ROUND);
 }
 
 type Mode = "idle" | "playing" | "done";
 
 export default function GameScreen() {
   const { lang } = useLanguage();
+  const { user } = useAuth();
+  const { org } = useOrg();
+  const router = useRouter();
 
   const [mode, setMode] = useState<Mode>("idle");
   const [round, setRound] = useState<Question[]>([]);
@@ -116,22 +166,76 @@ export default function GameScreen() {
   const [hearts, setHearts] = useState(STARTING_HEARTS);
   const [selected, setSelected] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
-  const [bestScore, setBestScore] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [community, setCommunity] = useState<CommunityQuestion[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [playsToday, setPlaysToday] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [roundFailed, setRoundFailed] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(BEST_SCORE_KEY)
-      .then((v) => {
-        if (v) setBestScore(parseInt(v, 10) || 0);
-      })
-      .catch(() => {});
     // First-time visitors see the how-to-play onboarding automatically.
     AsyncStorage.getItem(ONBOARDING_KEY)
       .then((v) => {
         if (!v) setShowOnboarding(true);
       })
       .catch(() => {});
+    // Hydrate play limits / cooldown.
+    readPlaysToday().then(setPlaysToday);
+    readCooldownUntil().then(setCooldownUntil);
+    // Hydrate local fallback score (used when not in an org).
+    AsyncStorage.getItem(LOCAL_SCORE_KEY).then((v) => {
+      if (v) setTotalScore(parseInt(v, 10) || 0);
+    });
   }, []);
+
+  // Tick each second so the countdown banner updates live.
+  useEffect(() => {
+    if (!cooldownUntil) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [cooldownUntil]);
+
+  // Auto-clear the cooldown when its deadline passes.
+  useEffect(() => {
+    if (cooldownUntil && now >= cooldownUntil) setCooldownUntil(null);
+  }, [now, cooldownUntil]);
+
+  // Live total score for the player from the org leaderboard collection.
+  useEffect(() => {
+    if (!org || !user) return;
+    const ref = doc(db, "organizations", org.orgId, "questScores", user.uid);
+    const unsub = onSnapshot(ref, (snap) => {
+      const s = snap.data()?.score;
+      if (typeof s === "number") setTotalScore(s);
+    });
+    return unsub;
+  }, [org, user]);
+
+  // Live leaderboard (top 20).
+  useEffect(() => {
+    if (!org) {
+      setLeaderboard([]);
+      return;
+    }
+    const q = query(
+      collection(db, "organizations", org.orgId, "questScores"),
+      orderBy("score", "desc"),
+      limit(20),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setLeaderboard(
+        snap.docs.map((d) => ({
+          uid: d.id,
+          displayName: d.data().displayName ?? null,
+          score: typeof d.data().score === "number" ? d.data().score : 0,
+        })),
+      );
+    });
+    return unsub;
+  }, [org]);
 
   async function dismissOnboarding() {
     setShowOnboarding(false);
@@ -140,8 +244,66 @@ export default function GameScreen() {
     } catch {}
   }
 
-  function startGame() {
-    setRound(buildRound());
+  // Live-subscribe to community questions created by members of the org.
+  useEffect(() => {
+    if (!org) {
+      setCommunity([]);
+      return;
+    }
+    const q = query(
+      collection(db, "organizations", org.orgId, "questQuestions"),
+      orderBy("createdAt", "desc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setCommunity(
+        snap.docs
+          .map((d) => {
+            const data = d.data();
+            const choices = Array.isArray(data.choices) ? data.choices : [];
+            return {
+              id: d.id,
+              q: data.q || "",
+              choices,
+              answer: typeof data.answer === "number" ? data.answer : 0,
+              ref: data.ref || undefined,
+              successMsg: data.successMsg || undefined,
+              failMsg: data.failMsg || undefined,
+              createdBy: data.createdBy || "",
+              createdByName: data.createdByName || null,
+            };
+          })
+          // Ignore malformed documents (need 4 non-empty choices).
+          .filter(
+            (c) =>
+              c.q.trim().length > 0 &&
+              c.choices.length === 4 &&
+              c.choices.every((x: unknown) => typeof x === "string" && x.trim().length > 0) &&
+              c.answer >= 0 &&
+              c.answer <= 3,
+          ),
+      );
+    });
+    return unsub;
+  }, [org]);
+
+  async function startGame() {
+    // Enforce play limits before committing to a new round.
+    if (cooldownUntil && Date.now() < cooldownUntil) return;
+    if (playsToday >= MAX_ROUNDS_PER_DAY) return;
+
+    // The player cannot face their own questions.
+    const eligible = user
+      ? community.filter((c) => c.createdBy !== user.uid)
+      : community;
+
+    // Per the rules, no questions = no game.
+    if (eligible.length === 0) return;
+
+    // Burn one of today's plays.
+    const next = await bumpPlaysToday();
+    setPlaysToday(next);
+
+    setRound(buildRound(eligible));
     setQIndex(0);
     setScore(0);
     setStreak(0);
@@ -150,6 +312,7 @@ export default function GameScreen() {
     setHearts(STARTING_HEARTS);
     setSelected(null);
     setLocked(false);
+    setRoundFailed(false);
     setMode("playing");
   }
 
@@ -167,17 +330,40 @@ export default function GameScreen() {
   }, [hearts]);
 
   async function finishRound() {
-    const final = scoreRef.current;
-    if (final > bestScore) {
-      setBestScore(final);
-      try {
-        await AsyncStorage.setItem(BEST_SCORE_KEY, String(final));
-      } catch {}
+    const roundScore = scoreRef.current;
+    // Failed = lost all hearts before answering all questions.
+    const failed = heartsRef.current <= 0;
+    setRoundFailed(failed);
+
+    // Persist the round's points to the leaderboard (or local fallback).
+    if (roundScore > 0) {
+      if (org && user) {
+        await addToLeaderboard(
+          org.orgId,
+          user.uid,
+          user.displayName ?? null,
+          roundScore,
+        );
+      } else {
+        // No org → keep a local lifetime score so the player still sees progress.
+        const next = totalScore + roundScore;
+        setTotalScore(next);
+        try {
+          await AsyncStorage.setItem(LOCAL_SCORE_KEY, String(next));
+        } catch {}
+      }
     }
+
+    if (failed) {
+      const until = Date.now() + COOLDOWN_AFTER_FAIL_MS;
+      setCooldownUntil(until);
+      await writeCooldownUntil(until);
+    }
+
     setMode("done");
   }
 
-  function handleAnswer(choiceIdx: number, remainingMs: number) {
+  function handleAnswer(choiceIdx: number, _remainingMs: number) {
     if (locked) return;
     setLocked(true);
     setSelected(choiceIdx);
@@ -186,12 +372,8 @@ export default function GameScreen() {
     const isCorrect = choiceIdx === q.answer;
 
     if (isCorrect) {
-      const timeBonus = Math.round(
-        (Math.max(0, remainingMs) / TIME_PER_QUESTION_MS) * MAX_TIME_BONUS,
-      );
-      const streakBonus = streak * 10;
-      const gained = BASE_POINTS + timeBonus + streakBonus;
-      setScore((s) => s + gained);
+      // Flat scoring per the rules: +5 per correct answer.
+      setScore((s) => s + POINTS_PER_CORRECT);
       setStreak((s) => {
         const ns = s + 1;
         setBestStreak((b) => (ns > b ? ns : b));
@@ -241,9 +423,25 @@ export default function GameScreen() {
     <View style={styles.screen}>
       {mode === "idle" && (
         <StartView
-          bestScore={bestScore}
+          totalScore={totalScore}
+          playsToday={playsToday}
+          maxPlays={MAX_ROUNDS_PER_DAY}
+          cooldownMsLeft={cooldownUntil ? Math.max(0, cooldownUntil - now) : 0}
           onStart={startGame}
           onShowHelp={() => setShowOnboarding(true)}
+          onManageQuestions={() => router.push("/quest-questions")}
+          hasOrg={!!org}
+          communityCount={community.length}
+          eligibleCount={
+            user
+              ? community.filter((c) => c.createdBy !== user.uid).length
+              : community.length
+          }
+          myCount={
+            user ? community.filter((c) => c.createdBy === user.uid).length : 0
+          }
+          leaderboard={leaderboard}
+          currentUid={user?.uid}
           lang={lang}
         />
       )}
@@ -267,10 +465,15 @@ export default function GameScreen() {
       {mode === "done" && (
         <DoneView
           score={score}
-          bestScore={bestScore}
+          totalScore={totalScore}
           correctCount={correctCount}
           total={round.length}
           bestStreak={bestStreak}
+          failed={roundFailed}
+          cooldownMsLeft={
+            cooldownUntil ? Math.max(0, cooldownUntil - now) : 0
+          }
+          playsLeft={Math.max(0, MAX_ROUNDS_PER_DAY - playsToday)}
           onPlayAgain={startGame}
           onClose={goToStart}
           lang={lang}
@@ -287,16 +490,44 @@ export default function GameScreen() {
 }
 
 function StartView({
-  bestScore,
+  totalScore,
+  playsToday,
+  maxPlays,
+  cooldownMsLeft,
   onStart,
   onShowHelp,
+  onManageQuestions,
+  hasOrg,
+  communityCount,
+  eligibleCount,
+  myCount,
+  leaderboard,
+  currentUid,
   lang,
 }: {
-  bestScore: number;
+  totalScore: number;
+  playsToday: number;
+  maxPlays: number;
+  cooldownMsLeft: number;
   onStart: () => void;
   onShowHelp: () => void;
+  onManageQuestions: () => void;
+  hasOrg: boolean;
+  communityCount: number;
+  eligibleCount: number;
+  myCount: number;
+  leaderboard: LeaderboardEntry[];
+  currentUid: string | undefined;
   lang: Language;
 }) {
+  const playsLeft = Math.max(0, maxPlays - playsToday);
+  const cooldownActive = cooldownMsLeft > 0;
+  const noPlaysLeft = playsLeft === 0 && !cooldownActive;
+  // Per the rules, you can only play if community questions exist (excluding
+  // your own). When the org has none, the round can't be built.
+  const noEligibleQuestions = !cooldownActive && !noPlaysLeft && eligibleCount === 0;
+  const playDisabled = cooldownActive || noPlaysLeft || noEligibleQuestions || !hasOrg;
+  const cooldownLabel = formatCooldown(cooldownMsLeft);
   const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -338,18 +569,64 @@ function StartView({
         <Text style={styles.startTitle}>{t("game_title", lang)}</Text>
         <Text style={styles.startSubtitle}>{t("game_subtitle", lang)}</Text>
 
+        {/* Cooldown / daily-limit / no-questions notice */}
+        {cooldownActive && (
+          <View style={styles.noticeCard}>
+            <Ionicons name="hourglass" size={18} color={C.wrong} />
+            <Text style={styles.noticeText}>
+              {t("game_cooldown_msg", lang)} {cooldownLabel}
+            </Text>
+          </View>
+        )}
+        {!cooldownActive && noPlaysLeft && (
+          <View style={[styles.noticeCard, { backgroundColor: "#FEF3C7" }]}>
+            <Ionicons name="moon" size={18} color={C.gold} />
+            <Text style={[styles.noticeText, { color: C.gold }]}>
+              {t("game_daily_limit_msg", lang)}
+            </Text>
+          </View>
+        )}
+        {!cooldownActive && !noPlaysLeft && !hasOrg && (
+          <View
+            style={[
+              styles.noticeCard,
+              { backgroundColor: "rgba(91,117,83,0.10)" },
+            ]}
+          >
+            <Ionicons name="people-outline" size={18} color={C.primary} />
+            <Text style={[styles.noticeText, { color: C.primary }]}>
+              {t("game_need_org_msg", lang)}
+            </Text>
+          </View>
+        )}
+        {!cooldownActive && !noPlaysLeft && hasOrg && noEligibleQuestions && (
+          <View
+            style={[
+              styles.noticeCard,
+              { backgroundColor: "rgba(192,149,108,0.15)" },
+            ]}
+          >
+            <Ionicons name="bulb" size={18} color={C.accent} />
+            <Text style={[styles.noticeText, { color: C.accent }]}>
+              {communityCount > 0 && myCount === communityCount
+                ? t("game_only_own_msg", lang)
+                : t("game_no_questions_msg", lang)}
+            </Text>
+          </View>
+        )}
+
         <View style={styles.statsGrid}>
           <StatCard
             icon="trophy"
             iconColor={C.gold}
-            label={t("game_best_score", lang)}
-            value={String(bestScore)}
+            label={t("game_total_score", lang)}
+            value={String(totalScore)}
           />
           <StatCard
-            icon="help-circle"
+            icon="calendar"
             iconColor={C.primary}
-            label={t("game_questions", lang)}
-            value={String(QUESTIONS_PER_ROUND)}
+            label={t("game_plays_today", lang)}
+            value={`${playsLeft} / ${maxPlays}`}
           />
           <StatCard
             icon="heart"
@@ -358,26 +635,96 @@ function StartView({
             value={String(STARTING_HEARTS)}
           />
           <StatCard
-            icon="flash"
+            icon="star"
             iconColor={C.accent}
-            label={t("game_time", lang)}
-            value={`${TIME_PER_QUESTION_MS / 1000}s`}
+            label={t("game_per_correct", lang)}
+            value={`+${POINTS_PER_CORRECT}`}
           />
         </View>
 
-        <View style={styles.howCard}>
-          <Text style={styles.howTitle}>{t("game_how_title", lang)}</Text>
-          <HowRow icon="checkmark-circle" color={C.correct} text={t("game_how_1", lang)} />
-          <HowRow icon="flame" color={C.gold} text={t("game_how_2", lang)} />
-          <HowRow icon="timer" color={C.primary} text={t("game_how_3", lang)} />
+        {/* Leaderboard — inline on the start page */}
+        <View style={styles.boardCard}>
+          <View style={styles.boardHeader}>
+            <Ionicons name="trophy" size={18} color={C.gold} />
+            <Text style={styles.boardTitle}>
+              {t("game_leaderboard_title", lang)}
+            </Text>
+          </View>
+
+          {!hasOrg ? (
+            <Text style={styles.boardEmpty}>
+              {t("game_leaderboard_need_org", lang)}
+            </Text>
+          ) : leaderboard.length === 0 ? (
+            <Text style={styles.boardEmpty}>
+              {t("game_leaderboard_empty", lang)}
+            </Text>
+          ) : (
+            <View style={{ gap: 6 }}>
+              {leaderboard.slice(0, 10).map((e, i) => {
+                const isMe = e.uid === currentUid;
+                const medal =
+                  i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+                return (
+                  <View
+                    key={e.uid}
+                    style={[
+                      styles.boardRow,
+                      isMe && styles.boardRowMe,
+                      i === 0 && styles.boardRowFirst,
+                    ]}
+                  >
+                    <View style={styles.boardRank}>
+                      {medal ? (
+                        <Text style={styles.boardMedal}>{medal}</Text>
+                      ) : (
+                        <Text style={styles.boardRankText}>{i + 1}</Text>
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        styles.boardName,
+                        isMe && styles.boardNameMe,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {e.displayName ||
+                        t("home_member_fallback", lang) ||
+                        "—"}
+                      {isMe ? "  · " + t("game_leaderboard_you", lang) : ""}
+                    </Text>
+                    <Text style={styles.boardScore}>{e.score}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </View>
+
       </ScrollView>
 
-      {/* Bottom-docked action, matches the Calendar/Tasks switcher pill */}
+      {/* Bottom-docked action group: Play + Create question + Help */}
       <View style={styles.bottomBar}>
-        <Pressable onPress={onStart} style={styles.playBtn}>
+        <Pressable
+          onPress={onStart}
+          disabled={playDisabled}
+          style={[styles.playBtn, playDisabled && { opacity: 0.5 }]}
+        >
           <Ionicons name="play" size={20} color="#FFFFFF" />
-          <Text style={styles.playBtnText}>{t("game_play", lang)}</Text>
+          <Text style={styles.playBtnText}>
+            {cooldownActive
+              ? `${t("game_play", lang)}  ·  ${cooldownLabel}`
+              : t("game_play", lang)}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={onManageQuestions}
+          disabled={!hasOrg}
+          style={[styles.helpBtn, !hasOrg && { opacity: 0.5 }]}
+          accessibilityLabel={t("game_manage_questions", lang)}
+          hitSlop={6}
+        >
+          <Ionicons name="add" size={22} color={C.primary} />
         </Pressable>
         <Pressable
           onPress={onShowHelp}
@@ -596,9 +943,19 @@ function PlayView({
           },
         ]}
       >
-        <Text style={styles.questionIndex}>
-          {qIndex + 1} / {total}
-        </Text>
+        <View style={styles.questionMetaRow}>
+          <Text style={styles.questionIndex}>
+            {qIndex + 1} / {total}
+          </Text>
+          {question.createdByName && (
+            <View style={styles.byPill}>
+              <Ionicons name="person" size={10} color={C.accent} />
+              <Text style={styles.byPillText}>
+                {t("game_by", lang)} {question.createdByName}
+              </Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.questionText}>{question.q}</Text>
         {question.ref && (
           <View style={styles.refPill}>
@@ -607,6 +964,49 @@ function PlayView({
           </View>
         )}
       </Animated.View>
+
+      {/* Trash-talk bubble — author's reaction to the player's answer */}
+      {locked &&
+        (() => {
+          const answeredCorrectly =
+            selected !== null && selected === question.answer;
+          const msg = answeredCorrectly
+            ? question.successMsg
+            : question.failMsg;
+          if (!msg) return null;
+          const tone = answeredCorrectly ? "success" : "fail";
+          return (
+            <View
+              style={[
+                styles.reactionBubble,
+                tone === "success"
+                  ? styles.reactionBubbleSuccess
+                  : styles.reactionBubbleFail,
+              ]}
+            >
+              <Text style={styles.reactionEmoji}>
+                {tone === "success" ? "🎉" : "😈"}
+              </Text>
+              <View style={{ flex: 1 }}>
+                {question.createdByName && (
+                  <Text style={styles.reactionAuthor}>
+                    {question.createdByName}
+                  </Text>
+                )}
+                <Text
+                  style={[
+                    styles.reactionText,
+                    tone === "success"
+                      ? styles.reactionTextSuccess
+                      : styles.reactionTextFail,
+                  ]}
+                >
+                  {msg}
+                </Text>
+              </View>
+            </View>
+          );
+        })()}
 
       <View style={styles.choicesWrap}>
         {question.choices.map((choice, idx) => {
@@ -666,24 +1066,32 @@ function PlayView({
 
 function DoneView({
   score,
-  bestScore,
+  totalScore,
   correctCount,
   total,
   bestStreak,
+  failed,
+  cooldownMsLeft,
+  playsLeft,
   onPlayAgain,
   onClose,
   lang,
 }: {
   score: number;
-  bestScore: number;
+  totalScore: number;
   correctCount: number;
   total: number;
   bestStreak: number;
+  failed: boolean;
+  cooldownMsLeft: number;
+  playsLeft: number;
   onPlayAgain: () => void;
   onClose: () => void;
   lang: Language;
 }) {
-  const isNewBest = score >= bestScore && score > 0;
+  const cooldownActive = cooldownMsLeft > 0;
+  const noPlaysLeft = !cooldownActive && playsLeft === 0;
+  const playAgainDisabled = cooldownActive || noPlaysLeft;
 
   const scale = useRef(new Animated.Value(0.6)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -705,13 +1113,18 @@ function DoneView({
   }, [scale, opacity]);
 
   const { verseKey, titleKey } = useMemo(() => {
+    if (failed)
+      return {
+        titleKey: "game_result_failed" as const,
+        verseKey: "game_verse_try" as const,
+      };
     const pct = correctCount / Math.max(1, total);
     if (pct >= 0.9)
       return { titleKey: "game_result_great" as const, verseKey: "game_verse_great" as const };
     if (pct >= 0.5)
       return { titleKey: "game_result_good" as const, verseKey: "game_verse_good" as const };
     return { titleKey: "game_result_try" as const, verseKey: "game_verse_try" as const };
-  }, [correctCount, total]);
+  }, [correctCount, total, failed]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -719,27 +1132,32 @@ function DoneView({
         <Animated.View
           style={[styles.doneHero, { opacity, transform: [{ scale }] }]}
         >
-          {isNewBest ? (
-            <View style={[styles.doneIconCircle, { backgroundColor: "#FEF3C7" }]}>
-              <Ionicons name="trophy" size={44} color={C.gold} />
-            </View>
-          ) : (
-            <View style={styles.doneIconCircle}>
-              <Ionicons name="ribbon" size={44} color={C.primary} />
-            </View>
-          )}
+          <View
+            style={[
+              styles.doneIconCircle,
+              failed && { backgroundColor: "#FEE2E2" },
+            ]}
+          >
+            <Ionicons
+              name={failed ? "skull" : "ribbon"}
+              size={44}
+              color={failed ? C.wrong : C.primary}
+            />
+          </View>
           <Text style={styles.doneTitle}>{t(titleKey, lang)}</Text>
-          {isNewBest && (
-            <View style={styles.newBestPill}>
-              <Ionicons name="sparkles" size={12} color={C.gold} />
-              <Text style={styles.newBestPillText}>
-                {t("game_new_best", lang)}
-              </Text>
-            </View>
-          )}
-          <Text style={styles.doneScore}>{score}</Text>
+          <Text style={styles.doneScore}>+{score}</Text>
           <Text style={styles.doneScoreLabel}>{t("game_points", lang)}</Text>
         </Animated.View>
+
+        {/* Cooldown banner — shown only after a failure */}
+        {cooldownActive && (
+          <View style={styles.noticeCard}>
+            <Ionicons name="hourglass" size={18} color={C.wrong} />
+            <Text style={styles.noticeText}>
+              {t("game_cooldown_msg", lang)} {formatCooldown(cooldownMsLeft)}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.resultGrid}>
           <StatCard
@@ -757,8 +1175,8 @@ function DoneView({
           <StatCard
             icon="trophy"
             iconColor={C.accent}
-            label={t("game_best_score", lang)}
-            value={String(bestScore)}
+            label={t("game_total_score", lang)}
+            value={String(totalScore)}
           />
         </View>
 
@@ -774,9 +1192,19 @@ function DoneView({
 
       {/* Bottom-docked primary action */}
       <View style={styles.bottomBar}>
-        <Pressable onPress={onPlayAgain} style={styles.playBtn}>
+        <Pressable
+          onPress={onPlayAgain}
+          disabled={playAgainDisabled}
+          style={[styles.playBtn, playAgainDisabled && { opacity: 0.5 }]}
+        >
           <Ionicons name="refresh" size={18} color="#FFFFFF" />
-          <Text style={styles.playBtnText}>{t("game_play_again", lang)}</Text>
+          <Text style={styles.playBtnText}>
+            {cooldownActive
+              ? `${t("game_play_again", lang)}  ·  ${formatCooldown(cooldownMsLeft)}`
+              : noPlaysLeft
+              ? t("game_daily_limit_short", lang)
+              : t("game_play_again", lang)}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -802,30 +1230,34 @@ type OnboardStep = {
 
 const ONBOARD_STEPS: OnboardStep[] = [
   {
-    icon: "help-circle",
+    // Step 1 — community-authored questions, +5 per correct answer
+    icon: "people",
     color: C.primary,
     bgColor: "#E8F0E5",
     titleKey: "onboard_1_title",
     descKey: "onboard_1_desc",
   },
   {
-    icon: "flash",
-    color: C.accent,
-    bgColor: "#F7EDE0",
+    // Step 2 — 3 lives, 30-min cooldown if you fail
+    icon: "heart",
+    color: C.heart,
+    bgColor: "#FEE2E2",
     titleKey: "onboard_2_title",
     descKey: "onboard_2_desc",
   },
   {
-    icon: "flame",
+    // Step 3 — 5 rounds/day, leaderboard honors top players
+    icon: "trophy",
     color: C.gold,
     bgColor: "#FEF3C7",
     titleKey: "onboard_3_title",
     descKey: "onboard_3_desc",
   },
   {
-    icon: "heart",
-    color: C.heart,
-    bgColor: "#FEE2E2",
+    // Step 4 — challenge back: create your own questions for +2 each
+    icon: "add-circle",
+    color: C.accent,
+    bgColor: "#F7EDE0",
     titleKey: "onboard_4_title",
     descKey: "onboard_4_desc",
   },
@@ -1130,6 +1562,90 @@ const styles = StyleSheet.create({
   },
   howRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   howText: { fontSize: 14, color: C.text, flex: 1 },
+
+  noticeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: "#FEE2E2",
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.wrong,
+  },
+  boardCard: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    padding: 14,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  boardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingBottom: 4,
+  },
+  boardTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: C.primaryDark,
+  },
+  boardEmpty: {
+    fontSize: 13,
+    color: C.textMuted,
+    fontStyle: "italic",
+    paddingVertical: 8,
+    textAlign: "center",
+  },
+  boardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: "#F9F7F4",
+    borderRadius: 10,
+  },
+  boardRowMe: {
+    backgroundColor: "#E8F0E5",
+    borderWidth: 1,
+    borderColor: C.primary,
+  },
+  boardRowFirst: {
+    backgroundColor: "#FEF3C7",
+  },
+  boardRank: {
+    width: 24,
+    alignItems: "center",
+  },
+  boardRankText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: C.textMuted,
+  },
+  boardMedal: { fontSize: 16 },
+  boardName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: C.text,
+  },
+  boardNameMe: {
+    color: C.primaryDark,
+    fontWeight: "800",
+  },
+  boardScore: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: C.primaryDark,
+  },
+
   // Bottom-docked container — matches the Calendar/Tasks segmented switcher:
   // same horizontal margin, bottom margin, padding, and light-green wrapper tint.
   bottomBar: {
@@ -1221,11 +1737,31 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  questionMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
   questionIndex: {
     fontSize: 12,
     fontWeight: "700",
     color: C.textMuted,
     letterSpacing: 0.5,
+  },
+  byPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "rgba(192,149,108,0.15)",
+  },
+  byPillText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: C.accent,
   },
   questionText: {
     fontSize: 20,
@@ -1244,6 +1780,39 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0FDF4",
   },
   refPillText: { fontSize: 11, color: C.primary, fontWeight: "600" },
+
+  reactionBubble: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  reactionBubbleSuccess: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF7D0",
+  },
+  reactionBubbleFail: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+  reactionEmoji: { fontSize: 22 },
+  reactionAuthor: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: C.textMuted,
+    marginBottom: 2,
+  },
+  reactionText: {
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+    fontStyle: "italic",
+  },
+  reactionTextSuccess: { color: "#14532D" },
+  reactionTextFail: { color: "#7F1D1D" },
+
   choicesWrap: { gap: 10, marginTop: 4 },
   choiceBtn: {
     flexDirection: "row",

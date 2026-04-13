@@ -863,44 +863,277 @@ const translations = {
     vi: "Bắt đầu!",
   },
   onboard_1_title: {
-    en: "Answer Bible Trivia",
-    de: "Beantworte Bibel-Fragen",
-    vi: "Trả lời câu hỏi Kinh Thánh",
+    en: "Challenges From Your Community",
+    de: "Herausforderungen aus deiner Gemeinschaft",
+    vi: "Thử thách từ cộng đồng",
   },
   onboard_1_desc: {
-    en: "Each round has 10 questions with 4 choices. Tap the right answer to earn 100 points.",
-    de: "Jede Runde hat 10 Fragen mit 4 Optionen. Tippe die richtige Antwort an und erhalte 100 Punkte.",
-    vi: "Mỗi vòng có 10 câu hỏi, mỗi câu 4 lựa chọn. Chọn đúng để nhận 100 điểm.",
+    en: "Answer trivia questions written by other members of your community. Each correct answer earns you 5 points.",
+    de: "Beantworte Fragen, die andere Mitglieder deiner Gemeinschaft erstellt haben. Jede richtige Antwort bringt 5 Punkte.",
+    vi: "Trả lời câu hỏi do các thành viên khác trong cộng đồng tạo ra. Mỗi câu đúng được 5 điểm.",
   },
   onboard_2_title: {
-    en: "Race the Clock",
-    de: "Schlag die Uhr",
-    vi: "Chạy đua với thời gian",
+    en: "Three Lives. Use Them Well.",
+    de: "Drei Leben. Geh sorgsam damit um.",
+    vi: "Ba mạng. Hãy giữ gìn.",
   },
   onboard_2_desc: {
-    en: "You get 15 seconds per question. Answer quickly to earn up to 50 bonus points — watch the runner along the timer bar!",
-    de: "Du hast 15 Sekunden pro Frage. Antworte schnell für bis zu 50 Bonuspunkte — beobachte den Läufer auf der Zeitleiste!",
-    vi: "Bạn có 15 giây mỗi câu. Trả lời nhanh để nhận đến 50 điểm thưởng — xem chú chạy trên thanh thời gian!",
+    en: "You have 3 lives per round. Lose them all and you'll have to wait 30 minutes before you can play again.",
+    de: "Du hast 3 Leben pro Runde. Wenn du alle verlierst, musst du 30 Minuten warten, bevor du wieder spielen kannst.",
+    vi: "Bạn có 3 mạng mỗi vòng. Mất hết mạng, bạn phải chờ 30 phút mới được chơi lại.",
   },
   onboard_3_title: {
-    en: "Build Streaks",
-    de: "Baue Serien auf",
-    vi: "Tạo chuỗi thắng",
+    en: "5 Rounds a Day",
+    de: "5 Runden pro Tag",
+    vi: "5 lượt mỗi ngày",
   },
   onboard_3_desc: {
-    en: "Answer correctly in a row to build a streak. Each streak level adds +10 bonus points per correct answer.",
-    de: "Richtige Antworten in Folge bauen eine Serie auf. Jede Stufe gibt +10 Bonuspunkte pro richtiger Antwort.",
-    vi: "Trả lời đúng liên tiếp để tạo chuỗi. Mỗi cấp chuỗi thêm +10 điểm thưởng mỗi câu đúng.",
+    en: "You can play up to 5 rounds each day. The highest-scoring players are honored on the leaderboard.",
+    de: "Du kannst bis zu 5 Runden pro Tag spielen. Die besten Spieler werden auf der Bestenliste geehrt.",
+    vi: "Bạn được chơi tối đa 5 lượt mỗi ngày. Người chơi điểm cao nhất sẽ được vinh danh trên bảng xếp hạng.",
   },
   onboard_4_title: {
-    en: "Don't Lose Your Hearts",
-    de: "Verliere keine Leben",
-    vi: "Đừng mất mạng",
+    en: "Challenge Back",
+    de: "Fordere zurück heraus",
+    vi: "Thách thức ngược lại",
   },
   onboard_4_desc: {
-    en: "You start with 3 hearts. Wrong answers or running out of time cost a heart. Lose them all and the round ends.",
-    de: "Du startest mit 3 Leben. Falsche Antworten oder Zeitablauf kosten ein Leben. Sind alle weg, endet die Runde.",
-    vi: "Bạn bắt đầu với 3 mạng. Câu sai hoặc hết giờ sẽ mất 1 mạng. Mất hết mạng là kết thúc vòng.",
+    en: "Create your own questions to challenge other members. You earn 2 points per question — and your own questions won't appear in your rounds.",
+    de: "Erstelle eigene Fragen, um andere herauszufordern. Du bekommst 2 Punkte pro Frage — und deine eigenen Fragen erscheinen nicht in deinen Runden.",
+    vi: "Tạo câu hỏi của riêng bạn để thách thức người khác. Bạn nhận 2 điểm mỗi câu — và câu hỏi của bạn sẽ không xuất hiện trong vòng chơi của bạn.",
+  },
+
+  // Verse Quest — community-authored questions (Challenge Mode)
+  game_challenge_title: {
+    en: "Challenge Mode",
+    de: "Challenge-Modus",
+    vi: "Chế độ thử thách",
+  },
+  game_challenge_subtitle: {
+    en: "Write your own questions to challenge other players in your community.",
+    de: "Schreibe eigene Fragen, um andere in deiner Gemeinschaft herauszufordern.",
+    vi: "Viết câu hỏi của riêng bạn để thử thách các thành viên khác.",
+  },
+  game_challenge_need_org: {
+    en: "Join a community to create and share questions.",
+    de: "Tritt einer Gemeinschaft bei, um Fragen zu erstellen.",
+    vi: "Hãy tham gia cộng đồng để tạo và chia sẻ câu hỏi.",
+  },
+  game_challenge_pool: {
+    en: "in the pool",
+    de: "im Pool",
+    vi: "trong kho",
+  },
+  game_challenge_create: {
+    en: "Create Question",
+    de: "Frage erstellen",
+    vi: "Tạo câu hỏi",
+  },
+  game_challenge_mine: {
+    en: "My questions",
+    de: "Meine Fragen",
+    vi: "Câu hỏi của tôi",
+  },
+  game_by: { en: "by", de: "von", vi: "của" },
+
+  // Create Question modal
+  game_cq_title: {
+    en: "New Question",
+    de: "Neue Frage",
+    vi: "Câu hỏi mới",
+  },
+  game_cq_question: { en: "Question", de: "Frage", vi: "Câu hỏi" },
+  game_cq_question_ph: {
+    en: "e.g. Who led the Israelites out of Egypt?",
+    de: "z.B. Wer führte die Israeliten aus Ägypten?",
+    vi: "VD: Ai đã dẫn dân Israel ra khỏi Ai Cập?",
+  },
+  game_cq_choices: {
+    en: "Answers",
+    de: "Antworten",
+    vi: "Lựa chọn",
+  },
+  game_cq_tap_correct: {
+    en: "Tap the letter next to the correct answer.",
+    de: "Tippe den Buchstaben neben der richtigen Antwort an.",
+    vi: "Chạm vào chữ cái bên cạnh câu trả lời đúng.",
+  },
+  game_cq_choice_ph: {
+    en: "Choice",
+    de: "Antwort",
+    vi: "Lựa chọn",
+  },
+  game_cq_reference: {
+    en: "Bible reference (optional)",
+    de: "Bibelstelle (optional)",
+    vi: "Tham chiếu Kinh Thánh (tùy chọn)",
+  },
+  game_cq_reference_ph: {
+    en: "e.g. Exodus 3:10",
+    de: "z.B. 2. Mose 3:10",
+    vi: "VD: Xuất 3:10",
+  },
+  game_cq_save: { en: "Save", de: "Speichern", vi: "Lưu" },
+  game_cq_answer_label: {
+    en: "Answer",
+    de: "Antwort",
+    vi: "Đáp án",
+  },
+  game_cq_success_label: {
+    en: "Say something if they get it right (optional)",
+    de: "Sag etwas, wenn sie richtig antworten (optional)",
+    vi: "Nhắn gì đó nếu họ trả lời đúng (tùy chọn)",
+  },
+  game_cq_success_ph: {
+    en: "e.g. Show-off! 😎 Lucky guess, huh?",
+    de: "z.B. Angeber! 😎 Glückstreffer, was?",
+    vi: "VD: Giỏi quá đấy! 😎 May mắn thôi chứ gì?",
+  },
+  game_cq_fail_label: {
+    en: "Say something if they get it wrong (optional)",
+    de: "Sag etwas, wenn sie falsch liegen (optional)",
+    vi: "Nhắn gì đó nếu họ trả lời sai (tùy chọn)",
+  },
+  game_cq_fail_ph: {
+    en: "e.g. Seriously?? Even my goldfish knew that 🐟",
+    de: "z.B. Echt jetzt?? Das wusste sogar mein Goldfisch 🐟",
+    vi: "VD: Thật hả?? Cá vàng của tôi còn biết 🐟",
+  },
+
+  // My Questions modal
+  game_mq_title: {
+    en: "My Questions",
+    de: "Meine Fragen",
+    vi: "Câu hỏi của tôi",
+  },
+  game_mq_empty: {
+    en: "You haven't created any questions yet.",
+    de: "Du hast noch keine Fragen erstellt.",
+    vi: "Bạn chưa tạo câu hỏi nào.",
+  },
+
+  // Verse Quest — totals, limits & leaderboard
+  game_total_score: {
+    en: "Total score",
+    de: "Gesamtpunkte",
+    vi: "Tổng điểm",
+  },
+  game_plays_today: {
+    en: "Plays left today",
+    de: "Heute übrig",
+    vi: "Lượt còn lại",
+  },
+  game_per_correct: {
+    en: "Per correct",
+    de: "Pro richtig",
+    vi: "Mỗi câu đúng",
+  },
+  game_cooldown_msg: {
+    en: "You ran out of lives. Come back in",
+    de: "Du hast alle Leben verloren. Komm zurück in",
+    vi: "Bạn đã hết mạng. Quay lại sau",
+  },
+  game_daily_limit_msg: {
+    en: "You've used all 5 plays today. Come back tomorrow.",
+    de: "Du hast heute alle 5 Spiele verbraucht. Komm morgen wieder.",
+    vi: "Bạn đã dùng hết 5 lượt hôm nay. Hẹn gặp lại ngày mai.",
+  },
+  game_daily_limit_short: {
+    en: "Come back tomorrow",
+    de: "Komm morgen wieder",
+    vi: "Hẹn ngày mai",
+  },
+  game_result_failed: {
+    en: "Out of lives!",
+    de: "Keine Leben mehr!",
+    vi: "Hết mạng rồi!",
+  },
+  game_leaderboard_title: {
+    en: "Leaderboard",
+    de: "Bestenliste",
+    vi: "Bảng xếp hạng",
+  },
+  game_leaderboard_subtitle: {
+    en: "See the top players in your community.",
+    de: "Sieh die besten Spieler deiner Gemeinschaft.",
+    vi: "Xem những người chơi xuất sắc nhất trong cộng đồng.",
+  },
+  game_leaderboard_need_org: {
+    en: "Join a community to see the leaderboard.",
+    de: "Tritt einer Gemeinschaft bei, um die Bestenliste zu sehen.",
+    vi: "Tham gia cộng đồng để xem bảng xếp hạng.",
+  },
+  game_leaderboard_empty: {
+    en: "No scores yet — be the first to play!",
+    de: "Noch keine Punkte — sei der Erste!",
+    vi: "Chưa có điểm nào — hãy là người đầu tiên!",
+  },
+  game_leaderboard_you: {
+    en: "you",
+    de: "du",
+    vi: "bạn",
+  },
+  game_no_questions_msg: {
+    en: "No questions yet — be the first to add one!",
+    de: "Noch keine Fragen — sei der Erste, der eine erstellt!",
+    vi: "Chưa có câu hỏi nào — hãy là người đầu tiên tạo câu hỏi!",
+  },
+  game_only_own_msg: {
+    en: "Only your own questions exist. Wait for someone else to add one.",
+    de: "Es gibt nur deine eigenen Fragen. Warte, bis jemand anderes eine hinzufügt.",
+    vi: "Chỉ có câu hỏi của bạn. Hãy chờ người khác tạo thêm.",
+  },
+  game_need_org_msg: {
+    en: "Join a community to play and see the leaderboard.",
+    de: "Tritt einer Gemeinschaft bei, um zu spielen und die Bestenliste zu sehen.",
+    vi: "Tham gia cộng đồng để chơi và xem bảng xếp hạng.",
+  },
+  game_manage_questions: {
+    en: "Manage questions",
+    de: "Fragen verwalten",
+    vi: "Quản lý câu hỏi",
+  },
+
+  // Quest Questions management page
+  qq_title: {
+    en: "Quest Questions",
+    de: "Quest-Fragen",
+    vi: "Câu hỏi Quest",
+  },
+  qq_need_org: {
+    en: "Join a community to manage questions.",
+    de: "Tritt einer Gemeinschaft bei, um Fragen zu verwalten.",
+    vi: "Tham gia cộng đồng để quản lý câu hỏi.",
+  },
+  qq_add: {
+    en: "New Question",
+    de: "Neue Frage",
+    vi: "Câu hỏi mới",
+  },
+  qq_mine: {
+    en: "My Questions",
+    de: "Meine Fragen",
+    vi: "Câu hỏi của tôi",
+  },
+  qq_mine_empty: {
+    en: "You haven't created any questions yet.",
+    de: "Du hast noch keine Fragen erstellt.",
+    vi: "Bạn chưa tạo câu hỏi nào.",
+  },
+  qq_community: {
+    en: "Community Questions",
+    de: "Fragen der Gemeinschaft",
+    vi: "Câu hỏi cộng đồng",
+  },
+  qq_community_empty: {
+    en: "No community questions yet — be the first!",
+    de: "Noch keine Fragen — sei der Erste!",
+    vi: "Chưa có câu hỏi nào — hãy là người đầu tiên!",
+  },
+  qq_form_title: {
+    en: "Create a Question",
+    de: "Frage erstellen",
+    vi: "Tạo câu hỏi",
   },
 } as const;
 

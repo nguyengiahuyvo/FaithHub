@@ -883,14 +883,14 @@ const translations = {
     vi: "Bạn có 3 mạng mỗi vòng. Mất hết mạng, bạn phải chờ 30 phút mới được chơi lại.",
   },
   onboard_3_title: {
-    en: "5 Rounds a Day",
-    de: "5 Runden pro Tag",
-    vi: "5 lượt mỗi ngày",
+    en: "10 Rounds a Day",
+    de: "10 Runden pro Tag",
+    vi: "10 lượt mỗi ngày",
   },
   onboard_3_desc: {
-    en: "You can play up to 5 rounds each day. The highest-scoring players are honored on the leaderboard.",
-    de: "Du kannst bis zu 5 Runden pro Tag spielen. Die besten Spieler werden auf der Bestenliste geehrt.",
-    vi: "Bạn được chơi tối đa 5 lượt mỗi ngày. Người chơi điểm cao nhất sẽ được vinh danh trên bảng xếp hạng.",
+    en: "You can play up to 10 rounds each day. The highest-scoring players are honored on the leaderboard.",
+    de: "Du kannst bis zu 10 Runden pro Tag spielen. Die besten Spieler werden auf der Bestenliste geehrt.",
+    vi: "Bạn được chơi tối đa 10 lượt mỗi ngày. Người chơi điểm cao nhất sẽ được vinh danh trên bảng xếp hạng.",
   },
   onboard_4_title: {
     en: "Challenge Back",
@@ -1034,9 +1034,9 @@ const translations = {
     vi: "Bạn đã hết mạng. Quay lại sau",
   },
   game_daily_limit_msg: {
-    en: "You've used all 5 plays today. Come back tomorrow.",
-    de: "Du hast heute alle 5 Spiele verbraucht. Komm morgen wieder.",
-    vi: "Bạn đã dùng hết 5 lượt hôm nay. Hẹn gặp lại ngày mai.",
+    en: "You've used all 10 plays today. Come back tomorrow.",
+    de: "Du hast heute alle 10 Spiele verbraucht. Komm morgen wieder.",
+    vi: "Bạn đã dùng hết 10 lượt hôm nay. Hẹn gặp lại ngày mai.",
   },
   game_daily_limit_short: {
     en: "Come back tomorrow",

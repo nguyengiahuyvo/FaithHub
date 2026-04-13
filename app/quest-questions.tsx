@@ -1,15 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import {ActivityIndicator,
+import {
+  ActivityIndicator,
   Animated,
   Easing,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,} from "react-native";
+  View,
+} from "react-native";
 import { Pressable } from "@/components/HapticPressable";
 import {
   addDoc,
@@ -101,9 +105,6 @@ export default function QuestQuestionsScreen() {
   const myQuestions = user
     ? community.filter((c) => c.createdBy === user.uid)
     : [];
-  const otherQuestions = user
-    ? community.filter((c) => c.createdBy !== user.uid)
-    : community;
 
   async function handleDelete(qid: string) {
     if (!org) return;
@@ -119,7 +120,10 @@ export default function QuestQuestionsScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.screen}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
@@ -136,6 +140,7 @@ export default function QuestQuestionsScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets
         >
           {!org ? (
             <View style={styles.emptyCard}>
@@ -185,30 +190,10 @@ export default function QuestQuestionsScreen() {
                 )}
               </Section>
 
-              {/* Community questions */}
-              <Section
-                title={t("qq_community", lang)}
-                count={otherQuestions.length}
-              >
-                {otherQuestions.length === 0 ? (
-                  <Text style={styles.emptyHint}>
-                    {t("qq_community_empty", lang)}
-                  </Text>
-                ) : (
-                  otherQuestions.map((q) => (
-                    <QuestionItem
-                      key={q.id}
-                      question={q}
-                      ownedByMe={false}
-                      lang={lang}
-                    />
-                  ))
-                )}
-              </Section>
             </>
           )}
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </>
   );
 }

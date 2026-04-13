@@ -23,6 +23,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
+import UserAvatar from "@/components/UserAvatar";
 import {
   addToLeaderboard,
   type CommunityQuestion,
@@ -39,7 +40,7 @@ const POINTS_PER_CORRECT = 5;
 const POINTS_PER_QUESTION_CREATED = 2;
 const STARTING_HEARTS = 3;
 // Play limits: max 5 rounds/day; 30-minute cooldown if you lose all hearts.
-const MAX_ROUNDS_PER_DAY = 5;
+const MAX_ROUNDS_PER_DAY = 10;
 const COOLDOWN_AFTER_FAIL_MS = 30 * 60 * 1000;
 const ONBOARDING_KEY = "@faithhub/verseQuest/onboardingSeen";
 const DAILY_PLAYS_KEY = "@faithhub/verseQuest/dailyPlays";
@@ -680,6 +681,11 @@ function StartView({
                         <Text style={styles.boardRankText}>{i + 1}</Text>
                       )}
                     </View>
+                    <UserAvatar
+                      uid={e.uid}
+                      name={e.displayName}
+                      size={28}
+                    />
                     <Text
                       style={[
                         styles.boardName,

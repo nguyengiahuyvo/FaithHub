@@ -868,9 +868,9 @@ const translations = {
     vi: "Thử thách từ cộng đồng",
   },
   onboard_1_desc: {
-    en: "Answer trivia questions written by other members of your community. Each correct answer earns you 5 Shekel. Each round costs 10 Shekel to play.",
-    de: "Beantworte Fragen, die andere Mitglieder deiner Gemeinschaft erstellt haben. Jede richtige Antwort bringt 5 Schekel. Eine Runde kostet 10 Schekel.",
-    vi: "Trả lời câu hỏi do các thành viên khác trong cộng đồng tạo ra. Mỗi câu đúng được 5 Shekel. Mỗi lượt chơi tốn 10 Shekel.",
+    en: "Answer trivia questions written by other members of your community. Each correct answer earns you 5 Shekel. Playing is free!",
+    de: "Beantworte Fragen, die andere Mitglieder deiner Gemeinschaft erstellt haben. Jede richtige Antwort bringt 5 Schekel. Spielen ist kostenlos!",
+    vi: "Trả lời câu hỏi do các thành viên khác trong cộng đồng tạo ra. Mỗi câu đúng được 5 Shekel. Chơi miễn phí!",
   },
   onboard_2_title: {
     en: "Three Lives. Use Them Well.",
@@ -878,9 +878,9 @@ const translations = {
     vi: "Ba mạng. Hãy giữ gìn.",
   },
   onboard_2_desc: {
-    en: "You have 3 lives per round. Lose them all and you'll have to wait 30 minutes before you can play again.",
-    de: "Du hast 3 Leben pro Runde. Wenn du alle verlierst, musst du 30 Minuten warten, bevor du wieder spielen kannst.",
-    vi: "Bạn có 3 mạng mỗi vòng. Mất hết mạng, bạn phải chờ 30 phút mới được chơi lại.",
+    en: "You have 3 lives per round. Lose them all and you'll wait 30 minutes — or pay 10 Shekel to skip the wait and play right away.",
+    de: "Du hast 3 Leben pro Runde. Verlierst du alle, wartest du 30 Minuten — oder zahlst 10 Schekel, um sofort weiterzuspielen.",
+    vi: "Bạn có 3 mạng mỗi vòng. Mất hết thì phải chờ 30 phút — hoặc trả 10 Shekel để chơi tiếp ngay.",
   },
   onboard_3_title: {
     en: "10 Rounds a Day",
@@ -888,9 +888,9 @@ const translations = {
     vi: "10 lượt mỗi ngày",
   },
   onboard_3_desc: {
-    en: "You can play up to 10 rounds each day. The highest-scoring players are honored on the leaderboard.",
-    de: "Du kannst bis zu 10 Runden pro Tag spielen. Die besten Spieler werden auf der Bestenliste geehrt.",
-    vi: "Bạn được chơi tối đa 10 lượt mỗi ngày. Người chơi điểm cao nhất sẽ được vinh danh trên bảng xếp hạng.",
+    en: "You get 10 free rounds each day. Want to keep playing? Pay 10 Shekel to buy an extra round. The highest-scoring players are honored on the leaderboard.",
+    de: "Du hast 10 Gratis-Runden pro Tag. Weiterspielen? Zahle 10 Schekel für eine Extrarunde. Die besten Spieler werden auf der Bestenliste geehrt.",
+    vi: "Bạn có 10 lượt miễn phí mỗi ngày. Muốn chơi tiếp? Trả 10 Shekel để mua thêm một lượt. Người chơi điểm cao nhất được vinh danh trên bảng xếp hạng.",
   },
   onboard_4_title: {
     en: "Challenge Back",
@@ -1029,14 +1029,19 @@ const translations = {
     vi: "Mỗi câu đúng",
   },
   game_play_cost: {
-    en: "Cost per play",
-    de: "Preis pro Runde",
-    vi: "Giá mỗi lượt",
+    en: "Override cost",
+    de: "Kosten für Freischaltung",
+    vi: "Giá mở khóa",
+  },
+  game_play_now: {
+    en: "Play Now",
+    de: "Jetzt spielen",
+    vi: "Chơi ngay",
   },
   game_insufficient_shekel: {
-    en: "You need 10 Shekel to play. Create questions to earn more!",
-    de: "Du brauchst 10 Schekel zum Spielen. Erstelle Fragen, um mehr zu verdienen!",
-    vi: "Bạn cần 10 Shekel để chơi. Tạo câu hỏi để kiếm thêm!",
+    en: "Not enough Shekel to play now. Create questions to earn more!",
+    de: "Nicht genug Schekel zum sofort Spielen. Erstelle Fragen, um mehr zu verdienen!",
+    vi: "Không đủ Shekel để chơi ngay. Tạo câu hỏi để kiếm thêm!",
   },
   game_cooldown_msg: {
     en: "You ran out of lives. Come back in",

@@ -301,46 +301,52 @@ export default function GameScreen() {
     return unsub;
   }, [org]);
 
-  async function startGame() {
-    // Enforce play limits before committing to a new round.
-    if (cooldownUntil && Date.now() < cooldownUntil) return;
-    if (playsToday >= MAX_ROUNDS_PER_DAY) return;
-
-    // Must have enough Shekel to pay the entry fee.
-    if (totalScore < PLAY_COST_SHEKEL) return;
-
-    // The player cannot face their own questions.
-    // Filter by language too (questions without a language are treated as
-    // matching, so legacy questions remain playable).
+  // Playing is normally free. `override=true` means the player chose to
+  // pay the Shekel fee to bypass a cooldown or daily-limit block and start
+  // an extra round right now.
+  async function startGame(override: boolean = false) {
+    // Pool check always applies — there has to be something to play.
     const eligible = community.filter((c) => {
       if (user && c.createdBy === user.uid) return false;
       if (c.language && c.language !== playLang) return false;
       return true;
     });
-
-    // Per the rules, no questions = no game.
     if (eligible.length === 0) return;
 
-    // Burn one of today's plays.
+    if (override) {
+      // Overrides cost Shekel and bypass cooldown + daily limit.
+      if (totalScore < PLAY_COST_SHEKEL) return;
+      // Charge the fee — Firestore for org users, local score otherwise.
+      if (org && user) {
+        await addToLeaderboard(
+          org.orgId,
+          user.uid,
+          user.displayName ?? null,
+          -PLAY_COST_SHEKEL,
+        );
+      } else {
+        const nextScore = Math.max(0, totalScore - PLAY_COST_SHEKEL);
+        setTotalScore(nextScore);
+        try {
+          await AsyncStorage.setItem(LOCAL_SCORE_KEY, String(nextScore));
+        } catch {}
+      }
+      // Clear any active cooldown so the "wait 30 min" block goes away.
+      if (cooldownUntil) {
+        setCooldownUntil(null);
+        try {
+          await AsyncStorage.removeItem(COOLDOWN_KEY);
+        } catch {}
+      }
+    } else {
+      // Normal free play — enforce limits.
+      if (cooldownUntil && Date.now() < cooldownUntil) return;
+      if (playsToday >= MAX_ROUNDS_PER_DAY) return;
+    }
+
+    // Burn one of today's plays (overrides also count, they just go over).
     const next = await bumpPlaysToday();
     setPlaysToday(next);
-
-    // Deduct the Shekel entry fee. Org users deduct from the leaderboard;
-    // solo/no-org users deduct from the local fallback score.
-    if (org && user) {
-      await addToLeaderboard(
-        org.orgId,
-        user.uid,
-        user.displayName ?? null,
-        -PLAY_COST_SHEKEL,
-      );
-    } else {
-      const nextScore = Math.max(0, totalScore - PLAY_COST_SHEKEL);
-      setTotalScore(nextScore);
-      try {
-        await AsyncStorage.setItem(LOCAL_SCORE_KEY, String(nextScore));
-      } catch {}
-    }
 
     setRound(buildRound(eligible));
     setQIndex(0);
@@ -465,7 +471,8 @@ export default function GameScreen() {
           playsToday={playsToday}
           maxPlays={MAX_ROUNDS_PER_DAY}
           cooldownMsLeft={cooldownUntil ? Math.max(0, cooldownUntil - now) : 0}
-          onStart={startGame}
+          onStart={() => startGame(false)}
+          onPayToPlayNow={() => startGame(true)}
           onShowHelp={() => setShowOnboarding(true)}
           onManageQuestions={() => router.push("/quest-questions")}
           hasOrg={!!org}
@@ -551,6 +558,7 @@ function StartView({
   maxPlays,
   cooldownMsLeft,
   onStart,
+  onPayToPlayNow,
   onShowHelp,
   onManageQuestions,
   hasOrg,
@@ -570,6 +578,7 @@ function StartView({
   maxPlays: number;
   cooldownMsLeft: number;
   onStart: () => void;
+  onPayToPlayNow: () => void;
   onShowHelp: () => void;
   onManageQuestions: () => void;
   hasOrg: boolean;
@@ -587,16 +596,21 @@ function StartView({
   const playsLeft = Math.max(0, maxPlays - playsToday);
   const cooldownActive = cooldownMsLeft > 0;
   const noPlaysLeft = playsLeft === 0 && !cooldownActive;
-  // Per the rules, you can only play if community questions exist (excluding
-  // your own). When the org has none, the round can't be built.
-  const noEligibleQuestions = !cooldownActive && !noPlaysLeft && eligibleCount === 0;
-  const insufficientShekel = totalScore < playCost;
+  // There has to be something to play regardless of payment state.
+  const noEligibleQuestions = eligibleCount === 0;
+  // Reasons you'd normally be blocked that can be unlocked by paying Shekel.
+  const blockedByTime = cooldownActive || noPlaysLeft;
+  // Can the player pay the fee to bypass a time-based block right now?
+  const canPayToOverride =
+    blockedByTime &&
+    hasOrg &&
+    !noEligibleQuestions &&
+    totalScore >= playCost;
+  // Button is fully disabled only when nothing can make play happen.
   const playDisabled =
-    cooldownActive ||
-    noPlaysLeft ||
+    !hasOrg ||
     noEligibleQuestions ||
-    insufficientShekel ||
-    !hasOrg;
+    (blockedByTime && !canPayToOverride);
   const cooldownLabel = formatCooldown(cooldownMsLeft);
   const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -718,11 +732,12 @@ function StartView({
             </Text>
           </View>
         )}
-        {!cooldownActive &&
-          !noPlaysLeft &&
+        {/* When blocked by cooldown/limit AND you can't pay to override,
+            nudge the player to earn Shekel by creating questions. */}
+        {blockedByTime &&
           hasOrg &&
           !noEligibleQuestions &&
-          insufficientShekel && (
+          totalScore < playCost && (
             <View
               style={[
                 styles.noticeCard,
@@ -832,15 +847,27 @@ function StartView({
       {/* Bottom-docked action group: Play + Create question + Help */}
       <View style={styles.bottomBar}>
         <Pressable
-          onPress={onStart}
+          onPress={canPayToOverride ? onPayToPlayNow : onStart}
           disabled={playDisabled}
-          style={[styles.playBtn, playDisabled && { opacity: 0.5 }]}
+          style={[
+            styles.playBtn,
+            playDisabled && { opacity: 0.5 },
+            canPayToOverride && { backgroundColor: C.gold },
+          ]}
         >
-          <Ionicons name="play" size={20} color="#FFFFFF" />
+          <Ionicons
+            name={canPayToOverride ? "flash" : "play"}
+            size={20}
+            color="#FFFFFF"
+          />
           <Text style={styles.playBtnText}>
-            {cooldownActive
+            {canPayToOverride
+              ? `${t("game_play_now", lang)}  ·  −${playCost} ${t("game_points", lang)}`
+              : cooldownActive
               ? `${t("game_play", lang)}  ·  ${cooldownLabel}`
-              : `${t("game_play", lang)}  ·  −${playCost} ${t("game_points", lang)}`}
+              : noPlaysLeft
+              ? t("game_daily_limit_short", lang)
+              : t("game_play", lang)}
           </Text>
         </Pressable>
         <Pressable

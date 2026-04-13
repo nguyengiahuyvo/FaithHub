@@ -47,16 +47,21 @@ type Comment = {
   createdAt: Date | null;
 };
 
+type RepeatRule = "none" | "daily" | "weekly" | "yearly";
+
 type CalEvent = {
   id: string;
   title: string;
   description: string;
-  date: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD (base/first occurrence)
   time: string; // HH:MM
   createdBy: string;
   createdByName: string | null;
   attendees: Attendee[];
   maybe: Attendee[];
+  repeat: RepeatRule;
+  repeatUntil: string | null; // YYYY-MM-DD — null = no end (yearly/birthday)
+  isBirthday: boolean;
 };
 
 function getDaysInMonth(year: number, month: number) {
@@ -67,6 +72,82 @@ function getFirstDayOfMonth(year: number, month: number) {
   const day = new Date(year, month, 1).getDay();
   // Convert from Sun=0 to Mon=0: (day + 6) % 7
   return (day + 6) % 7;
+}
+
+// Parse a YYYY-MM-DD string into a Date at local midnight — avoids the
+// UTC-shift bug that `new Date("YYYY-MM-DD")` triggers near timezone edges.
+function parseDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function formatDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Returns true if the event has an occurrence on the given date.
+function eventOccursOn(ev: CalEvent, dateStr: string): boolean {
+  const rule = ev.repeat || "none";
+  if (rule === "none") return ev.date === dateStr;
+  if (dateStr < ev.date) return false;
+  if (ev.repeatUntil && dateStr > ev.repeatUntil) return false;
+
+  if (rule === "yearly") {
+    // Match MM-DD (allows birthdays to recur across all future years).
+    return ev.date.slice(5) === dateStr.slice(5);
+  }
+  if (rule === "daily") return true;
+  if (rule === "weekly") {
+    const base = parseDate(ev.date).getTime();
+    const target = parseDate(dateStr).getTime();
+    const days = Math.round((target - base) / 86_400_000);
+    return days >= 0 && days % 7 === 0;
+  }
+  return false;
+}
+
+// Next occurrence date >= fromStr, or null if none.
+function nextOccurrence(ev: CalEvent, fromStr: string): string | null {
+  const rule = ev.repeat || "none";
+  if (rule === "none") return ev.date >= fromStr ? ev.date : null;
+
+  if (rule === "yearly") {
+    const fromYear = parseInt(fromStr.slice(0, 4), 10);
+    const mmdd = ev.date.slice(5);
+    const baseYear = parseInt(ev.date.slice(0, 4), 10);
+    for (let y = Math.max(fromYear, baseYear); y <= fromYear + 2; y++) {
+      const cand = `${y}-${mmdd}`;
+      if (cand >= fromStr) return cand;
+    }
+    return null;
+  }
+
+  // Daily / weekly are capped by repeatUntil.
+  if (ev.repeatUntil && fromStr > ev.repeatUntil) return null;
+  const base = parseDate(ev.date);
+  const from = parseDate(fromStr);
+  const start = from > base ? from : base;
+
+  if (rule === "daily") {
+    const cand = formatDateStr(start);
+    if (ev.repeatUntil && cand > ev.repeatUntil) return null;
+    return cand;
+  }
+  if (rule === "weekly") {
+    const deltaDays = Math.round(
+      (start.getTime() - base.getTime()) / 86_400_000,
+    );
+    const remainder = ((deltaDays % 7) + 7) % 7;
+    const offset = remainder === 0 ? 0 : 7 - remainder;
+    const next = new Date(start.getTime() + offset * 86_400_000);
+    const cand = formatDateStr(next);
+    if (ev.repeatUntil && cand > ev.repeatUntil) return null;
+    return cand;
+  }
+  return null;
 }
 
 function CalendarEventsView() {
@@ -105,6 +186,9 @@ function CalendarEventsView() {
             createdByName: d.data().createdByName || null,
             attendees: d.data().attendees || [],
             maybe: d.data().maybe || [],
+            repeat: (d.data().repeat as RepeatRule) || "none",
+            repeatUntil: d.data().repeatUntil || null,
+            isBirthday: !!d.data().isBirthday,
           })),
         );
         setLoading(false);
@@ -135,17 +219,24 @@ function CalendarEventsView() {
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
   const todayStr = today.toISOString().split("T")[0];
 
-  const eventsForDate = events.filter((e) => e.date === selectedDate);
+  const eventsForDate = events.filter((e) => eventOccursOn(e, selectedDate));
 
-  // Find all upcoming events on the nearest future date
-  const upcomingEvents = (() => {
-    const future = events.filter((e) => e.date >= todayStr);
-    if (future.length === 0) return [];
-    const sorted = [...future].sort((a, b) => a.date.localeCompare(b.date));
-    const nearestDate = sorted[0].date;
-    return sorted
-      .filter((e) => e.date === nearestDate)
-      .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+  // Find all upcoming events on the nearest future date. Expand recurring
+  // events to their next occurrence instead of comparing raw stored dates.
+  const upcomingEvents: { ev: CalEvent; date: string }[] = (() => {
+    const withNext: { ev: CalEvent; date: string }[] = [];
+    for (const e of events) {
+      const next = nextOccurrence(e, todayStr);
+      if (next) withNext.push({ ev: e, date: next });
+    }
+    if (withNext.length === 0) return [];
+    withNext.sort((a, b) => a.date.localeCompare(b.date));
+    const nearestDate = withNext[0].date;
+    return withNext
+      .filter((x) => x.date === nearestDate)
+      .sort((a, b) =>
+        (a.ev.time || "99:99").localeCompare(b.ev.time || "99:99"),
+      );
   })();
 
   function dateStr(day: number) {
@@ -156,7 +247,7 @@ function CalendarEventsView() {
 
   function eventCountForDay(day: number) {
     const ds = dateStr(day);
-    return events.filter((e) => e.date === ds).length;
+    return events.filter((e) => eventOccursOn(e, ds)).length;
   }
 
   async function toggleAttend(eventId: string, ev: CalEvent) {
@@ -239,24 +330,28 @@ function CalendarEventsView() {
             {upcomingEvents.length > 0 && (
               <View style={{ gap: 8 }}>
                 <Text style={styles.upcomingLabel}>{t("cal_upcoming", lang)}</Text>
-                {upcomingEvents.map((ev) => (
+                {upcomingEvents.map(({ ev, date: nextDate }) => (
                   <Pressable
                     key={ev.id}
                     onPress={() => {
-                      setSelectedDate(ev.date);
-                      const [y, m] = ev.date.split("-").map(Number);
+                      setSelectedDate(nextDate);
+                      const [y, m] = nextDate.split("-").map(Number);
                       setViewYear(y);
                       setViewMonth(m - 1);
                     }}
                     style={styles.upcomingCard}
                   >
                     <View style={styles.upcomingIconWrap}>
-                      <Ionicons name="calendar" size={20} color="#FFFFFF" />
+                      <Ionicons
+                        name={ev.isBirthday ? "gift" : "calendar"}
+                        size={20}
+                        color="#FFFFFF"
+                      />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.upcomingTitle} numberOfLines={1}>{ev.title}</Text>
                       <Text style={styles.upcomingMeta}>
-                        {ev.date}
+                        {nextDate}
                         {ev.time ? ` · ${ev.time}` : ""}
                         {ev.attendees.length > 0
                           ? ` · ${ev.attendees.length} ${ev.attendees.length === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}`
@@ -521,9 +616,13 @@ function EventCard({
       {/* Top row: time badge + title/desc + delete */}
       <View style={styles.eventTopRow}>
         <View style={styles.eventTimeBadge}>
-          <Text style={styles.eventTime}>
-            {ev.time || t("cal_all_day", lang)}
-          </Text>
+          {ev.isBirthday ? (
+            <Ionicons name="gift" size={16} color="#5B7553" />
+          ) : (
+            <Text style={styles.eventTime}>
+              {ev.time || t("cal_all_day", lang)}
+            </Text>
+          )}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.eventTitle}>{ev.title}</Text>
@@ -855,6 +954,8 @@ function CreateEventModal({
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(defaultDate);
   const [time, setTime] = useState("");
+  const [isBirthday, setIsBirthday] = useState(false);
+  const [repeat, setRepeat] = useState<RepeatRule>("none");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -887,6 +988,8 @@ function CreateEventModal({
       setTitle("");
       setDescription("");
       setTime("");
+      setIsBirthday(false);
+      setRepeat("none");
       onDismiss();
     });
   }
@@ -894,12 +997,24 @@ function CreateEventModal({
   async function handleCreate() {
     if (!title.trim() || !date.trim()) return;
     setSaving(true);
+    // Birthday events: always yearly, never end, no time.
+    const effectiveRepeat: RepeatRule = isBirthday ? "yearly" : repeat;
+    // Daily/weekly are capped at the end of the current year to avoid
+    // runaway data. Yearly (including birthdays) has no end.
+    let repeatUntil: string | null = null;
+    if (effectiveRepeat === "daily" || effectiveRepeat === "weekly") {
+      const yr = parseInt(date.slice(0, 4), 10) || new Date().getFullYear();
+      repeatUntil = `${yr}-12-31`;
+    }
     try {
       await addDoc(collection(db, "organizations", orgId, "events"), {
         title: title.trim(),
         description: description.trim(),
         date: date.trim(),
-        time: time.trim(),
+        time: isBirthday ? "" : time.trim(),
+        repeat: effectiveRepeat,
+        repeatUntil,
+        isBirthday,
         createdBy: userId,
         createdByName: userName,
         createdAt: serverTimestamp(),
@@ -907,6 +1022,8 @@ function CreateEventModal({
       setTitle("");
       setDescription("");
       setTime("");
+      setIsBirthday(false);
+      setRepeat("none");
       onDismiss();
     } catch {
       // ignore
@@ -926,12 +1043,72 @@ function CreateEventModal({
           >
             <Text style={mStyles.modalTitle}>{t("cal_new", lang)}</Text>
 
+            {/* Event type: Event | Birthday */}
+            <View style={mStyles.field}>
+              <Text style={mStyles.label}>{t("cal_type_label", lang)}</Text>
+              <View style={mStyles.segmentRow}>
+                <Pressable
+                  onPress={() => {
+                    setIsBirthday(false);
+                    if (repeat === "yearly") setRepeat("none");
+                  }}
+                  style={[
+                    mStyles.segment,
+                    !isBirthday && mStyles.segmentActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={!isBirthday ? "#FFFFFF" : "#5B7553"}
+                  />
+                  <Text
+                    style={[
+                      mStyles.segmentText,
+                      !isBirthday && mStyles.segmentTextActive,
+                    ]}
+                  >
+                    {t("cal_type_event", lang)}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setIsBirthday(true);
+                    setRepeat("yearly");
+                    setTime("");
+                  }}
+                  style={[
+                    mStyles.segment,
+                    isBirthday && mStyles.segmentActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="gift-outline"
+                    size={16}
+                    color={isBirthday ? "#FFFFFF" : "#5B7553"}
+                  />
+                  <Text
+                    style={[
+                      mStyles.segmentText,
+                      isBirthday && mStyles.segmentTextActive,
+                    ]}
+                  >
+                    {t("cal_type_birthday", lang)}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
             <View style={mStyles.field}>
               <Text style={mStyles.label}>{t("tasks_title_label", lang)}</Text>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
-                placeholder={t("cal_event_name", lang)}
+                placeholder={
+                  isBirthday
+                    ? t("cal_birthday_name", lang)
+                    : t("cal_event_name", lang)
+                }
                 placeholderTextColor="#A3A89E"
                 style={mStyles.input}
               />
@@ -948,17 +1125,64 @@ function CreateEventModal({
                   style={mStyles.input}
                 />
               </View>
-              <View style={[mStyles.field, { flex: 1 }]}>
-                <Text style={mStyles.label}>{t("cal_time", lang)}</Text>
-                <TextInput
-                  value={time}
-                  onChangeText={setTime}
-                  placeholder={t("cal_time_placeholder", lang)}
-                  placeholderTextColor="#A3A89E"
-                  style={mStyles.input}
-                />
-              </View>
+              {!isBirthday && (
+                <View style={[mStyles.field, { flex: 1 }]}>
+                  <Text style={mStyles.label}>{t("cal_time", lang)}</Text>
+                  <TextInput
+                    value={time}
+                    onChangeText={setTime}
+                    placeholder={t("cal_time_placeholder", lang)}
+                    placeholderTextColor="#A3A89E"
+                    style={mStyles.input}
+                  />
+                </View>
+              )}
             </View>
+
+            {/* Repeat rule — locked to Yearly for birthdays */}
+            {!isBirthday && (
+              <View style={mStyles.field}>
+                <Text style={mStyles.label}>{t("cal_repeat_label", lang)}</Text>
+                <View style={mStyles.repeatRow}>
+                  {(
+                    [
+                      { k: "none", lbl: "cal_repeat_none" },
+                      { k: "daily", lbl: "cal_repeat_daily" },
+                      { k: "weekly", lbl: "cal_repeat_weekly" },
+                      { k: "yearly", lbl: "cal_repeat_yearly" },
+                    ] as const
+                  ).map((opt) => (
+                    <Pressable
+                      key={opt.k}
+                      onPress={() => setRepeat(opt.k)}
+                      style={[
+                        mStyles.repeatChip,
+                        repeat === opt.k && mStyles.repeatChipActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          mStyles.repeatChipText,
+                          repeat === opt.k && mStyles.repeatChipTextActive,
+                        ]}
+                      >
+                        {t(opt.lbl, lang)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                {(repeat === "daily" || repeat === "weekly") && (
+                  <Text style={mStyles.hint}>
+                    {t("cal_repeat_hint", lang)}
+                  </Text>
+                )}
+              </View>
+            )}
+            {isBirthday && (
+              <Text style={mStyles.hint}>
+                {t("cal_birthday_hint", lang)}
+              </Text>
+            )}
 
             <View style={mStyles.field}>
               <Text style={mStyles.label}>{t("tasks_desc_label", lang)}</Text>
@@ -1184,6 +1408,61 @@ const mStyles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+  segmentRow: {
+    flexDirection: "row",
+    gap: 6,
+    padding: 4,
+    backgroundColor: "rgba(91,117,83,0.08)",
+    borderRadius: 12,
+  },
+  segment: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  segmentActive: {
+    backgroundColor: "#5B7553",
+  },
+  segmentText: {
+    color: "#5B7553",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  segmentTextActive: {
+    color: "#FFFFFF",
+  },
+  repeatRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  repeatChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+  },
+  repeatChipActive: {
+    backgroundColor: "#5B7553",
+  },
+  repeatChipText: {
+    color: "#4B5563",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  repeatChipTextActive: {
+    color: "#FFFFFF",
+  },
+  hint: {
+    color: "#8A8F84",
+    fontSize: 12,
+    fontStyle: "italic",
+    marginTop: 2,
   },
 });
 

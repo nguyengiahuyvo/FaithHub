@@ -1238,6 +1238,28 @@ const translations = {
   },
   quest_next: { en: "Next", de: "Weiter", vi: "Tiếp theo" },
   quest_finish: { en: "Finish", de: "Beenden", vi: "Kết thúc" },
+
+  // Update dialog
+  update_title: {
+    en: "Update Available",
+    de: "Update verfügbar",
+    vi: "Có bản cập nhật",
+  },
+  update_message: {
+    en: "A new version of FaithHub is available. Please update to continue.",
+    de: "Eine neue Version von FaithHub ist verfügbar. Bitte aktualisiere, um fortzufahren.",
+    vi: "Phiên bản mới của FaithHub đã có. Vui lòng cập nhật để tiếp tục.",
+  },
+  update_button: {
+    en: "Update Now",
+    de: "Jetzt aktualisieren",
+    vi: "Cập nhật ngay",
+  },
+  update_later: {
+    en: "Later",
+    de: "Später",
+    vi: "Để sau",
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

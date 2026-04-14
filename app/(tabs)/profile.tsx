@@ -17,18 +17,16 @@ import {
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
+import {ActivityIndicator,
   Animated,
   Image,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 
 type ModalType = "confirm" | "error" | null;
 type DeleteModalStep = "confirm" | "type-to-delete" | "error" | null;

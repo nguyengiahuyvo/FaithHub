@@ -1,16 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
+import {ActivityIndicator,
   Animated,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 import {
   addDoc,
   arrayRemove,

@@ -12,6 +12,7 @@ const translations = {
   tab_tasks: { en: "Tasks", de: "Aufgaben", vi: "Công việc" },
   tab_calendar: { en: "Calendar", de: "Kalender", vi: "Lịch" },
   tab_profile: { en: "Profile", de: "Profil", vi: "Hồ sơ" },
+  tab_game: { en: "Quest", de: "Quest", vi: "Thử thách" },
 
   // Auth screen
   auth_brand: { en: "✞ ​FaithHub", de: "✞ FaithHub", vi: "✞ FaithHub" },
@@ -489,6 +490,40 @@ const translations = {
   cal_date: { en: "Date", de: "Datum", vi: "Ngày" },
   cal_time: { en: "Time", de: "Uhrzeit", vi: "Giờ" },
   cal_time_placeholder: { en: "e.g. 14:00", de: "z.B. 14:00", vi: "VD: 14:00" },
+  cal_type_label: { en: "Type", de: "Art", vi: "Loại" },
+  cal_type_event: { en: "Event", de: "Ereignis", vi: "Sự kiện" },
+  cal_type_birthday: { en: "Birthday", de: "Geburtstag", vi: "Sinh nhật" },
+  cal_birthday_name: {
+    en: "Whose birthday?",
+    de: "Wessen Geburtstag?",
+    vi: "Sinh nhật của ai?",
+  },
+  cal_birthday_hint: {
+    en: "Birthdays repeat every year — no time needed.",
+    de: "Geburtstage wiederholen sich jedes Jahr — keine Uhrzeit nötig.",
+    vi: "Sinh nhật lặp lại hàng năm — không cần giờ.",
+  },
+  cal_repeat_label: { en: "Repeat", de: "Wiederholen", vi: "Lặp lại" },
+  cal_repeat_none: { en: "Once", de: "Einmalig", vi: "Một lần" },
+  cal_repeat_daily: { en: "Daily", de: "Täglich", vi: "Hàng ngày" },
+  cal_repeat_weekly: { en: "Weekly", de: "Wöchentlich", vi: "Hàng tuần" },
+  cal_repeat_yearly: { en: "Yearly", de: "Jährlich", vi: "Hàng năm" },
+  cal_repeat_hint: {
+    en: "Repeats until the end of the current year.",
+    de: "Wiederholt sich bis zum Ende des laufenden Jahres.",
+    vi: "Lặp lại đến hết năm hiện tại.",
+  },
+  notif_new_event_title: {
+    en: "New event",
+    de: "Neues Ereignis",
+    vi: "Sự kiện mới",
+  },
+  notif_new_birthday_title: {
+    en: "New birthday",
+    de: "Neuer Geburtstag",
+    vi: "Sinh nhật mới",
+  },
+  notif_someone: { en: "Someone", de: "Jemand", vi: "Ai đó" },
   cal_no_events: {
     en: "No events",
     de: "Keine Ereignisse",
@@ -758,6 +793,451 @@ const translations = {
     de: "Möchtest du dieses Ereignis wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
     vi: "Bạn có chắc chắn muốn xóa sự kiện này không? Không thể hoàn tác.",
   },
+
+  // Verse Quest (Bible trivia game)
+  game_title: { en: "Verse Quest", de: "Verse Quest", vi: "Verse Quest" },
+  game_subtitle: {
+    en: "Answer Bible trivia, build streaks, and chase your best score.",
+    de: "Beantworte Bibel-Quizfragen, baue Serien auf und jage deinen Bestwert.",
+    vi: "Trả lời câu hỏi Kinh Thánh, xây chuỗi thắng và phá kỷ lục của bạn.",
+  },
+  game_best_score: { en: "Best score", de: "Bestwert", vi: "Điểm cao nhất" },
+  game_questions: { en: "Questions", de: "Fragen", vi: "Câu hỏi" },
+  game_hearts: { en: "Hearts", de: "Leben", vi: "Mạng" },
+  game_time: { en: "Per question", de: "Pro Frage", vi: "Mỗi câu" },
+  game_how_title: { en: "How to play", de: "So geht's", vi: "Cách chơi" },
+  game_how_1: {
+    en: "Pick the right answer to earn points.",
+    de: "Wähle die richtige Antwort, um Punkte zu sammeln.",
+    vi: "Chọn câu trả lời đúng để ghi điểm.",
+  },
+  game_how_2: {
+    en: "Answer in a row to build a streak bonus.",
+    de: "Richtige Antworten in Folge geben einen Serien-Bonus.",
+    vi: "Trả lời liên tiếp để nhận thưởng chuỗi.",
+  },
+  game_how_3: {
+    en: "Answer fast — speed gives bonus points.",
+    de: "Antworte schnell — Tempo bringt Bonuspunkte.",
+    vi: "Trả lời nhanh — tốc độ cho điểm thưởng.",
+  },
+  game_play: { en: "Play", de: "Spielen", vi: "Chơi" },
+  game_play_again: { en: "Play again", de: "Nochmal spielen", vi: "Chơi lại" },
+  game_done: { en: "Done", de: "Fertig", vi: "Xong" },
+  game_streak: { en: "Streak", de: "Serie", vi: "Chuỗi" },
+  game_correct: { en: "Correct", de: "Richtig", vi: "Đúng" },
+  game_best_streak: { en: "Best streak", de: "Beste Serie", vi: "Chuỗi tốt nhất" },
+  game_points: { en: "Shekel", de: "Schekel", vi: "Shekel" },
+  game_new_best: { en: "New best score!", de: "Neuer Bestwert!", vi: "Kỷ lục mới!" },
+  game_result_great: { en: "Outstanding!", de: "Ausgezeichnet!", vi: "Tuyệt vời!" },
+  game_result_good: { en: "Well done!", de: "Gut gemacht!", vi: "Làm tốt lắm!" },
+  game_result_try: { en: "Keep going!", de: "Weitermachen!", vi: "Cố lên!" },
+  game_verse_great: {
+    en: "\"Well done, good and faithful servant.\" — Matthew 25:21",
+    de: "„Wohl, du treuer und getreuer Knecht.\" — Matthäus 25:21",
+    vi: "„Hỡi đầy tớ ngay lành trung tín kia, được lắm.\" — Ma-thi-ơ 25:21",
+  },
+  game_verse_good: {
+    en: "\"Your word is a lamp to my feet and a light to my path.\" — Psalm 119:105",
+    de: "„Dein Wort ist meines Fußes Leuchte und ein Licht auf meinem Wege.\" — Psalm 119:105",
+    vi: "„Lời Chúa là ngọn đèn cho chân tôi, ánh sáng cho đường lối tôi.\" — Thi thiên 119:105",
+  },
+  game_verse_try: {
+    en: "\"Be strong and courageous... for the Lord your God is with you.\" — Joshua 1:9",
+    de: "„Sei mutig und stark... denn der Herr, dein Gott, ist mit dir.\" — Josua 1:9",
+    vi: "„Hãy vững lòng bền chí... vì Giê-hô-va Đức Chúa Trời ngươi vẫn ở cùng ngươi.\" — Giô-suê 1:9",
+  },
+
+  // Verse Quest — onboarding (how to play)
+  onboard_help: {
+    en: "How to play",
+    de: "Spielanleitung",
+    vi: "Cách chơi",
+  },
+  onboard_skip: { en: "Skip", de: "Überspringen", vi: "Bỏ qua" },
+  onboard_next: { en: "Next", de: "Weiter", vi: "Tiếp" },
+  onboard_back: { en: "Back", de: "Zurück", vi: "Quay lại" },
+  onboard_start: {
+    en: "Let's play!",
+    de: "Los geht's!",
+    vi: "Bắt đầu!",
+  },
+  onboard_1_title: {
+    en: "Challenges From Your Community",
+    de: "Herausforderungen aus deiner Gemeinschaft",
+    vi: "Thử thách từ cộng đồng",
+  },
+  onboard_1_desc: {
+    en: "Answer trivia questions written by other members of your community. Each correct answer earns you 5 Shekel. Playing is free!",
+    de: "Beantworte Fragen, die andere Mitglieder deiner Gemeinschaft erstellt haben. Jede richtige Antwort bringt 5 Schekel. Spielen ist kostenlos!",
+    vi: "Trả lời câu hỏi do các thành viên khác trong cộng đồng tạo ra. Mỗi câu đúng được 5 Shekel. Chơi miễn phí!",
+  },
+  onboard_2_title: {
+    en: "Three Lives. Use Them Well.",
+    de: "Drei Leben. Geh sorgsam damit um.",
+    vi: "Ba mạng. Hãy giữ gìn.",
+  },
+  onboard_2_desc: {
+    en: "You have 3 lives per round. Lose them all and you'll wait 30 minutes — or pay 10 Shekel to skip the wait and play right away.",
+    de: "Du hast 3 Leben pro Runde. Verlierst du alle, wartest du 30 Minuten — oder zahlst 10 Schekel, um sofort weiterzuspielen.",
+    vi: "Bạn có 3 mạng mỗi vòng. Mất hết thì phải chờ 30 phút — hoặc trả 10 Shekel để chơi tiếp ngay.",
+  },
+  onboard_3_title: {
+    en: "10 Rounds a Day",
+    de: "10 Runden pro Tag",
+    vi: "10 lượt mỗi ngày",
+  },
+  onboard_3_desc: {
+    en: "You get 10 free rounds each day. Want to keep playing? Pay 10 Shekel to buy an extra round. The highest-scoring players are honored on the leaderboard.",
+    de: "Du hast 10 Gratis-Runden pro Tag. Weiterspielen? Zahle 10 Schekel für eine Extrarunde. Die besten Spieler werden auf der Bestenliste geehrt.",
+    vi: "Bạn có 10 lượt miễn phí mỗi ngày. Muốn chơi tiếp? Trả 10 Shekel để mua thêm một lượt. Người chơi điểm cao nhất được vinh danh trên bảng xếp hạng.",
+  },
+  onboard_4_title: {
+    en: "Challenge Back",
+    de: "Fordere zurück heraus",
+    vi: "Thách thức ngược lại",
+  },
+  onboard_4_desc: {
+    en: "Create your own questions to challenge other members. You earn 2 Shekel per question — and your own questions won't appear in your rounds.",
+    de: "Erstelle eigene Fragen, um andere herauszufordern. Du bekommst 2 Schekel pro Frage — und deine eigenen Fragen erscheinen nicht in deinen Runden.",
+    vi: "Tạo câu hỏi của riêng bạn để thách thức người khác. Bạn nhận 2 Shekel mỗi câu — và câu hỏi của bạn sẽ không xuất hiện trong vòng chơi của bạn.",
+  },
+
+  // Verse Quest — community-authored questions (Challenge Mode)
+  game_challenge_title: {
+    en: "Challenge Mode",
+    de: "Challenge-Modus",
+    vi: "Chế độ thử thách",
+  },
+  game_challenge_subtitle: {
+    en: "Write your own questions to challenge other players in your community.",
+    de: "Schreibe eigene Fragen, um andere in deiner Gemeinschaft herauszufordern.",
+    vi: "Viết câu hỏi của riêng bạn để thử thách các thành viên khác.",
+  },
+  game_challenge_need_org: {
+    en: "Join a community to create and share questions.",
+    de: "Tritt einer Gemeinschaft bei, um Fragen zu erstellen.",
+    vi: "Hãy tham gia cộng đồng để tạo và chia sẻ câu hỏi.",
+  },
+  game_challenge_pool: {
+    en: "in the pool",
+    de: "im Pool",
+    vi: "trong kho",
+  },
+  game_challenge_create: {
+    en: "Create Question",
+    de: "Frage erstellen",
+    vi: "Tạo câu hỏi",
+  },
+  game_challenge_mine: {
+    en: "My questions",
+    de: "Meine Fragen",
+    vi: "Câu hỏi của tôi",
+  },
+  game_by: { en: "by", de: "von", vi: "của" },
+
+  // Create Question modal
+  game_cq_title: {
+    en: "New Question",
+    de: "Neue Frage",
+    vi: "Câu hỏi mới",
+  },
+  game_cq_question: { en: "Question", de: "Frage", vi: "Câu hỏi" },
+  game_cq_question_ph: {
+    en: "e.g. Who led the Israelites out of Egypt?",
+    de: "z.B. Wer führte die Israeliten aus Ägypten?",
+    vi: "VD: Ai đã dẫn dân Israel ra khỏi Ai Cập?",
+  },
+  game_cq_choices: {
+    en: "Answers",
+    de: "Antworten",
+    vi: "Lựa chọn",
+  },
+  game_cq_tap_correct: {
+    en: "Tap the letter next to the correct answer.",
+    de: "Tippe den Buchstaben neben der richtigen Antwort an.",
+    vi: "Chạm vào chữ cái bên cạnh câu trả lời đúng.",
+  },
+  game_cq_choice_ph: {
+    en: "Choice",
+    de: "Antwort",
+    vi: "Lựa chọn",
+  },
+  game_cq_reference: {
+    en: "Bible reference (optional)",
+    de: "Bibelstelle (optional)",
+    vi: "Tham chiếu Kinh Thánh (tùy chọn)",
+  },
+  game_cq_reference_ph: {
+    en: "e.g. Exodus 3:10",
+    de: "z.B. 2. Mose 3:10",
+    vi: "VD: Xuất 3:10",
+  },
+  game_cq_save: { en: "Save", de: "Speichern", vi: "Lưu" },
+  game_cq_answer_label: {
+    en: "Answer",
+    de: "Antwort",
+    vi: "Đáp án",
+  },
+  game_cq_success_label: {
+    en: "Say something if they get it right (optional)",
+    de: "Sag etwas, wenn sie richtig antworten (optional)",
+    vi: "Nhắn gì đó nếu họ trả lời đúng (tùy chọn)",
+  },
+  game_cq_success_ph: {
+    en: "e.g. Show-off! 😎 Lucky guess, huh?",
+    de: "z.B. Angeber! 😎 Glückstreffer, was?",
+    vi: "VD: Giỏi quá đấy! 😎 May mắn thôi chứ gì?",
+  },
+  game_cq_fail_label: {
+    en: "Say something if they get it wrong (optional)",
+    de: "Sag etwas, wenn sie falsch liegen (optional)",
+    vi: "Nhắn gì đó nếu họ trả lời sai (tùy chọn)",
+  },
+  game_cq_fail_ph: {
+    en: "e.g. Seriously?? Even my goldfish knew that 🐟",
+    de: "z.B. Echt jetzt?? Das wusste sogar mein Goldfisch 🐟",
+    vi: "VD: Thật hả?? Cá vàng của tôi còn biết 🐟",
+  },
+
+  // My Questions modal
+  game_mq_title: {
+    en: "My Questions",
+    de: "Meine Fragen",
+    vi: "Câu hỏi của tôi",
+  },
+  game_mq_empty: {
+    en: "You haven't created any questions yet.",
+    de: "Du hast noch keine Fragen erstellt.",
+    vi: "Bạn chưa tạo câu hỏi nào.",
+  },
+
+  // Verse Quest — totals, limits & leaderboard
+  game_total_score: {
+    en: "Your Shekel",
+    de: "Deine Schekel",
+    vi: "Shekel của bạn",
+  },
+  game_plays_today: {
+    en: "Plays left today",
+    de: "Heute übrig",
+    vi: "Lượt còn lại",
+  },
+  game_per_correct: {
+    en: "Per correct",
+    de: "Pro richtig",
+    vi: "Mỗi câu đúng",
+  },
+  game_play_cost: {
+    en: "Override cost",
+    de: "Kosten für Freischaltung",
+    vi: "Giá mở khóa",
+  },
+  game_play_now: {
+    en: "Play Now",
+    de: "Jetzt spielen",
+    vi: "Chơi ngay",
+  },
+  game_insufficient_shekel: {
+    en: "Not enough Shekel to play now. Create questions to earn more!",
+    de: "Nicht genug Schekel zum sofort Spielen. Erstelle Fragen, um mehr zu verdienen!",
+    vi: "Không đủ Shekel để chơi ngay. Tạo câu hỏi để kiếm thêm!",
+  },
+
+  // Pay-to-override confirm dialog
+  game_pay_confirm_title: {
+    en: "Pay 10 Shekel to play now?",
+    de: "10 Schekel bezahlen, um jetzt zu spielen?",
+    vi: "Trả 10 Shekel để chơi ngay?",
+  },
+  game_pay_confirm_msg: {
+    en: "This will charge 10 Shekel from your balance and unlock a round right away — bypassing the cooldown or daily limit.",
+    de: "Das bucht 10 Schekel von deinem Guthaben ab und schaltet sofort eine Runde frei — ohne Abklingzeit oder Tageslimit.",
+    vi: "Sẽ trừ 10 Shekel khỏi số dư và mở khóa một lượt chơi ngay — bỏ qua thời gian chờ hoặc giới hạn hàng ngày.",
+  },
+  game_paid_msg: {
+    en: "Let the round begin!",
+    de: "Die Runde beginnt!",
+    vi: "Bắt đầu lượt chơi!",
+  },
+
+  // Quit-round confirm dialog
+  game_quit_confirm_title: {
+    en: "Quit this round?",
+    de: "Runde beenden?",
+    vi: "Bỏ vòng chơi này?",
+  },
+  game_quit_confirm_msg: {
+    en: "If you quit now, you'll lose the points earned this round, this play still counts toward your daily limit, and any Shekel you paid to start the round will not be refunded.",
+    de: "Wenn du jetzt aufhörst, verlierst du die Punkte dieser Runde, die Runde zählt weiter zum Tageslimit, und bezahlte Schekel werden nicht erstattet.",
+    vi: "Nếu bạn bỏ ngay, bạn mất điểm đã kiếm trong vòng này, lượt chơi vẫn tính vào giới hạn hàng ngày, và Shekel đã trả sẽ không được hoàn lại.",
+  },
+  game_quit_confirm_yes: {
+    en: "Quit anyway",
+    de: "Trotzdem beenden",
+    vi: "Vẫn bỏ",
+  },
+  game_quit_confirm_no: {
+    en: "Keep playing",
+    de: "Weiterspielen",
+    vi: "Tiếp tục chơi",
+  },
+  game_cooldown_msg: {
+    en: "You ran out of lives. Come back in",
+    de: "Du hast alle Leben verloren. Komm zurück in",
+    vi: "Bạn đã hết mạng. Quay lại sau",
+  },
+  game_daily_limit_msg: {
+    en: "You've used all 10 plays today. Come back tomorrow.",
+    de: "Du hast heute alle 10 Spiele verbraucht. Komm morgen wieder.",
+    vi: "Bạn đã dùng hết 10 lượt hôm nay. Hẹn gặp lại ngày mai.",
+  },
+  game_daily_limit_short: {
+    en: "Come back tomorrow",
+    de: "Komm morgen wieder",
+    vi: "Hẹn ngày mai",
+  },
+  game_result_failed: {
+    en: "Out of lives!",
+    de: "Keine Leben mehr!",
+    vi: "Hết mạng rồi!",
+  },
+  game_leaderboard_title: {
+    en: "Leaderboard",
+    de: "Bestenliste",
+    vi: "Bảng xếp hạng",
+  },
+  game_leaderboard_subtitle: {
+    en: "See the top players in your community.",
+    de: "Sieh die besten Spieler deiner Gemeinschaft.",
+    vi: "Xem những người chơi xuất sắc nhất trong cộng đồng.",
+  },
+  game_leaderboard_need_org: {
+    en: "Join a community to see the leaderboard.",
+    de: "Tritt einer Gemeinschaft bei, um die Bestenliste zu sehen.",
+    vi: "Tham gia cộng đồng để xem bảng xếp hạng.",
+  },
+  game_leaderboard_empty: {
+    en: "No scores yet — be the first to play!",
+    de: "Noch keine Punkte — sei der Erste!",
+    vi: "Chưa có điểm nào — hãy là người đầu tiên!",
+  },
+  game_leaderboard_you: {
+    en: "you",
+    de: "du",
+    vi: "bạn",
+  },
+  game_no_questions_msg: {
+    en: "No questions yet — be the first to add one!",
+    de: "Noch keine Fragen — sei der Erste, der eine erstellt!",
+    vi: "Chưa có câu hỏi nào — hãy là người đầu tiên tạo câu hỏi!",
+  },
+  game_only_own_msg: {
+    en: "Only your own questions exist. Wait for someone else to add one.",
+    de: "Es gibt nur deine eigenen Fragen. Warte, bis jemand anderes eine hinzufügt.",
+    vi: "Chỉ có câu hỏi của bạn. Hãy chờ người khác tạo thêm.",
+  },
+  game_need_org_msg: {
+    en: "Join a community to play and see the leaderboard.",
+    de: "Tritt einer Gemeinschaft bei, um zu spielen und die Bestenliste zu sehen.",
+    vi: "Tham gia cộng đồng để chơi và xem bảng xếp hạng.",
+  },
+  game_manage_questions: {
+    en: "Manage questions",
+    de: "Fragen verwalten",
+    vi: "Quản lý câu hỏi",
+  },
+  game_language_label: {
+    en: "Language",
+    de: "Sprache",
+    vi: "Ngôn ngữ",
+  },
+
+  // Quest Questions management page
+  qq_title: {
+    en: "Quest Questions",
+    de: "Quest-Fragen",
+    vi: "Câu hỏi Quest",
+  },
+  qq_need_org: {
+    en: "Join a community to manage questions.",
+    de: "Tritt einer Gemeinschaft bei, um Fragen zu verwalten.",
+    vi: "Tham gia cộng đồng để quản lý câu hỏi.",
+  },
+  qq_add: {
+    en: "New Question",
+    de: "Neue Frage",
+    vi: "Câu hỏi mới",
+  },
+  qq_mine: {
+    en: "My Questions",
+    de: "Meine Fragen",
+    vi: "Câu hỏi của tôi",
+  },
+  qq_mine_empty: {
+    en: "You haven't created any questions yet.",
+    de: "Du hast noch keine Fragen erstellt.",
+    vi: "Bạn chưa tạo câu hỏi nào.",
+  },
+  qq_community: {
+    en: "Community Questions",
+    de: "Fragen der Gemeinschaft",
+    vi: "Câu hỏi cộng đồng",
+  },
+  qq_community_empty: {
+    en: "No community questions yet — be the first!",
+    de: "Noch keine Fragen — sei der Erste!",
+    vi: "Chưa có câu hỏi nào — hãy là người đầu tiên!",
+  },
+  qq_form_title: {
+    en: "Create a Question",
+    de: "Frage erstellen",
+    vi: "Tạo câu hỏi",
+  },
+  qq_form_edit_title: {
+    en: "Edit Question",
+    de: "Frage bearbeiten",
+    vi: "Sửa câu hỏi",
+  },
+  qq_form_language: {
+    en: "Language",
+    de: "Sprache",
+    vi: "Ngôn ngữ",
+  },
+  qq_created_msg: {
+    en: "Question saved — +2 Shekel!",
+    de: "Frage gespeichert — +2 Schekel!",
+    vi: "Đã lưu câu hỏi — +2 Shekel!",
+  },
+  qq_updated_msg: {
+    en: "Question updated",
+    de: "Frage aktualisiert",
+    vi: "Đã cập nhật câu hỏi",
+  },
+  qq_filter_all: {
+    en: "All",
+    de: "Alle",
+    vi: "Tất cả",
+  },
+
+  // Quest play screen — snackbar + next-button
+  quest_correct_title: {
+    en: "Correct!",
+    de: "Richtig!",
+    vi: "Chính xác!",
+  },
+  quest_wrong_title: {
+    en: "Wrong answer",
+    de: "Falsche Antwort",
+    vi: "Trả lời sai",
+  },
+  quest_timeout_title: {
+    en: "Out of time",
+    de: "Zeit abgelaufen",
+    vi: "Hết giờ",
+  },
+  quest_next: { en: "Next", de: "Weiter", vi: "Tiếp theo" },
+  quest_finish: { en: "Finish", de: "Beenden", vi: "Kết thúc" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

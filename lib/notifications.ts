@@ -3,7 +3,8 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
-import { doc, setDoc } from "firebase/firestore";
+import { router } from "expo-router";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 // Configure how notifications are presented when the app is in the foreground
@@ -92,10 +93,18 @@ export function useNotifications(userId: string | undefined) {
         console.log("Notification received:", notification);
       });
 
-    // Listen for user interaction with notifications
+    // Listen for user interaction with notifications — deep-link to the
+    // relevant tab so tapping a "new event" push opens the Calendar.
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("Notification response:", response);
+        const data = response.notification.request.content.data as
+          | { screen?: string }
+          | undefined;
+        if (data?.screen === "calendar") {
+          router.push("/(tabs)/calendar");
+        } else if (data?.screen === "tasks") {
+          router.push("/(tabs)/calendar");
+        }
       });
 
     return () => {
@@ -103,4 +112,122 @@ export function useNotifications(userId: string | undefined) {
       responseListener.current?.remove();
     };
   }, [userId]);
+}
+
+// ==========================================================================
+// Sending push notifications from the client
+//
+// Until a Cloud Functions backend is in place, the device that creates
+// an event / task / etc. also triggers the push by calling Expo's push
+// service directly. Expo tokens are opaque and safe to use from the
+// client; the service rate-limits and chunks for us.
+// ==========================================================================
+
+type PushPayload = {
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+};
+
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+// Expo accepts up to 100 messages per request.
+const EXPO_BATCH = 100;
+
+function isExpoToken(value: unknown): value is string {
+  return typeof value === "string" && value.startsWith("ExponentPushToken[");
+}
+
+/**
+ * Collect all push tokens for members of an organization, optionally
+ * excluding a specific user (e.g. the creator of the event).
+ */
+export async function getOrgMemberPushTokens(
+  orgId: string,
+  excludeUid?: string,
+): Promise<string[]> {
+  const membersSnap = await getDocs(
+    collection(db, "organizations", orgId, "members"),
+  );
+  const uids = membersSnap.docs
+    .map((m) => m.id)
+    .filter((uid) => uid !== excludeUid);
+  if (uids.length === 0) return [];
+
+  const tokens: string[] = [];
+  await Promise.all(
+    uids.map(async (uid) => {
+      try {
+        const userSnap = await getDoc(doc(db, "users", uid));
+        const tok = userSnap.data()?.expoPushToken;
+        if (isExpoToken(tok)) tokens.push(tok);
+      } catch {
+        // ignore per-user failures
+      }
+    }),
+  );
+  return tokens;
+}
+
+/**
+ * Send a push notification to a list of Expo push tokens.
+ * Batches at 100 messages per request (Expo's limit) and fails silently
+ * on network errors so UI flows aren't blocked.
+ */
+export async function sendPushNotifications(
+  tokens: string[],
+  payload: PushPayload,
+): Promise<void> {
+  const valid = tokens.filter(isExpoToken);
+  if (valid.length === 0) return;
+
+  for (let i = 0; i < valid.length; i += EXPO_BATCH) {
+    const slice = valid.slice(i, i + EXPO_BATCH);
+    const messages = slice.map((to) => ({
+      to,
+      sound: "default",
+      title: payload.title,
+      body: payload.body,
+      data: payload.data ?? {},
+    }));
+    try {
+      await fetch(EXPO_PUSH_URL, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Accept-Encoding": "gzip, deflate",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(messages),
+      });
+    } catch {
+      // Fail silently — push is a best-effort side effect.
+    }
+  }
+}
+
+/**
+ * Convenience: notify every org member except the creator about a new
+ * calendar event. Never throws — safe to fire-and-forget.
+ */
+export async function notifyOrgOfNewEvent(params: {
+  orgId: string;
+  creatorUid: string;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}): Promise<void> {
+  try {
+    const tokens = await getOrgMemberPushTokens(
+      params.orgId,
+      params.creatorUid,
+    );
+    if (tokens.length === 0) return;
+    await sendPushNotifications(tokens, {
+      title: params.title,
+      body: params.body,
+      data: params.data,
+    });
+  } catch {
+    // swallow — do not block the caller's flow
+  }
 }

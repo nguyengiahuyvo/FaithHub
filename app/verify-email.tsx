@@ -1,12 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
+import {ActivityIndicator,
   StyleSheet,
   Text,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 import { sendEmailVerification, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";

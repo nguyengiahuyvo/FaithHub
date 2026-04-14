@@ -6,16 +6,14 @@ import {
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
+import {ActivityIndicator,
   Animated,
   Modal,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 import "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { updateProfile } from "firebase/auth";
@@ -295,12 +293,19 @@ function RootNavigator() {
 
     const inTabsGroup = segments[0] === "(tabs)";
     const inVerify = segments[0] === "verify-email";
+    // Modal/overlay routes that should remain reachable for signed-in users
+    // without being bounced back to the tabs group by the auth guard below.
+    const authedModalRoutes = new Set<string>([
+      "modal",
+      "quest-questions",
+    ]);
+    const inAuthedModal = authedModalRoutes.has(segments[0] ?? "");
 
-    if (!user && (inTabsGroup || inVerify)) {
+    if (!user && (inTabsGroup || inVerify || inAuthedModal)) {
       router.replace("/login");
     } else if (user && !user.emailVerified && !inVerify) {
       router.replace("/verify-email");
-    } else if (user && user.emailVerified && !inTabsGroup) {
+    } else if (user && user.emailVerified && !inTabsGroup && !inAuthedModal) {
       router.replace("/(tabs)");
     }
   }, [user, isLoading, segments]);
@@ -349,6 +354,10 @@ function RootNavigator() {
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
+        />
+        <Stack.Screen
+          name="quest-questions"
+          options={{ presentation: "modal", headerShown: false }}
         />
       </Stack>
       <AppleNamePrompt

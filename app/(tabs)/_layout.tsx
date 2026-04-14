@@ -33,13 +33,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="game"
+        options={{
+          title: t("tab_game", lang),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="game-controller" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="tasks"
         options={{
-          title: t("tab_tasks", lang),
-          href: hasOrg ? "/(tabs)/tasks" : null,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkbox-outline" size={size} color={color} />
-          ),
+          // Tasks are now a sub-tab inside Calendar; hide this route from the bar.
+          href: null,
         }}
       />
       <Tabs.Screen

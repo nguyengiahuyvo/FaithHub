@@ -1,11 +1,15 @@
-- Push notification
-- Intersting feature: (I pray for you)
 - Add Offline Bible
 - Push notification
 - show Activities
 - when i open app, i see shortly the enter code page, before it lands on home page, can you fix that.
 - Profile: they can write me feedback
 - Add setting for dark theme.
+- pay to pay also works too for "come back tomorrow" button
+- on question screen add comment section (only after clicked the answer on every question)
+
+Need to check:
+
+- Push notification: notify user when add new event in calender
 
   Done:
 

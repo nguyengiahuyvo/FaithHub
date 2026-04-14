@@ -4,15 +4,14 @@
 - when i open app, i see shortly the enter code page, before it lands on home page, can you fix that.
 - Profile: they can write me feedback
 - Add setting for dark theme.
-- pay to pay also works too for "come back tomorrow" button
-- on question screen add comment section (only after clicked the answer on every question)
-
-Need to check:
+  Need to check:
 
 - Push notification: notify user when add new event in calender
 
   Done:
 
+- pay to pay also works too for "come back tomorrow" button
+- on question screen add comment section (only after clicked the answer on every question)
 - On new vote modal, when i type in deadline field, keyboard doesnt push the field up, or disappear when i tape on another area
 - On Task page: when i click on plus button, ask me first if i want to add task or add vote, when i choose vote, then show fields i need for new vote: title, description, option (+), deadline.
 - Implement home page: add a card for users to add their "nan đề" để cầu nguyện thay. Thay have option to post annonym. Add new button under members: "my prayer requests": when click on that i can see all my prayer requests posts

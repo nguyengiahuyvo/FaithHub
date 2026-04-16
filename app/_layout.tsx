@@ -6,17 +6,18 @@ import {
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
+import {ActivityIndicator,
   Animated,
+  Linking,
   Modal,
-  Pressable,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 import "react-native-reanimated";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { updateProfile } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -25,6 +26,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { t, type Language } from "@/lib/i18n";
 import { LanguageProvider, useLanguage } from "@/lib/language-context";
+import { useNotifications } from "@/lib/notifications";
 import { OrgProvider } from "@/lib/org-context";
 import { db } from "@/lib/firebase";
 
@@ -277,6 +279,135 @@ const promptStyles = StyleSheet.create({
   },
 });
 
+function UpdateModal({
+  visible,
+  onUpdate,
+  onClose,
+  lang,
+}: {
+  visible: boolean;
+  onUpdate: () => void;
+  onClose: () => void;
+  lang: Language;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[updateStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[updateStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={updateStyles.iconCircle}>
+            <Ionicons name="cloud-download-outline" size={32} color="#5B7553" />
+          </View>
+
+          <Text style={updateStyles.title}>{t("update_title", lang)}</Text>
+          <Text style={updateStyles.message}>{t("update_message", lang)}</Text>
+
+          <Pressable onPress={onUpdate} style={updateStyles.button}>
+            <Text style={updateStyles.buttonText}>
+              {t("update_button", lang)}
+            </Text>
+          </Pressable>
+
+          <Pressable onPress={onClose} style={updateStyles.closeButton}>
+            <Text style={updateStyles.closeButtonText}>
+              {t("update_later", lang)}
+            </Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const updateStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 28,
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#F0FDF4",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  title: {
+    color: "#1F2A1F",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  message: {
+    color: "#5C625C",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  button: {
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: "#5B7553",
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  closeButton: {
+    paddingVertical: 8,
+  },
+  closeButtonText: {
+    color: "#8A8F84",
+    fontSize: 14,
+  },
+});
+
 function RootNavigator() {
   const { user, isLoading, refreshUser } = useAuth();
   const { lang } = useLanguage();
@@ -285,18 +416,54 @@ function RootNavigator() {
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const checkedRef = useRef(false);
+  const [showUpdate, setShowUpdate] = useState(false);
+  const storeLinksRef = useRef({ ios: "", android: "" });
+
+  // Register push notifications when user is authenticated and verified
+  useNotifications(user?.emailVerified ? user.uid : undefined);
+
+  // Check for app updates on startup
+  useEffect(() => {
+    const appVersion = Constants.expoConfig?.version;
+    console.log("[VersionCheck] local version:", appVersion);
+
+    if (!appVersion) return;
+
+    getDoc(doc(db, "app", "metadata")).then((snap) => {
+      console.log("[VersionCheck] doc exists:", snap.exists());
+      if (!snap.exists()) return;
+      const data = snap.data();
+      console.log("[VersionCheck] remote version:", data.version);
+      if (data.version && data.version !== appVersion) {
+        storeLinksRef.current = {
+          ios: data["ios-link"] ?? "",
+          android: data["android-link"] ?? "",
+        };
+        setShowUpdate(true);
+      }
+    }).catch((err) => {
+      console.error("[VersionCheck] error:", err);
+    });
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
 
     const inTabsGroup = segments[0] === "(tabs)";
     const inVerify = segments[0] === "verify-email";
+    // Modal/overlay routes that should remain reachable for signed-in users
+    // without being bounced back to the tabs group by the auth guard below.
+    const authedModalRoutes = new Set<string>([
+      "modal",
+      "quest-questions",
+    ]);
+    const inAuthedModal = authedModalRoutes.has(segments[0] ?? "");
 
-    if (!user && (inTabsGroup || inVerify)) {
+    if (!user && (inTabsGroup || inVerify || inAuthedModal)) {
       router.replace("/login");
     } else if (user && !user.emailVerified && !inVerify) {
       router.replace("/verify-email");
-    } else if (user && user.emailVerified && !inTabsGroup) {
+    } else if (user && user.emailVerified && !inTabsGroup && !inAuthedModal) {
       router.replace("/(tabs)");
     }
   }, [user, isLoading, segments]);
@@ -334,6 +501,14 @@ function RootNavigator() {
     setShowNamePrompt(false);
   }
 
+  function handleUpdate() {
+    const link =
+      Platform.OS === "ios"
+        ? storeLinksRef.current.ios
+        : storeLinksRef.current.android;
+    if (link) Linking.openURL(link);
+  }
+
   if (isLoading) return <SplashScreen />;
 
   return (
@@ -346,12 +521,22 @@ function RootNavigator() {
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
+        <Stack.Screen
+          name="quest-questions"
+          options={{ presentation: "modal", headerShown: false }}
+        />
       </Stack>
       <AppleNamePrompt
         visible={showNamePrompt}
         onSave={handleSaveName}
         onSkip={handleSkipName}
         loading={savingName}
+        lang={lang}
+      />
+      <UpdateModal
+        visible={showUpdate}
+        onUpdate={handleUpdate}
+        onClose={() => setShowUpdate(false)}
         lang={lang}
       />
     </>

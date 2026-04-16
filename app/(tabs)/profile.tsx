@@ -4,6 +4,7 @@ import { auth, db } from "@/lib/firebase";
 import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -16,21 +17,36 @@ import {
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
+import {ActivityIndicator,
   Animated,
   Image,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
-  View,
-} from "react-native";
+  View,} from "react-native";
+import { Pressable } from "@/components/HapticPressable";
 
 type ModalType = "confirm" | "error" | null;
 type DeleteModalStep = "confirm" | "type-to-delete" | "error" | null;
+type EventRemindBefore = "30m" | "1h" | "1d";
+type BibleReminder = { hour: number; minute: number };
+type NotifPrefs = {
+  events: boolean;
+  eventsBefore: EventRemindBefore;
+  tasks: boolean;
+  quest: boolean;
+  bible: boolean;
+  bibleReminders: BibleReminder[];
+};
+
+function LazyTimePicker(props: Record<string, unknown>) {
+  const DateTimePicker =
+    require("@react-native-community/datetimepicker").default;
+  return <DateTimePicker {...props} />;
+}
 
 function SignOutModal({
   type,
@@ -603,6 +619,12 @@ export default function ProfileScreen() {
   const [photoURI, setPhotoURI] = useState<string | null>(null);
   const [showEditName, setShowEditName] = useState(false);
   const [savingName, setSavingName] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [snackbar, setSnackbar] = useState<string | null>(null);
+  const snackOpacity = useRef(new Animated.Value(0)).current;
+  const defaultNotifPrefs: NotifPrefs = { events: true, eventsBefore: "1h", tasks: true, quest: true, bible: false, bibleReminders: [{ hour: 9, minute: 0 }] };
+  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(defaultNotifPrefs);
+  const [notifExpanded, setNotifExpanded] = useState(false);
 
   useEffect(() => {
     setPendingLang(lang);
@@ -611,11 +633,32 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (!user) return;
     getDoc(doc(db, "users", user.uid)).then((snap) => {
-      if (snap.exists() && snap.data().photoBase64) {
-        setPhotoURI(snap.data().photoBase64);
+      if (!snap.exists()) return;
+      const data = snap.data();
+      if (data.photoBase64) setPhotoURI(data.photoBase64);
+      if (data.notifPrefs) {
+        const saved = { ...defaultNotifPrefs, ...data.notifPrefs };
+        // Migrate old single-time format to array
+        if (!Array.isArray(saved.bibleReminders)) {
+          const h = (data.notifPrefs as Record<string, unknown>).bibleHour;
+          const m = (data.notifPrefs as Record<string, unknown>).bibleMinute;
+          saved.bibleReminders = [{ hour: typeof h === "number" ? h : 9, minute: typeof m === "number" ? m : 0 }];
+        }
+        setNotifPrefs(saved);
       }
     });
   }, [user]);
+
+  async function saveNotifPref(patch: Partial<NotifPrefs>) {
+    if (!user) return;
+    const next = { ...notifPrefs, ...patch };
+    setNotifPrefs(next);
+    try {
+      await setDoc(doc(db, "users", user.uid), { notifPrefs: next }, { merge: true });
+    } catch (e) {
+      console.error("Failed to save notification prefs:", e);
+    }
+  }
 
   async function saveDisplayName(newName: string) {
     if (!user) return;
@@ -751,6 +794,7 @@ export default function ProfileScreen() {
   }
 
   return (
+    <>
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Pressable onPress={() => setShowPhotoMenu(true)} style={styles.avatarWrapper}>
@@ -890,7 +934,7 @@ export default function ProfileScreen() {
 
           <View style={styles.separator} />
 
-          <Pressable onPress={leaveOrg} style={styles.row}>
+          <Pressable onPress={() => setShowLeaveConfirm(true)} style={styles.row}>
             <Ionicons name="exit-outline" size={20} color="#DC2626" />
             <Text style={[styles.rowLabel, { color: "#DC2626" }]}>
               {t("profile_leave_org", lang)}
@@ -898,6 +942,104 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       )}
+
+      <View style={styles.section}>
+        <Pressable
+          onPress={() => setNotifExpanded((v) => !v)}
+          style={styles.notifHeader}
+        >
+          <Text style={styles.sectionLabel}>
+            {t("profile_notifications", lang)}
+          </Text>
+          <Ionicons
+            name={notifExpanded ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#A3A89E"
+          />
+        </Pressable>
+
+        {notifExpanded && (
+        <View style={{ gap: 8 }}>
+
+        {/* Event reminders */}
+        <View style={styles.notifItem}>
+          <View style={styles.notifRow}>
+            <View style={styles.notifIconCircle}>
+              <Ionicons name="calendar-outline" size={18} color="#5B7553" />
+            </View>
+            <Text style={styles.rowLabel}>{t("profile_notif_events", lang)}</Text>
+            <Switch
+              value={notifPrefs.events}
+              onValueChange={(v) => saveNotifPref({ events: v })}
+              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
+              thumbColor={notifPrefs.events ? "#5B7553" : "#F4F4F5"}
+            />
+          </View>
+          {notifPrefs.events && (
+            <View style={styles.notifSub}>
+              <Text style={styles.notifSubLabel}>
+                {t("profile_notif_events_before", lang)}
+              </Text>
+              <View style={styles.notifChipRow}>
+                {(["30m", "1h", "1d"] as EventRemindBefore[]).map((v) => (
+                  <Pressable
+                    key={v}
+                    onPress={() => saveNotifPref({ eventsBefore: v })}
+                    style={[
+                      styles.notifChip,
+                      notifPrefs.eventsBefore === v && styles.notifChipActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.notifChipText,
+                        notifPrefs.eventsBefore === v && styles.notifChipTextActive,
+                      ]}
+                    >
+                      {t(`profile_notif_events_${v}` as const, lang)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Task reminders */}
+        <View style={styles.notifItem}>
+          <View style={styles.notifRow}>
+            <View style={styles.notifIconCircle}>
+              <Ionicons name="checkmark-circle-outline" size={18} color="#5B7553" />
+            </View>
+            <Text style={styles.rowLabel}>{t("profile_notif_tasks", lang)}</Text>
+            <Switch
+              value={notifPrefs.tasks}
+              onValueChange={(v) => saveNotifPref({ tasks: v })}
+              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
+              thumbColor={notifPrefs.tasks ? "#5B7553" : "#F4F4F5"}
+            />
+          </View>
+        </View>
+
+        {/* New quest questions */}
+        <View style={styles.notifItem}>
+          <View style={styles.notifRow}>
+            <View style={styles.notifIconCircle}>
+              <Ionicons name="help-circle-outline" size={18} color="#5B7553" />
+            </View>
+            <Text style={styles.rowLabel}>{t("profile_notif_quest", lang)}</Text>
+            <Switch
+              value={notifPrefs.quest}
+              onValueChange={(v) => saveNotifPref({ quest: v })}
+              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
+              thumbColor={notifPrefs.quest ? "#5B7553" : "#F4F4F5"}
+            />
+          </View>
+        </View>
+
+        </View>
+        )}
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>
@@ -953,7 +1095,64 @@ export default function ProfileScreen() {
         <Text style={styles.signOutText}>{t("profile_signout", lang)}</Text>
       </Pressable>
 
-      <Text style={styles.version}>FaithHub v1.2.0</Text>
+      <Text style={styles.version}>{`FaithHub v${Constants.expoConfig?.version ?? "?"}`}</Text>
+
+      {/* Leave org confirmation */}
+      {showLeaveConfirm && (
+        <Modal transparent visible animationType="none">
+          <View style={modalStyles.backdrop}>
+            <View style={modalStyles.card}>
+              <Pressable
+                onPress={() => setShowLeaveConfirm(false)}
+                style={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
+              >
+                <Ionicons name="close" size={24} color="#8A8F84" />
+              </Pressable>
+              <View style={[modalStyles.iconCircle, { backgroundColor: "#FEF2F2" }]}>
+                <Ionicons name="exit-outline" size={28} color="#DC2626" />
+              </View>
+              <Text style={modalStyles.title}>{t("profile_leave_title", lang)}</Text>
+              <Text style={modalStyles.message}>{t("profile_leave_msg", lang)}</Text>
+              <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+                <Pressable
+                  onPress={() => setShowLeaveConfirm(false)}
+                  style={modalStyles.cancelButton}
+                >
+                  <Text style={modalStyles.cancelButtonText}>
+                    {t("cancel", lang)}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    setShowLeaveConfirm(false);
+                    await leaveOrg();
+                    setSnackbar(t("profile_leave_success", lang));
+                    snackOpacity.setValue(0);
+                    Animated.timing(snackOpacity, {
+                      toValue: 1,
+                      duration: 250,
+                      useNativeDriver: true,
+                    }).start(() => {
+                      setTimeout(() => {
+                        Animated.timing(snackOpacity, {
+                          toValue: 0,
+                          duration: 400,
+                          useNativeDriver: true,
+                        }).start(() => setSnackbar(null));
+                      }, 3000);
+                    });
+                  }}
+                  style={[modalStyles.primaryButton, { backgroundColor: "#DC2626" }]}
+                >
+                  <Text style={modalStyles.primaryButtonText}>
+                    {t("profile_leave_confirm", lang)}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       <SignOutModal
         type={modalType}
@@ -986,8 +1185,44 @@ export default function ProfileScreen() {
         lang={lang}
       />
     </ScrollView>
+
+    {/* Snackbar */}
+    {snackbar && (
+      <Animated.View style={[snackStyles.container, { opacity: snackOpacity }]}>
+        <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+        <Text style={snackStyles.text}>{snackbar}</Text>
+      </Animated.View>
+    )}
+    </>
   );
 }
+
+const snackStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    bottom: 40,
+    left: 24,
+    right: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#2C3E2C",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  text: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+  },
+});
 
 const styles = StyleSheet.create({
   content: {
@@ -1112,6 +1347,118 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "rgba(0,0,0,0.04)",
     marginVertical: 8,
+  },
+  notifHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  notifItem: {
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.02)",
+    padding: 12,
+    gap: 10,
+  },
+  notifRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  notifIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(91,117,83,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notifSub: {
+    marginLeft: 42,
+    gap: 6,
+  },
+  notifSubLabel: {
+    color: "#8A8F84",
+    fontSize: 13,
+  },
+  notifChipRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  notifChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  notifChipActive: {
+    backgroundColor: "#5B7553",
+  },
+  notifChipText: {
+    color: "#6B7264",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  notifChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  bibleTimesWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginLeft: 42,
+  },
+  bibleReminderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  timePickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    borderRadius: 10,
+  },
+  timePickerText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2C3E2C",
+  },
+  bibleRemoveBtn: {
+    padding: 2,
+  },
+  timeModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  timeModalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    maxWidth: 320,
+  },
+  timeModalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2C3E2C",
+  },
+  bibleAddBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(91,117,83,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   langRow: {
     flexDirection: "row",

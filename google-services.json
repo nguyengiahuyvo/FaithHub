@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "981282172978",
+    "project_id": "faithhub-dbdbb",
+    "storage_bucket": "faithhub-dbdbb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981282172978:android:776a8172f48aaa7c618c2b",
+        "android_client_info": {
+          "package_name": "com.nguyengiahuy.vo.FaithHub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmcvZCw1PsEikgwNbt-9wGHPybxKydkJw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

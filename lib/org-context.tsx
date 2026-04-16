@@ -7,6 +7,7 @@ import {
 } from "react";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -28,14 +29,14 @@ type OrgState = {
   org: OrgInfo;
   isLoading: boolean;
   joinOrg: (code: string) => Promise<void>;
-  leaveOrg: () => void;
+  leaveOrg: () => Promise<void>;
 };
 
 const OrgContext = createContext<OrgState>({
   org: null,
   isLoading: true,
   joinOrg: async () => {},
-  leaveOrg: () => {},
+  leaveOrg: async () => {},
 });
 
 export function OrgProvider({ children }: { children: ReactNode }) {
@@ -50,6 +51,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setIsLoading(true);
     let cancelled = false;
 
     async function findUserOrg() {
@@ -129,7 +131,15 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  function leaveOrg() {
+  async function leaveOrg() {
+    if (!user || !org) return;
+    try {
+      await deleteDoc(
+        doc(db, "organizations", org.orgId, "members", user.uid)
+      );
+    } catch {
+      // ignore
+    }
     setOrg(null);
   }
 

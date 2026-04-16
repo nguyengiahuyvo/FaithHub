@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
+  Alert,
   Animated,
   Modal,
   ScrollView,
@@ -607,8 +608,9 @@ function OrgDashboard() {
       });
       setPrayerText("");
       setAnonymous(false);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Prayer post failed:", e);
+      Alert.alert("Error", "Failed to post prayer request.");
     } finally {
       setSendingPrayer(false);
     }

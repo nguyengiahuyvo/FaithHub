@@ -881,6 +881,11 @@ const translations = {
     de: "Geschenk senden",
     vi: "Gửi quà",
   },
+  game_chat_title: {
+    en: "Quest Chat",
+    de: "Quest-Chat",
+    vi: "Trò chuyện Quest",
+  },
   game_gift_received_title: {
     en: "Shekel Gift!",
     de: "Schekel-Geschenk!",

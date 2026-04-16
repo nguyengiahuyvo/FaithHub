@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
+  Alert,
   Animated,
   Keyboard,
   Modal,
@@ -461,8 +462,9 @@ function CreateVoteModal({
       setDeadline(null);
       setShowDatePicker(false);
       onDismiss();
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Task save failed:", e);
+      Alert.alert("Error", "Failed to save task.");
     } finally {
       setSaving(false);
     }
@@ -853,8 +855,8 @@ function TaskCard({
           deleteCommentTarget,
         ),
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Comment delete failed:", e);
     }
     setDeleteCommentTarget(null);
   }
@@ -881,8 +883,9 @@ function TaskCard({
         text: body,
         screen: "tasks",
       });
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Comment post failed:", e);
+      Alert.alert("Error", "Failed to post comment.");
     } finally {
       setSending(false);
     }
@@ -1218,8 +1221,9 @@ function VoteCard({
         text: body,
         screen: "tasks",
       });
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Comment post failed:", e);
+      Alert.alert("Error", "Failed to post comment.");
     } finally {
       setSending(false);
     }

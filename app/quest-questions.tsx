@@ -3,11 +3,10 @@ import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Easing,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +19,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -68,9 +68,23 @@ export default function QuestQuestionsScreen() {
   const [community, setCommunity] = useState<CommunityQuestion[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<CommunityQuestion | null>(null);
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const snack = useSnackbar();
   const [snackMsg, setSnackMsg] = useState<string | null>(null);
   snack.setMessage.current = setSnackMsg;
+
+  // Load org members for resolving UIDs to display names
+  useEffect(() => {
+    if (!org) return;
+    getDocs(collection(db, "organizations", org.orgId, "members")).then((snap) => {
+      const map: Record<string, string> = {};
+      for (const d of snap.docs) {
+        const name = d.data().displayName;
+        if (name) map[d.id] = name;
+      }
+      setMemberNames(map);
+    }).catch(() => {});
+  }, [org]);
 
   // Live-subscribe to community questions in the org.
   useEffect(() => {
@@ -102,6 +116,7 @@ export default function QuestQuestionsScreen() {
               createdByName: data.createdByName || null,
               correctCount: typeof data.correctCount === "number" ? data.correctCount : 0,
               wrongCount: typeof data.wrongCount === "number" ? data.wrongCount : 0,
+              answeredUsers: (data.answeredUsers as Record<string, boolean>) || {},
             };
           })
           .filter(
@@ -130,18 +145,16 @@ export default function QuestQuestionsScreen() {
       await deleteDoc(
         doc(db, "organizations", org.orgId, "questQuestions", qid),
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Question delete failed:", e);
+      Alert.alert("Error", "Failed to delete question.");
     }
   }
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <KeyboardAvoidingView
-        style={styles.screen}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <View style={styles.screen}>
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
@@ -217,6 +230,7 @@ export default function QuestQuestionsScreen() {
                       ownedByMe
                       orgId={org.orgId}
                       userId={user?.uid}
+                      memberNames={memberNames}
                       onDelete={() => handleDelete(q.id)}
                       onEdit={() => {
                         setShowForm(false);
@@ -232,7 +246,7 @@ export default function QuestQuestionsScreen() {
           )}
         </ScrollView>
         <Snackbar message={snackMsg} opacity={snack.opacity} />
-      </KeyboardAvoidingView>
+      </View>
     </>
   );
 }
@@ -272,6 +286,7 @@ function QuestionItem({
   ownedByMe,
   orgId,
   userId,
+  memberNames,
   onDelete,
   onEdit,
   lang,
@@ -280,6 +295,7 @@ function QuestionItem({
   ownedByMe: boolean;
   orgId?: string;
   userId?: string;
+  memberNames?: Record<string, string>;
   onDelete?: () => void;
   onEdit?: () => void;
   lang: ReturnType<typeof useLanguage>["lang"];
@@ -333,7 +349,9 @@ function QuestionItem({
       await deleteDoc(
         doc(db, "organizations", orgId, "questQuestions", question.id, "comments", cid),
       );
-    } catch {}
+    } catch (e) {
+      console.error("Comment delete failed:", e);
+    }
   }
 
   return (
@@ -406,6 +424,30 @@ function QuestionItem({
           </View>
         )}
       </View>
+
+      {/* Answered users — always visible for the creator */}
+      {ownedByMe && (() => {
+        const au = (question as Record<string, unknown>).answeredUsers as Record<string, boolean> | undefined;
+        const entries = au ? Object.entries(au) : [];
+        if (entries.length === 0) return null;
+        return (
+          <View style={styles.answeredRow}>
+            {entries.map(([uid, correct]) => (
+              <View key={uid} style={styles.answeredChip}>
+                <UserAvatar uid={uid} name={memberNames?.[uid] ?? null} size={18} />
+                <Text style={styles.answeredName} numberOfLines={1}>
+                  {memberNames?.[uid] || uid.slice(0, 6)}
+                </Text>
+                <Ionicons
+                  name={correct ? "checkmark-circle" : "close-circle"}
+                  size={14}
+                  color={correct ? C.correct : C.wrong}
+                />
+              </View>
+            ))}
+          </View>
+        );
+      })()}
 
       {expanded && (
         <View style={styles.qExpand}>
@@ -700,8 +742,9 @@ function NewQuestionForm({
         );
       }
       onSaved(isEdit);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Question save failed:", e);
+      Alert.alert("Error", "Failed to save question.");
     } finally {
       setSaving(false);
     }
@@ -1107,6 +1150,26 @@ const styles = StyleSheet.create({
   qStatText: {
     fontSize: 12,
     fontWeight: "800",
+  },
+  answeredRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 4,
+  },
+  answeredChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: "#F9F7F4",
+  },
+  answeredName: {
+    fontSize: 11,
+    color: C.textMuted,
+    maxWidth: 80,
   },
   qAnswers: {
     marginTop: 8,

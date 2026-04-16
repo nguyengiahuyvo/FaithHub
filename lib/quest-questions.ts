@@ -88,7 +88,7 @@ export async function addToLeaderboard(
       { shekel: increment(delta) },
       { merge: true },
     );
-  } catch {
-    // best-effort — don't break the caller's flow
+  } catch (e) {
+    console.error("addToLeaderboard failed:", e);
   }
 }

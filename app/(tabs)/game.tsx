@@ -33,6 +33,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Easing,
   Keyboard,
@@ -235,8 +236,9 @@ export default function GameScreen() {
       setGiftTarget(null);
       setGiftAmount("");
       snack.show(`−${amount} ✡ → ${giftTarget.name || "?"}`);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Gift failed:", e);
+      Alert.alert("Error", "Failed to send Shekel. Check permissions.");
     } finally {
       setGifting(false);
     }
@@ -477,27 +479,21 @@ export default function GameScreen() {
   function recordAnswerStat(questionId: string | undefined, correct: boolean) {
     if (!questionId || !org || !user) return;
     const field = correct ? "correctCount" : "wrongCount";
-    updateDoc(
-      doc(db, "organizations", org.orgId, "questQuestions", questionId),
-      { [field]: increment(1) },
-    ).catch(() => {});
+    const ref = doc(db, "organizations", org.orgId, "questQuestions", questionId);
+    updateDoc(ref, {
+      [field]: increment(1),
+      [`answeredUsers.${user.uid}`]: correct,
+    }).catch((e) => console.error("Answer stat update failed:", e));
     // Store individual answer record
     addDoc(
-      collection(
-        db,
-        "organizations",
-        org.orgId,
-        "questQuestions",
-        questionId,
-        "answers",
-      ),
+      collection(db, "organizations", org.orgId, "questQuestions", questionId, "answers"),
       {
         uid: user.uid,
         displayName: user.displayName ?? null,
         correct,
         answeredAt: serverTimestamp(),
       },
-    ).catch(() => {});
+    ).catch((e) => console.error("Answer record failed:", e));
   }
 
   function handleAnswer(choiceIdx: number, _remainingMs: number) {
@@ -607,6 +603,8 @@ export default function GameScreen() {
               .slice(0, 10);
           })()}
           currentUid={user?.uid}
+          currentUserName={user?.displayName ?? null}
+          orgId={org?.orgId}
           onGift={(uid, name) => {
             setGiftTarget({ uid, name });
             setGiftAmount("");
@@ -788,6 +786,8 @@ function StartView({
   leaderboard,
   contributors,
   currentUid,
+  currentUserName,
+  orgId,
   onGift,
   playCost,
   lang,
@@ -807,6 +807,8 @@ function StartView({
   leaderboard: LeaderboardEntry[];
   contributors: { uid: string; displayName: string | null; count: number }[];
   currentUid: string | undefined;
+  currentUserName: string | null;
+  orgId: string | undefined;
   onGift: (uid: string, name: string | null) => void;
   playCost: number;
   lang: Language;
@@ -854,6 +856,8 @@ function StartView({
       <ScrollView
         contentContainerStyle={styles.startContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         <Animated.View
           style={[styles.startIconWrap, { transform: [{ translateY }] }]}
@@ -865,6 +869,11 @@ function StartView({
 
         <Text style={styles.startTitle}>{t("game_title", lang)}</Text>
         <Text style={styles.startSubtitle}>{t("game_subtitle", lang)}</Text>
+
+        {/* Community chat */}
+        {hasOrg && orgId && currentUid && (
+          <QuestChat orgId={orgId} userId={currentUid} userName={currentUserName} lang={lang} />
+        )}
 
         {/* Cooldown / daily-limit / no-questions notice */}
         {cooldownActive && (
@@ -1067,6 +1076,7 @@ function StartView({
             </View>
           )}
         </View>
+
       </ScrollView>
 
       {/* Bottom-docked action group: Play + Create question + Help */}
@@ -1962,8 +1972,8 @@ function QuestionComments({
         text: body,
         screen: "game",
       });
-    } catch {
-      // restore input on failure so user can retry
+    } catch (e) {
+      console.error("Question comment failed:", e);
       setText(body);
     } finally {
       setSending(false);
@@ -1984,8 +1994,8 @@ function QuestionComments({
           cid,
         ),
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Question comment delete failed:", e);
     }
   }
 
@@ -2046,6 +2056,146 @@ function QuestionComments({
             commentStyles.sendBtn,
             (!text.trim() || sending) && { opacity: 0.5 },
           ]}
+        >
+          {sending ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Ionicons name="send" size={16} color="#FFFFFF" />
+          )}
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ===== Community chat on the Quest start page =====
+type ChatMsg = {
+  id: string;
+  text: string;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
+};
+
+function QuestChat({
+  orgId,
+  userId,
+  userName,
+  lang,
+}: {
+  orgId: string;
+  userId: string;
+  userName: string | null;
+  lang: Language;
+}) {
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, "organizations", orgId, "questChat"),
+      orderBy("createdAt", "desc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setMessages(
+        snap.docs.slice(0, 30).map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+    }, () => {});
+    return unsub;
+  }, [orgId]);
+
+  async function handleSend() {
+    if (!text.trim() || sending) return;
+    const body = text.trim();
+    setSending(true);
+    setText("");
+    try {
+      await addDoc(collection(db, "organizations", orgId, "questChat"), {
+        text: body,
+        createdBy: userId,
+        createdByName: userName,
+        createdAt: serverTimestamp(),
+      });
+      notifyMentionedUsers({
+        orgId,
+        senderUid: userId,
+        senderName: userName,
+        text: body,
+        screen: "game",
+      });
+    } catch (e) {
+      console.error("Quest chat send failed:", e);
+      setText(body);
+      Alert.alert("Error", "Failed to send message.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await deleteDoc(doc(db, "organizations", orgId, "questChat", id));
+    } catch (e) {
+      console.error("Quest chat delete failed:", e);
+    }
+  }
+
+  return (
+    <View style={commentStyles.card}>
+      <View style={commentStyles.header}>
+        <Ionicons name="chatbubbles" size={16} color={C.primary} />
+        <Text style={commentStyles.headerTitle}>
+          {t("game_chat_title", lang)}
+        </Text>
+      </View>
+
+      {messages.length === 0 ? (
+        <Text style={commentStyles.empty}>
+          {t("quest_comments_empty", lang)}
+        </Text>
+      ) : (
+        <View style={{ gap: 8 }}>
+          {messages.map((m) => (
+            <View key={m.id} style={commentStyles.row}>
+              <UserAvatar uid={m.createdBy} name={m.createdByName} size={26} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={commentStyles.name} numberOfLines={1}>
+                  {m.createdByName || t("notif_someone", lang)}
+                </Text>
+                <Text style={commentStyles.text}>{m.text}</Text>
+              </View>
+              {m.createdBy === userId && (
+                <Pressable onPress={() => handleDelete(m.id)} hitSlop={6} style={{ padding: 4 }}>
+                  <Ionicons name="trash-outline" size={14} color={C.wrong} />
+                </Pressable>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
+      <View style={commentStyles.inputRow}>
+        <MentionInput
+          orgId={orgId}
+          value={text}
+          onChangeText={setText}
+          placeholder={t("quest_comments_placeholder", lang)}
+          placeholderTextColor="#A3A89E"
+          style={commentStyles.input}
+          multiline
+          maxLength={280}
+        />
+        <Pressable
+          onPress={handleSend}
+          disabled={!text.trim() || sending}
+          style={[commentStyles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}
         >
           {sending ? (
             <ActivityIndicator color="#FFFFFF" size="small" />

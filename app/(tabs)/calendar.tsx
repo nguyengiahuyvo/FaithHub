@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
+  Alert,
   Animated,
   Keyboard,
   Modal,
@@ -581,8 +582,8 @@ function EventCard({
           deleteCommentTarget,
         ),
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Comment delete failed:", e);
     }
     setDeleteCommentTarget(null);
   }
@@ -609,8 +610,9 @@ function EventCard({
         text: body,
         screen: "calendar",
       });
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Comment post failed:", e);
+      Alert.alert("Error", "Failed to post comment.");
     } finally {
       setSending(false);
     }
@@ -1062,8 +1064,9 @@ function CreateEventModal({
       setIsBirthday(false);
       setRepeat("none");
       onDismiss();
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Event save failed:", e);
+      Alert.alert("Error", "Failed to save event.");
     } finally {
       setSaving(false);
     }

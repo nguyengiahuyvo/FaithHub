@@ -587,6 +587,7 @@ export default function GameScreen() {
               { uid: string; displayName: string | null; count: number }
             >();
             for (const c of community) {
+              if (c.createdByName === "FaithHub") continue;
               const e = map.get(c.createdBy);
               if (e) {
                 e.count++;

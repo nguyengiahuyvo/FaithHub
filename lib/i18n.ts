@@ -332,7 +332,11 @@ const translations = {
   home_member_fallback: { en: "Member", de: "Mitglied", vi: "Thành viên" },
 
   // Prayer requests
-  prayer_title: { en: "Prayer Requests", de: "Gebetsanliegen", vi: "Nan đề cầu nguyện" },
+  prayer_title: {
+    en: "Prayer Requests",
+    de: "Gebetsanliegen",
+    vi: "Nan đề cầu nguyện",
+  },
   prayer_empty: {
     en: "No prayer requests yet",
     de: "Noch keine Gebetsanliegen",
@@ -343,7 +347,11 @@ const translations = {
     de: "Teile ein Gebetsanliegen...",
     vi: "Chia sẻ nan đề cầu nguyện...",
   },
-  prayer_anonymous: { en: "Post anonymously", de: "Anonym posten", vi: "Đăng ẩn danh" },
+  prayer_anonymous: {
+    en: "Post anonymously",
+    de: "Anonym posten",
+    vi: "Đăng ẩn danh",
+  },
   prayer_anonymous_label: { en: "Anonymous", de: "Anonym", vi: "Ẩn danh" },
   prayer_delete_msg: {
     en: "Are you sure you want to delete this prayer request?",
@@ -351,7 +359,11 @@ const translations = {
     vi: "Bạn có chắc chắn muốn xóa nan đề cầu nguyện này không?",
   },
   prayer_praying: { en: "Praying", de: "Bete", vi: "Cầu nguyện" },
-  prayer_my_requests: { en: "My Prayer Requests", de: "Meine Gebetsanliegen", vi: "Nan đề của tôi" },
+  prayer_my_requests: {
+    en: "My Prayer Requests",
+    de: "Meine Gebetsanliegen",
+    vi: "Nan đề của tôi",
+  },
   prayer_my_empty: {
     en: "You haven't shared any prayer requests yet",
     de: "Du hast noch keine Gebetsanliegen geteilt",
@@ -371,7 +383,11 @@ const translations = {
     vi: "Nhấn + để tạo công việc đầu tiên",
   },
   tasks_new: { en: "New Task", de: "Neue Aufgabe", vi: "Công việc mới" },
-  tasks_edit: { en: "Edit Task", de: "Aufgabe bearbeiten", vi: "Sửa công việc" },
+  tasks_edit: {
+    en: "Edit Task",
+    de: "Aufgabe bearbeiten",
+    vi: "Sửa công việc",
+  },
   tasks_title_label: { en: "Title", de: "Titel", vi: "Tiêu đề" },
   tasks_title_placeholder: {
     en: "What needs to be done?",
@@ -437,7 +453,11 @@ const translations = {
 
   // Create choice
   tasks_add_task: { en: "New Task", de: "Neue Aufgabe", vi: "Công việc mới" },
-  tasks_add_vote: { en: "New Vote", de: "Neue Abstimmung", vi: "Bình chọn mới" },
+  tasks_add_vote: {
+    en: "New Vote",
+    de: "Neue Abstimmung",
+    vi: "Bình chọn mới",
+  },
 
   // Votes
   vote_title_label: { en: "Question", de: "Frage", vi: "Câu hỏi" },
@@ -447,10 +467,22 @@ const translations = {
     vi: "Bình chọn về điều gì?",
   },
   vote_option: { en: "Option", de: "Option", vi: "Lựa chọn" },
-  vote_add_option: { en: "Add option", de: "Option hinzufügen", vi: "Thêm lựa chọn" },
+  vote_add_option: {
+    en: "Add option",
+    de: "Option hinzufügen",
+    vi: "Thêm lựa chọn",
+  },
   vote_deadline: { en: "Deadline", de: "Frist", vi: "Hạn chót" },
-  vote_deadline_placeholder: { en: "YYYY-MM-DD", de: "JJJJ-MM-TT", vi: "YYYY-MM-DD" },
-  vote_no_votes: { en: "No votes yet", de: "Noch keine Abstimmungen", vi: "Chưa có bình chọn" },
+  vote_deadline_placeholder: {
+    en: "YYYY-MM-DD",
+    de: "JJJJ-MM-TT",
+    vi: "YYYY-MM-DD",
+  },
+  vote_no_votes: {
+    en: "No votes yet",
+    de: "Noch keine Abstimmungen",
+    vi: "Chưa có bình chọn",
+  },
   vote_votes: { en: "votes", de: "Stimmen", vi: "phiếu" },
   vote_vote: { en: "vote", de: "Stimme", vi: "phiếu" },
   vote_ended: { en: "Ended", de: "Beendet", vi: "Đã kết thúc" },
@@ -540,7 +572,11 @@ const translations = {
   cal_maybe: { en: "Maybe", de: "Vielleicht", vi: "Có thể" },
   cal_interested: { en: "Interested", de: "Interessiert", vi: "Quan tâm" },
   cal_attendees: { en: "attendees", de: "Teilnehmer", vi: "người tham gia" },
-  cal_attendees_title: { en: "Attendees", de: "Teilnehmer", vi: "Người tham gia" },
+  cal_attendees_title: {
+    en: "Attendees",
+    de: "Teilnehmer",
+    vi: "Người tham gia",
+  },
   cal_upcoming: { en: "Upcoming", de: "Demnächst", vi: "Sắp tới" },
   cal_attendee: { en: "attendee", de: "Teilnehmer", vi: "người tham gia" },
   cal_comments: { en: "Comments", de: "Kommentare", vi: "Bình luận" },
@@ -812,7 +848,11 @@ const translations = {
   },
 
   // Shared
-  snack_deleted: { en: "Deleted successfully", de: "Erfolgreich gelöscht", vi: "Đã xóa thành công" },
+  snack_deleted: {
+    en: "Deleted successfully",
+    de: "Erfolgreich gelöscht",
+    vi: "Đã xóa thành công",
+  },
   cancel: { en: "Cancel", de: "Abbrechen", vi: "Hủy" },
   close: { en: "Close", de: "Schließen", vi: "Đóng" },
   create: { en: "Create", de: "Erstellen", vi: "Tạo" },
@@ -864,7 +904,11 @@ const translations = {
   game_done: { en: "Done", de: "Fertig", vi: "Xong" },
   game_streak: { en: "Streak", de: "Serie", vi: "Chuỗi" },
   game_correct: { en: "Correct", de: "Richtig", vi: "Đúng" },
-  game_best_streak: { en: "Best streak", de: "Beste Serie", vi: "Chuỗi tốt nhất" },
+  game_best_streak: {
+    en: "Best streak",
+    de: "Beste Serie",
+    vi: "Chuỗi tốt nhất",
+  },
   game_points: { en: "Shekel", de: "Schekel", vi: "Shekel" },
   game_gift_title: {
     en: "Send Shekel",
@@ -896,24 +940,36 @@ const translations = {
     de: "hat dir gesendet",
     vi: "đã gửi cho bạn",
   },
-  game_new_best: { en: "New best score!", de: "Neuer Bestwert!", vi: "Kỷ lục mới!" },
-  game_result_great: { en: "Outstanding!", de: "Ausgezeichnet!", vi: "Tuyệt vời!" },
-  game_result_good: { en: "Well done!", de: "Gut gemacht!", vi: "Làm tốt lắm!" },
+  game_new_best: {
+    en: "New best score!",
+    de: "Neuer Bestwert!",
+    vi: "Kỷ lục mới!",
+  },
+  game_result_great: {
+    en: "Outstanding!",
+    de: "Ausgezeichnet!",
+    vi: "Tuyệt vời!",
+  },
+  game_result_good: {
+    en: "Well done!",
+    de: "Gut gemacht!",
+    vi: "Làm tốt lắm!",
+  },
   game_result_try: { en: "Keep going!", de: "Weitermachen!", vi: "Cố lên!" },
   game_verse_great: {
-    en: "\"Well done, good and faithful servant.\" — Matthew 25:21",
-    de: "„Wohl, du treuer und getreuer Knecht.\" — Matthäus 25:21",
-    vi: "„Hỡi đầy tớ ngay lành trung tín kia, được lắm.\" — Ma-thi-ơ 25:21",
+    en: '"Well done, good and faithful servant." — Matthew 25:21',
+    de: '„Wohl, du treuer und getreuer Knecht." — Matthäus 25:21',
+    vi: '„Hỡi đầy tớ ngay lành trung tín kia, được lắm." — Ma-thi-ơ 25:21',
   },
   game_verse_good: {
-    en: "\"Your word is a lamp to my feet and a light to my path.\" — Psalm 119:105",
-    de: "„Dein Wort ist meines Fußes Leuchte und ein Licht auf meinem Wege.\" — Psalm 119:105",
-    vi: "„Lời Chúa là ngọn đèn cho chân tôi, ánh sáng cho đường lối tôi.\" — Thi thiên 119:105",
+    en: '"Your word is a lamp to my feet and a light to my path." — Psalm 119:105',
+    de: '„Dein Wort ist meines Fußes Leuchte und ein Licht auf meinem Wege." — Psalm 119:105',
+    vi: '„Lời Chúa là ngọn đèn cho chân tôi, ánh sáng cho đường lối tôi." — Thi thiên 119:105',
   },
   game_verse_try: {
-    en: "\"Be strong and courageous... for the Lord your God is with you.\" — Joshua 1:9",
-    de: "„Sei mutig und stark... denn der Herr, dein Gott, ist mit dir.\" — Josua 1:9",
-    vi: "„Hãy vững lòng bền chí... vì Giê-hô-va Đức Chúa Trời ngươi vẫn ở cùng ngươi.\" — Giô-suê 1:9",
+    en: '"Be strong and courageous... for the Lord your God is with you." — Joshua 1:9',
+    de: '„Sei mutig und stark... denn der Herr, dein Gott, ist mit dir." — Josua 1:9',
+    vi: '„Hãy vững lòng bền chí... vì Giê-hô-va Đức Chúa Trời ngươi vẫn ở cùng ngươi." — Giô-suê 1:9',
   },
 
   // Verse Quest — onboarding (how to play)
@@ -1196,9 +1252,9 @@ const translations = {
     vi: "Hết mạng rồi!",
   },
   game_contributors_title: {
-    en: "Brain Factory",
-    de: "Gehirnfabrik",
-    vi: "Xưởng chế câu hỏi",
+    en: "Question Kings",
+    de: "Fragen-Kings",
+    vi: "Vua của những câu hỏi",
   },
   game_leaderboard_title: {
     en: "Shekel Tycoons",

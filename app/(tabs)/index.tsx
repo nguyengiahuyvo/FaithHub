@@ -30,6 +30,7 @@ import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
 import Snackbar from "@/components/Snackbar";
+import { notifyOrgOfNewEvent } from "@/lib/notifications";
 
 type MemberInfo = { uid: string; displayName: string | null; email: string; role: string };
 
@@ -592,6 +593,17 @@ function OrgDashboard() {
         createdByName: user.displayName,
         createdAt: serverTimestamp(),
         prayingFor: [],
+      });
+      const sender = anonymous ? t("prayer_anonymous", lang) : (user.displayName || t("notif_someone", lang));
+      const preview = prayerText.trim().length > 80
+        ? prayerText.trim().slice(0, 80) + "…"
+        : prayerText.trim();
+      notifyOrgOfNewEvent({
+        orgId: org.orgId,
+        creatorUid: user.uid,
+        title: t("notif_new_prayer_title", lang),
+        body: `${sender}: ${preview}`,
+        data: { screen: "home" },
       });
       setPrayerText("");
       setAnonymous(false);

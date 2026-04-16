@@ -1,6 +1,35 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Pressable } from "@/components/HapticPressable";
+import MentionInput from "@/components/MentionInput";
+import Snackbar, { useSnackbar } from "@/components/Snackbar";
+import UserAvatar from "@/components/UserAvatar";
+import { useAuth } from "@/lib/auth-context";
+import { db } from "@/lib/firebase";
+import { t, type Language } from "@/lib/i18n";
+import { useLanguage } from "@/lib/language-context";
+import { notifyMentionedUsers, notifyUser } from "@/lib/notifications";
+import { useOrg } from "@/lib/org-context";
+import {
+  addToLeaderboard,
+  availableLanguages,
+  resolveTranslation,
+  type CommunityQuestion,
+  type Question,
+} from "@/lib/quest-questions";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  increment,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,33 +43,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Pressable } from "@/components/HapticPressable";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
-import { useOrg } from "@/lib/org-context";
-import { t, type Language } from "@/lib/i18n";
-import { useLanguage } from "@/lib/language-context";
-import UserAvatar from "@/components/UserAvatar";
-import Snackbar, { useSnackbar } from "@/components/Snackbar";
-import { notifyMentionedUsers } from "@/lib/notifications";
-import {
-  addToLeaderboard,
-  availableLanguages,
-  resolveTranslation,
-  type CommunityQuestion,
-  type Question,
-} from "@/lib/quest-questions";
 
 // ===== Game constants =====
 const QUESTIONS_PER_ROUND = 10;
@@ -195,6 +197,50 @@ export default function GameScreen() {
   // Snackbar (for the "−10 Shekel paid" notification after override)
   const snack = useSnackbar();
   const [snackMsg, setSnackMsg] = useState<string | null>(null);
+
+  // Shekel gifting
+  const [showGiftModal, setShowGiftModal] = useState(false);
+  const [giftTarget, setGiftTarget] = useState<{
+    uid: string;
+    name: string | null;
+  } | null>(null);
+  const [giftAmount, setGiftAmount] = useState("");
+  const [gifting, setGifting] = useState(false);
+
+  async function sendGift() {
+    if (!org || !user || !giftTarget || gifting) return;
+    const amount = parseInt(giftAmount, 10);
+    if (!amount || amount <= 0 || amount > totalScore) return;
+    setGifting(true);
+    try {
+      await addToLeaderboard(
+        org.orgId,
+        user.uid,
+        user.displayName ?? null,
+        -amount,
+      );
+      await addToLeaderboard(
+        org.orgId,
+        giftTarget.uid,
+        giftTarget.name,
+        amount,
+      );
+      const sender = user.displayName || t("notif_someone", lang);
+      notifyUser(giftTarget.uid, {
+        title: t("game_gift_received_title", lang),
+        body: `${sender} ${t("game_gift_received_body", lang)} ${amount} ✡`,
+        data: { screen: "game" },
+      });
+      setShowGiftModal(false);
+      setGiftTarget(null);
+      setGiftAmount("");
+      snack.show(`−${amount} ✡ → ${giftTarget.name || "?"}`);
+    } catch {
+      // ignore
+    } finally {
+      setGifting(false);
+    }
+  }
   snack.setMessage.current = setSnackMsg;
   // Language filter for the round — defaults to the player's profile lang.
   const [playLang, setPlayLang] = useState<Language>(lang);
@@ -236,39 +282,34 @@ export default function GameScreen() {
     if (cooldownUntil && now >= cooldownUntil) setCooldownUntil(null);
   }, [now, cooldownUntil]);
 
-  // Live total score for the player from the org leaderboard collection.
-  useEffect(() => {
-    if (!org || !user) return;
-    const ref = doc(db, "organizations", org.orgId, "questScores", user.uid);
-    const unsub = onSnapshot(ref, (snap) => {
-      const s = snap.data()?.score;
-      if (typeof s === "number") setTotalScore(s);
-    }, () => {});
-    return unsub;
-  }, [org, user]);
-
-  // Live leaderboard (top 20).
+  // Live Shekel balance + leaderboard from the members collection.
   useEffect(() => {
     if (!org) {
       setLeaderboard([]);
       return;
     }
-    const q = query(
-      collection(db, "organizations", org.orgId, "questScores"),
-      orderBy("score", "desc"),
-      limit(20),
+    const unsub = onSnapshot(
+      collection(db, "organizations", org.orgId, "members"),
+      (snap) => {
+        const entries: LeaderboardEntry[] = [];
+        for (const d of snap.docs) {
+          const data = d.data();
+          const shekel = typeof data.shekel === "number" ? data.shekel : 0;
+          entries.push({
+            uid: d.id,
+            displayName: data.displayName ?? null,
+            score: shekel,
+          });
+          // Update own score
+          if (user && d.id === user.uid) setTotalScore(shekel);
+        }
+        entries.sort((a, b) => b.score - a.score);
+        setLeaderboard(entries);
+      },
+      () => {},
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setLeaderboard(
-        snap.docs.map((d) => ({
-          uid: d.id,
-          displayName: d.data().displayName ?? null,
-          score: typeof d.data().score === "number" ? d.data().score : 0,
-        })),
-      );
-    }, () => {});
     return unsub;
-  }, [org]);
+  }, [org, user]);
 
   async function dismissOnboarding() {
     setShowOnboarding(false);
@@ -287,37 +328,43 @@ export default function GameScreen() {
       collection(db, "organizations", org.orgId, "questQuestions"),
       orderBy("createdAt", "desc"),
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setCommunity(
-        snap.docs
-          .map((d) => {
-            const data = d.data();
-            const choices = Array.isArray(data.choices) ? data.choices : [];
-            return {
-              id: d.id,
-              q: data.q || "",
-              choices,
-              answer: typeof data.answer === "number" ? data.answer : 0,
-              ref: data.ref || undefined,
-              successMsg: data.successMsg || undefined,
-              failMsg: data.failMsg || undefined,
-              language: (data.language as Language) || undefined,
-              translations: data.translations || undefined,
-              createdBy: data.createdBy || "",
-              createdByName: data.createdByName || null,
-            };
-          })
-          // Ignore malformed documents (need 4 non-empty choices).
-          .filter(
-            (c) =>
-              c.q.trim().length > 0 &&
-              c.choices.length === 4 &&
-              c.choices.every((x: unknown) => typeof x === "string" && x.trim().length > 0) &&
-              c.answer >= 0 &&
-              c.answer <= 3,
-          ),
-      );
-    }, () => {});
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setCommunity(
+          snap.docs
+            .map((d) => {
+              const data = d.data();
+              const choices = Array.isArray(data.choices) ? data.choices : [];
+              return {
+                id: d.id,
+                q: data.q || "",
+                choices,
+                answer: typeof data.answer === "number" ? data.answer : 0,
+                ref: data.ref || undefined,
+                successMsg: data.successMsg || undefined,
+                failMsg: data.failMsg || undefined,
+                language: (data.language as Language) || undefined,
+                translations: data.translations || undefined,
+                createdBy: data.createdBy || "",
+                createdByName: data.createdByName || null,
+              };
+            })
+            // Ignore malformed documents (need 4 non-empty choices).
+            .filter(
+              (c) =>
+                c.q.trim().length > 0 &&
+                c.choices.length === 4 &&
+                c.choices.every(
+                  (x: unknown) => typeof x === "string" && x.trim().length > 0,
+                ) &&
+                c.answer >= 0 &&
+                c.answer <= 3,
+            ),
+        );
+      },
+      () => {},
+    );
     return unsub;
   }, [org]);
 
@@ -427,6 +474,32 @@ export default function GameScreen() {
     setMode("done");
   }
 
+  function recordAnswerStat(questionId: string | undefined, correct: boolean) {
+    if (!questionId || !org || !user) return;
+    const field = correct ? "correctCount" : "wrongCount";
+    updateDoc(
+      doc(db, "organizations", org.orgId, "questQuestions", questionId),
+      { [field]: increment(1) },
+    ).catch(() => {});
+    // Store individual answer record
+    addDoc(
+      collection(
+        db,
+        "organizations",
+        org.orgId,
+        "questQuestions",
+        questionId,
+        "answers",
+      ),
+      {
+        uid: user.uid,
+        displayName: user.displayName ?? null,
+        correct,
+        answeredAt: serverTimestamp(),
+      },
+    ).catch(() => {});
+  }
+
   function handleAnswer(choiceIdx: number, _remainingMs: number) {
     if (locked) return;
     setLocked(true);
@@ -434,6 +507,8 @@ export default function GameScreen() {
 
     const q = round[qIndex];
     const isCorrect = choiceIdx === q.answer;
+
+    recordAnswerStat(q.id, isCorrect);
 
     if (isCorrect) {
       // Flat scoring per the rules: +5 per correct answer.
@@ -460,6 +535,9 @@ export default function GameScreen() {
     setLocked(true);
     setSelected(null);
     setStreak(0);
+
+    recordAnswerStat(round[qIndex]?.id, false);
+
     setHearts((h) => {
       const nh = h - 1;
       heartsRef.current = nh;
@@ -507,7 +585,33 @@ export default function GameScreen() {
             user ? community.filter((c) => c.createdBy === user.uid).length : 0
           }
           leaderboard={leaderboard}
+          contributors={(() => {
+            const map = new Map<
+              string,
+              { uid: string; displayName: string | null; count: number }
+            >();
+            for (const c of community) {
+              const e = map.get(c.createdBy);
+              if (e) {
+                e.count++;
+              } else {
+                map.set(c.createdBy, {
+                  uid: c.createdBy,
+                  displayName: c.createdByName,
+                  count: 1,
+                });
+              }
+            }
+            return [...map.values()]
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 10);
+          })()}
           currentUid={user?.uid}
+          onGift={(uid, name) => {
+            setGiftTarget({ uid, name });
+            setGiftAmount("");
+            setShowGiftModal(true);
+          }}
           lang={lang}
         />
       )}
@@ -541,9 +645,7 @@ export default function GameScreen() {
           total={round.length}
           bestStreak={bestStreak}
           failed={roundFailed}
-          cooldownMsLeft={
-            cooldownUntil ? Math.max(0, cooldownUntil - now) : 0
-          }
+          cooldownMsLeft={cooldownUntil ? Math.max(0, cooldownUntil - now) : 0}
           playsLeft={Math.max(0, MAX_ROUNDS_PER_DAY - playsToday)}
           onPlayAgain={startGame}
           onClose={goToStart}
@@ -562,7 +664,7 @@ export default function GameScreen() {
         visible={showPayConfirm}
         title={t("game_pay_confirm_title", lang)}
         message={t("game_pay_confirm_msg", lang)}
-        confirmText={`${t("game_play_now", lang)} · −${PLAY_COST_SHEKEL} ${t("game_points", lang)}`}
+        confirmText={`${t("game_play_now", lang)} −${PLAY_COST_SHEKEL} ${t("game_points", lang)}`}
         cancelText={t("cancel", lang)}
         tone="accent"
         onCancel={() => setShowPayConfirm(false)}
@@ -593,6 +695,78 @@ export default function GameScreen() {
         }}
       />
 
+      {/* Shekel Gift Modal */}
+      {showGiftModal && giftTarget && (
+        <Modal transparent visible animationType="fade">
+          <Pressable
+            onPress={() => setShowGiftModal(false)}
+            style={giftStyles.backdrop}
+          >
+            <View
+              style={giftStyles.card}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={giftStyles.iconCircle}>
+                <Ionicons name="gift" size={28} color="#5B7553" />
+              </View>
+              <Text style={giftStyles.title}>{t("game_gift_title", lang)}</Text>
+              <View style={giftStyles.targetRow}>
+                <UserAvatar
+                  uid={giftTarget.uid}
+                  name={giftTarget.name}
+                  size={32}
+                />
+                <Text style={giftStyles.targetName} numberOfLines={1}>
+                  {giftTarget.name || "—"}
+                </Text>
+              </View>
+              <Text style={giftStyles.balance}>
+                {t("game_gift_balance", lang)}: {totalScore} ✡
+              </Text>
+              <TextInput
+                value={giftAmount}
+                onChangeText={(t) => setGiftAmount(t.replace(/[^0-9]/g, ""))}
+                placeholder="0"
+                placeholderTextColor="#A3A89E"
+                keyboardType="number-pad"
+                style={giftStyles.input}
+                autoFocus
+              />
+              <Pressable
+                onPress={sendGift}
+                disabled={
+                  !giftAmount ||
+                  parseInt(giftAmount, 10) <= 0 ||
+                  parseInt(giftAmount, 10) > totalScore ||
+                  gifting
+                }
+                style={[
+                  giftStyles.sendBtn,
+                  (!giftAmount ||
+                    parseInt(giftAmount, 10) <= 0 ||
+                    parseInt(giftAmount, 10) > totalScore ||
+                    gifting) && { opacity: 0.5 },
+                ]}
+              >
+                {gifting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={giftStyles.sendText}>
+                    {t("game_gift_send", lang)}
+                  </Text>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => setShowGiftModal(false)}
+                style={giftStyles.cancelBtn}
+              >
+                <Text style={giftStyles.cancelText}>{t("cancel", lang)}</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
+
       <Snackbar message={snackMsg} opacity={snack.opacity} />
     </View>
   );
@@ -612,7 +786,9 @@ function StartView({
   eligibleCount,
   myCount,
   leaderboard,
+  contributors,
   currentUid,
+  onGift,
   playCost,
   lang,
 }: {
@@ -629,7 +805,9 @@ function StartView({
   eligibleCount: number;
   myCount: number;
   leaderboard: LeaderboardEntry[];
+  contributors: { uid: string; displayName: string | null; count: number }[];
   currentUid: string | undefined;
+  onGift: (uid: string, name: string | null) => void;
   playCost: number;
   lang: Language;
 }) {
@@ -642,15 +820,10 @@ function StartView({
   const blockedByTime = cooldownActive || noPlaysLeft;
   // Can the player pay the fee to bypass a time-based block right now?
   const canPayToOverride =
-    blockedByTime &&
-    hasOrg &&
-    !noEligibleQuestions &&
-    totalScore >= playCost;
+    blockedByTime && hasOrg && !noEligibleQuestions && totalScore >= playCost;
   // Button is fully disabled only when nothing can make play happen.
   const playDisabled =
-    !hasOrg ||
-    noEligibleQuestions ||
-    (blockedByTime && !canPayToOverride);
+    !hasOrg || noEligibleQuestions || (blockedByTime && !canPayToOverride);
   const cooldownLabel = formatCooldown(cooldownMsLeft);
   const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -782,7 +955,59 @@ function StartView({
             label={t("game_per_correct", lang)}
             value={`+${POINTS_PER_CORRECT}`}
           />
+          <StatCard
+            icon="help-circle"
+            iconColor="#6366F1"
+            label={t("game_questions_available", lang)}
+            value={String(eligibleCount)}
+          />
         </View>
+
+        {/* Top Contributors — most questions created */}
+        {hasOrg && contributors.length > 0 && (
+          <View style={styles.boardCard}>
+            <View style={styles.boardHeader}>
+              <Ionicons name="create" size={18} color={C.primary} />
+              <Text style={styles.boardTitle}>
+                {t("game_contributors_title", lang)}
+              </Text>
+            </View>
+            <View style={{ gap: 6 }}>
+              {contributors.map((e, i) => {
+                const isMe = e.uid === currentUid;
+                const medal =
+                  i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+                return (
+                  <View
+                    key={e.uid}
+                    style={[
+                      styles.boardRow,
+                      isMe && styles.boardRowMe,
+                      i === 0 && styles.boardRowFirst,
+                    ]}
+                  >
+                    <View style={styles.boardRank}>
+                      {medal ? (
+                        <Text style={styles.boardMedal}>{medal}</Text>
+                      ) : (
+                        <Text style={styles.boardRankText}>{i + 1}</Text>
+                      )}
+                    </View>
+                    <UserAvatar uid={e.uid} name={e.displayName} size={28} />
+                    <Text
+                      style={[styles.boardName, isMe && styles.boardNameMe]}
+                      numberOfLines={1}
+                    >
+                      {e.displayName || "—"}
+                      {isMe ? "  · " + t("game_leaderboard_you", lang) : ""}
+                    </Text>
+                    <Text style={styles.boardScore}>{e.count}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* Leaderboard — inline on the start page */}
         <View style={styles.boardCard}>
@@ -803,13 +1028,17 @@ function StartView({
             </Text>
           ) : (
             <View style={{ gap: 6 }}>
-              {leaderboard.slice(0, 10).map((e, i) => {
+              {leaderboard.map((e, i) => {
                 const isMe = e.uid === currentUid;
                 const medal =
                   i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
                 return (
-                  <View
+                  <Pressable
                     key={e.uid}
+                    onPress={
+                      !isMe ? () => onGift(e.uid, e.displayName) : undefined
+                    }
+                    disabled={isMe}
                     style={[
                       styles.boardRow,
                       isMe && styles.boardRowMe,
@@ -823,31 +1052,21 @@ function StartView({
                         <Text style={styles.boardRankText}>{i + 1}</Text>
                       )}
                     </View>
-                    <UserAvatar
-                      uid={e.uid}
-                      name={e.displayName}
-                      size={28}
-                    />
+                    <UserAvatar uid={e.uid} name={e.displayName} size={28} />
                     <Text
-                      style={[
-                        styles.boardName,
-                        isMe && styles.boardNameMe,
-                      ]}
+                      style={[styles.boardName, isMe && styles.boardNameMe]}
                       numberOfLines={1}
                     >
-                      {e.displayName ||
-                        t("home_member_fallback", lang) ||
-                        "—"}
+                      {e.displayName || t("home_member_fallback", lang) || "—"}
                       {isMe ? "  · " + t("game_leaderboard_you", lang) : ""}
                     </Text>
                     <Text style={styles.boardScore}>{e.score}</Text>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
           )}
         </View>
-
       </ScrollView>
 
       {/* Bottom-docked action group: Play + Create question + Help */}
@@ -868,12 +1087,12 @@ function StartView({
           />
           <Text style={styles.playBtnText}>
             {canPayToOverride
-              ? `${t("game_play_now", lang)}  ·  −${playCost} ${t("game_points", lang)}`
+              ? `${t("game_play_now", lang)} −${playCost} ${t("game_points", lang)}`
               : cooldownActive
-              ? `${t("game_play", lang)}  ·  ${cooldownLabel}`
-              : noPlaysLeft
-              ? t("game_daily_limit_short", lang)
-              : t("game_play", lang)}
+                ? `${t("game_play", lang)}  ·  ${cooldownLabel}`
+                : noPlaysLeft
+                  ? t("game_daily_limit_short", lang)
+                  : t("game_play", lang)}
           </Text>
         </Pressable>
         <Pressable
@@ -986,12 +1205,21 @@ function PlayView({
   const langs = availableLanguages(question);
 
   // Reset display language to user's default when question changes
-  useEffect(() => { setDisplayLang(lang); }, [qIndex, lang]);
+  useEffect(() => {
+    setDisplayLang(lang);
+  }, [qIndex, lang]);
 
   useEffect(() => {
-    const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
-    return () => { showSub.remove(); hideSub.remove(); };
+    const showSub = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -1041,10 +1269,26 @@ function PlayView({
   useEffect(() => {
     if (selected !== null && selected !== question.answer) {
       Animated.sequence([
-        Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
-        Animated.timing(shake, { toValue: -1, duration: 60, useNativeDriver: true }),
-        Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
-        Animated.timing(shake, { toValue: 0, duration: 60, useNativeDriver: true }),
+        Animated.timing(shake, {
+          toValue: 1,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shake, {
+          toValue: -1,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shake, {
+          toValue: 1,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shake, {
+          toValue: 0,
+          duration: 60,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   }, [selected, question.answer, shake]);
@@ -1073,271 +1317,271 @@ function PlayView({
 
   return (
     <View style={{ flex: 1 }}>
-    <ScrollView
-      ref={scrollRef}
-      contentContainerStyle={styles.playRootContent}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-      automaticallyAdjustKeyboardInsets
-    >
-      <View style={styles.hudRow}>
-        <Pressable onPress={onQuit} hitSlop={12} style={styles.hudBtn}>
-          <Ionicons name="close" size={22} color={C.textMuted} />
-        </Pressable>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={styles.playRootContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets
+      >
+        <View style={styles.hudRow}>
+          <Pressable onPress={onQuit} hitSlop={12} style={styles.hudBtn}>
+            <Ionicons name="close" size={22} color={C.textMuted} />
+          </Pressable>
 
-        <View style={styles.heartsRow}>
-          {Array.from({ length: STARTING_HEARTS }).map((_, i) => (
-            <Ionicons
+          <View style={styles.heartsRow}>
+            {Array.from({ length: STARTING_HEARTS }).map((_, i) => (
+              <Ionicons
+                key={i}
+                name={i < hearts ? "heart" : "heart-outline"}
+                size={22}
+                color={i < hearts ? C.heart : "#D1D5DB"}
+                style={{ marginHorizontal: 2 }}
+              />
+            ))}
+          </View>
+
+          <View style={styles.scorePill}>
+            <Ionicons name="star" size={14} color={C.gold} />
+            <Text style={styles.scorePillText}>{score}</Text>
+          </View>
+        </View>
+
+        <View style={styles.progressRow}>
+          {Array.from({ length: total }).map((_, i) => (
+            <View
               key={i}
-              name={i < hearts ? "heart" : "heart-outline"}
-              size={22}
-              color={i < hearts ? C.heart : "#D1D5DB"}
-              style={{ marginHorizontal: 2 }}
+              style={[
+                styles.progressDot,
+                i < qIndex && styles.progressDotDone,
+                i === qIndex && styles.progressDotActive,
+              ]}
             />
           ))}
         </View>
 
-        <View style={styles.scorePill}>
-          <Ionicons name="star" size={14} color={C.gold} />
-          <Text style={styles.scorePillText}>{score}</Text>
-        </View>
-      </View>
+        {streak >= 2 && (
+          <View style={styles.streakPill}>
+            <Ionicons name="flame" size={14} color={C.gold} />
+            <Text style={styles.streakPillText}>
+              {t("game_streak", lang)} · {streak}x
+            </Text>
+          </View>
+        )}
 
-      <View style={styles.progressRow}>
-        {Array.from({ length: total }).map((_, i) => (
-          <View
-            key={i}
+        <View style={styles.timerTrack}>
+          <Animated.View
             style={[
-              styles.progressDot,
-              i < qIndex && styles.progressDotDone,
-              i === qIndex && styles.progressDotActive,
+              styles.timerFill,
+              { width: timerWidth, backgroundColor: timerColor },
             ]}
           />
-        ))}
-      </View>
-
-      {streak >= 2 && (
-        <View style={styles.streakPill}>
-          <Ionicons name="flame" size={14} color={C.gold} />
-          <Text style={styles.streakPillText}>
-            {t("game_streak", lang)} · {streak}x
-          </Text>
         </View>
-      )}
 
-      <View style={styles.timerTrack}>
         <Animated.View
           style={[
-            styles.timerFill,
-            { width: timerWidth, backgroundColor: timerColor },
+            styles.questionCard,
+            {
+              opacity: cardOpacity,
+              transform: [{ translateY: cardTranslate }, { translateX }],
+            },
           ]}
-        />
-      </View>
-
-      <Animated.View
-        style={[
-          styles.questionCard,
-          {
-            opacity: cardOpacity,
-            transform: [{ translateY: cardTranslate }, { translateX }],
-          },
-        ]}
-      >
-        <View style={styles.questionMetaRow}>
-          <Text style={styles.questionIndex}>
-            {qIndex + 1} / {total}
-          </Text>
-          {question.createdByName && (
-            <View style={styles.byPill}>
-              <Ionicons name="person" size={10} color={C.accent} />
-              <Text style={styles.byPillText}>
-                {t("game_by", lang)} {question.createdByName}
-              </Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.questionText}>{translated.q}</Text>
-        {langs.length > 1 && (
-          <View style={styles.langSwitchRow}>
-            {langs.map((l) => (
-              <Pressable
-                key={l}
-                onPress={() => setDisplayLang(l)}
-                style={[
-                  styles.langSwitchChip,
-                  displayLang === l && styles.langSwitchChipActive,
-                ]}
-              >
-                <Text style={[
-                  styles.langSwitchText,
-                  displayLang === l && styles.langSwitchTextActive,
-                ]}>
-                  {LANG_FLAGS[l]}
+        >
+          <View style={styles.questionMetaRow}>
+            <Text style={styles.questionIndex}>
+              {qIndex + 1} / {total}
+            </Text>
+            {question.createdByName && (
+              <View style={styles.byPill}>
+                <Ionicons name="person" size={10} color={C.accent} />
+                <Text style={styles.byPillText}>
+                  {t("game_by", lang)} {question.createdByName}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-        {question.ref && (
-          <View style={styles.refPill}>
-            <Ionicons name="book-outline" size={12} color={C.primary} />
-            <Text style={styles.refPillText}>{question.ref}</Text>
-          </View>
-        )}
-      </Animated.View>
-
-      {/* Result snackbar — appears above the choices once the answer is locked */}
-      {locked &&
-        (() => {
-          const answeredCorrectly =
-            selected !== null && selected === question.answer;
-          const timedOut = selected === null;
-          const tone = answeredCorrectly ? "success" : "fail";
-          const customMsg = answeredCorrectly
-            ? translated.successMsg
-            : translated.failMsg;
-          const defaultMsg = answeredCorrectly
-            ? t("quest_correct_title", lang)
-            : timedOut
-            ? t("quest_timeout_title", lang)
-            : t("quest_wrong_title", lang);
-          return (
-            <View
-              style={[
-                styles.snackbar,
-                tone === "success"
-                  ? styles.snackbarSuccess
-                  : styles.snackbarFail,
-              ]}
-            >
-              <View
-                style={[
-                  styles.snackbarIconWrap,
-                  tone === "success"
-                    ? { backgroundColor: "#DCFCE7" }
-                    : { backgroundColor: "#FEE2E2" },
-                ]}
-              >
-                <Ionicons
-                  name={answeredCorrectly ? "checkmark" : "close"}
-                  size={18}
-                  color={answeredCorrectly ? C.correct : C.wrong}
-                />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text
+            )}
+          </View>
+          <Text style={styles.questionText}>{translated.q}</Text>
+          {langs.length > 1 && (
+            <View style={styles.langSwitchRow}>
+              {langs.map((l) => (
+                <Pressable
+                  key={l}
+                  onPress={() => setDisplayLang(l)}
                   style={[
-                    styles.snackbarTitle,
-                    tone === "success"
-                      ? { color: "#14532D" }
-                      : { color: "#7F1D1D" },
+                    styles.langSwitchChip,
+                    displayLang === l && styles.langSwitchChipActive,
                   ]}
                 >
-                  {defaultMsg}
-                  {question.createdByName && customMsg
-                    ? ` · ${question.createdByName}`
-                    : ""}
-                </Text>
-                {customMsg && (
                   <Text
                     style={[
-                      styles.snackbarText,
-                      tone === "success"
-                        ? { color: "#166534" }
-                        : { color: "#991B1B" },
+                      styles.langSwitchText,
+                      displayLang === l && styles.langSwitchTextActive,
                     ]}
                   >
-                    {tone === "success" ? "🎉 " : "😈 "}
-                    {customMsg}
+                    {LANG_FLAGS[l]}
                   </Text>
-                )}
-              </View>
+                </Pressable>
+              ))}
             </View>
-          );
-        })()}
+          )}
+          {question.ref && (
+            <View style={styles.refPill}>
+              <Ionicons name="book-outline" size={12} color={C.primary} />
+              <Text style={styles.refPillText}>{question.ref}</Text>
+            </View>
+          )}
+        </Animated.View>
 
-      <View style={styles.choicesWrap}>
-        {translated.choices.map((choice, idx) => {
-          const isSelected = selected === idx;
-          const isCorrect = idx === question.answer;
-          const showResult = locked;
-          let bg = C.card;
-          let border = C.border;
-          let textColor = C.text;
-          let icon: keyof typeof Ionicons.glyphMap | null = null;
-          let iconColor = C.primary;
-          if (showResult) {
-            if (isCorrect) {
-              bg = C.correctSoft;
-              border = C.correct;
-              textColor = "#14532D";
-              icon = "checkmark-circle";
-              iconColor = C.correct;
-            } else if (isSelected) {
-              bg = C.wrongSoft;
-              border = C.wrong;
-              textColor = "#7F1D1D";
-              icon = "close-circle";
-              iconColor = C.wrong;
-            }
-          }
-          return (
-            <Pressable
-              key={idx}
-              onPress={() => pressChoice(idx)}
-              disabled={locked}
-              style={({ pressed }) => [
-                styles.choiceBtn,
-                {
-                  backgroundColor: bg,
-                  borderColor: border,
-                  opacity: pressed && !locked ? 0.7 : 1,
-                },
-              ]}
-            >
-              <View style={styles.choiceLabel}>
-                <Text style={styles.choiceLetter}>
-                  {String.fromCharCode(65 + idx)}
-                </Text>
+        {/* Result snackbar — appears above the choices once the answer is locked */}
+        {locked &&
+          (() => {
+            const answeredCorrectly =
+              selected !== null && selected === question.answer;
+            const timedOut = selected === null;
+            const tone = answeredCorrectly ? "success" : "fail";
+            const customMsg = answeredCorrectly
+              ? translated.successMsg
+              : translated.failMsg;
+            const defaultMsg = answeredCorrectly
+              ? t("quest_correct_title", lang)
+              : timedOut
+                ? t("quest_timeout_title", lang)
+                : t("quest_wrong_title", lang);
+            return (
+              <View
+                style={[
+                  styles.snackbar,
+                  tone === "success"
+                    ? styles.snackbarSuccess
+                    : styles.snackbarFail,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.snackbarIconWrap,
+                    tone === "success"
+                      ? { backgroundColor: "#DCFCE7" }
+                      : { backgroundColor: "#FEE2E2" },
+                  ]}
+                >
+                  <Ionicons
+                    name={answeredCorrectly ? "checkmark" : "close"}
+                    size={18}
+                    color={answeredCorrectly ? C.correct : C.wrong}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      styles.snackbarTitle,
+                      tone === "success"
+                        ? { color: "#14532D" }
+                        : { color: "#7F1D1D" },
+                    ]}
+                  >
+                    {defaultMsg}
+                    {question.createdByName && customMsg
+                      ? ` · ${question.createdByName}`
+                      : ""}
+                  </Text>
+                  {customMsg && (
+                    <Text
+                      style={[
+                        styles.snackbarText,
+                        tone === "success"
+                          ? { color: "#166534" }
+                          : { color: "#991B1B" },
+                      ]}
+                    >
+                      {tone === "success" ? "🎉 " : "😈 "}
+                      {customMsg}
+                    </Text>
+                  )}
+                </View>
               </View>
-              <Text style={[styles.choiceText, { color: textColor }]}>
-                {choice}
-              </Text>
-              {icon && <Ionicons name={icon} size={22} color={iconColor} />}
-            </Pressable>
-          );
-        })}
-      </View>
+            );
+          })()}
 
-      {/* Per-question comments — visible after the answer is revealed. */}
-      {locked && (
-        <QuestionComments
-          orgId={orgId}
-          questionId={question.id}
-          userId={userId}
-          userName={userName}
-          lang={lang}
-        />
-      )}
-    </ScrollView>
+        <View style={styles.choicesWrap}>
+          {translated.choices.map((choice, idx) => {
+            const isSelected = selected === idx;
+            const isCorrect = idx === question.answer;
+            const showResult = locked;
+            let bg = C.card;
+            let border = C.border;
+            let textColor = C.text;
+            let icon: keyof typeof Ionicons.glyphMap | null = null;
+            let iconColor = C.primary;
+            if (showResult) {
+              if (isCorrect) {
+                bg = C.correctSoft;
+                border = C.correct;
+                textColor = "#14532D";
+                icon = "checkmark-circle";
+                iconColor = C.correct;
+              } else if (isSelected) {
+                bg = C.wrongSoft;
+                border = C.wrong;
+                textColor = "#7F1D1D";
+                icon = "close-circle";
+                iconColor = C.wrong;
+              }
+            }
+            return (
+              <Pressable
+                key={idx}
+                onPress={() => pressChoice(idx)}
+                disabled={locked}
+                style={({ pressed }) => [
+                  styles.choiceBtn,
+                  {
+                    backgroundColor: bg,
+                    borderColor: border,
+                    opacity: pressed && !locked ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <View style={styles.choiceLabel}>
+                  <Text style={styles.choiceLetter}>
+                    {String.fromCharCode(65 + idx)}
+                  </Text>
+                </View>
+                <Text style={[styles.choiceText, { color: textColor }]}>
+                  {choice}
+                </Text>
+                {icon && <Ionicons name={icon} size={22} color={iconColor} />}
+              </Pressable>
+            );
+          })}
+        </View>
 
-    {/* Bottom-docked Next button — hidden when keyboard is open */}
-    {locked && !keyboardVisible && (
-      <View style={styles.bottomBar}>
-        <Pressable onPress={onNext} style={styles.playBtn}>
-          <Text style={styles.playBtnText}>
-            {isLast
-              ? t("quest_finish", lang)
-              : t("quest_next", lang)}
-          </Text>
-          <Ionicons
-            name={isLast ? "flag" : "arrow-forward"}
-            size={18}
-            color="#FFFFFF"
+        {/* Per-question comments — visible after the answer is revealed. */}
+        {locked && (
+          <QuestionComments
+            orgId={orgId}
+            questionId={question.id}
+            userId={userId}
+            userName={userName}
+            lang={lang}
           />
-        </Pressable>
-      </View>
-    )}
+        )}
+      </ScrollView>
+
+      {/* Bottom-docked Next button — hidden when keyboard is open */}
+      {locked && !keyboardVisible && (
+        <View style={styles.bottomBar}>
+          <Pressable onPress={onNext} style={styles.playBtn}>
+            <Text style={styles.playBtnText}>
+              {isLast ? t("quest_finish", lang) : t("quest_next", lang)}
+            </Text>
+            <Ionicons
+              name={isLast ? "flag" : "arrow-forward"}
+              size={18}
+              color="#FFFFFF"
+            />
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -1398,10 +1642,19 @@ function DoneView({
       };
     const pct = correctCount / Math.max(1, total);
     if (pct >= 0.9)
-      return { titleKey: "game_result_great" as const, verseKey: "game_verse_great" as const };
+      return {
+        titleKey: "game_result_great" as const,
+        verseKey: "game_verse_great" as const,
+      };
     if (pct >= 0.5)
-      return { titleKey: "game_result_good" as const, verseKey: "game_verse_good" as const };
-    return { titleKey: "game_result_try" as const, verseKey: "game_verse_try" as const };
+      return {
+        titleKey: "game_result_good" as const,
+        verseKey: "game_verse_good" as const,
+      };
+    return {
+      titleKey: "game_result_try" as const,
+      verseKey: "game_verse_try" as const,
+    };
   }, [correctCount, total, failed]);
 
   return (
@@ -1480,8 +1733,8 @@ function DoneView({
             {cooldownActive
               ? `${t("game_play_again", lang)}  ·  ${formatCooldown(cooldownMsLeft)}`
               : noPlaysLeft
-              ? t("game_daily_limit_short", lang)
-              : t("game_play_again", lang)}
+                ? t("game_daily_limit_short", lang)
+                : t("game_play_again", lang)}
           </Text>
         </Pressable>
       </View>
@@ -1533,11 +1786,7 @@ function ConfirmDialog({
   if (!visible) return null;
 
   const confirmBg =
-    tone === "danger"
-      ? C.wrong
-      : tone === "accent"
-      ? C.gold
-      : C.primary;
+    tone === "danger" ? C.wrong : tone === "accent" ? C.gold : C.primary;
 
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onCancel}>
@@ -1666,17 +1915,21 @@ function QuestionComments({
       ),
       orderBy("createdAt", "asc"),
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setComments(
-        snap.docs.map((d) => ({
-          id: d.id,
-          text: d.data().text || "",
-          createdBy: d.data().createdBy || "",
-          createdByName: d.data().createdByName || null,
-          createdAt: d.data().createdAt?.toDate?.() || null,
-        })),
-      );
-    }, () => {});
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setComments(
+          snap.docs.map((d) => ({
+            id: d.id,
+            text: d.data().text || "",
+            createdBy: d.data().createdBy || "",
+            createdByName: d.data().createdByName || null,
+            createdAt: d.data().createdAt?.toDate?.() || null,
+          })),
+        );
+      },
+      () => {},
+    );
     return unsub;
   }, [orgId, questionId]);
 
@@ -1753,11 +2006,7 @@ function QuestionComments({
         <View style={{ gap: 8 }}>
           {comments.map((c) => (
             <View key={c.id} style={commentStyles.row}>
-              <UserAvatar
-                uid={c.createdBy}
-                name={c.createdByName}
-                size={26}
-              />
+              <UserAvatar uid={c.createdBy} name={c.createdByName} size={26} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={commentStyles.name} numberOfLines={1}>
                   {c.createdByName || t("notif_someone", lang)}
@@ -1770,11 +2019,7 @@ function QuestionComments({
                   hitSlop={6}
                   style={{ padding: 4 }}
                 >
-                  <Ionicons
-                    name="trash-outline"
-                    size={14}
-                    color={C.wrong}
-                  />
+                  <Ionicons name="trash-outline" size={14} color={C.wrong} />
                 </Pressable>
               )}
             </View>
@@ -1784,7 +2029,8 @@ function QuestionComments({
 
       {/* Input */}
       <View style={commentStyles.inputRow}>
-        <TextInput
+        <MentionInput
+          orgId={orgId}
           value={text}
           onChangeText={setText}
           placeholder={t("quest_comments_placeholder", lang)}
@@ -1811,6 +2057,83 @@ function QuestionComments({
     </View>
   );
 }
+
+const giftStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 320,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+    gap: 12,
+  },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#F0FDF4",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: C.primaryDark,
+  },
+  targetRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  targetName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: C.text,
+  },
+  balance: {
+    fontSize: 13,
+    color: C.textMuted,
+  },
+  input: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 20,
+    fontWeight: "700",
+    color: C.text,
+    textAlign: "center",
+  },
+  sendBtn: {
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: C.primary,
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  sendText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  cancelBtn: {
+    paddingVertical: 6,
+  },
+  cancelText: {
+    color: C.textMuted,
+    fontSize: 14,
+  },
+});
 
 const commentStyles = StyleSheet.create({
   card: {
@@ -1894,12 +2217,16 @@ type OnboardStep = {
     | "onboard_1_title"
     | "onboard_2_title"
     | "onboard_3_title"
-    | "onboard_4_title";
+    | "onboard_4_title"
+    | "onboard_5_title"
+    | "onboard_6_title";
   descKey:
     | "onboard_1_desc"
     | "onboard_2_desc"
     | "onboard_3_desc"
-    | "onboard_4_desc";
+    | "onboard_4_desc"
+    | "onboard_5_desc"
+    | "onboard_6_desc";
 };
 
 const ONBOARD_STEPS: OnboardStep[] = [
@@ -1934,6 +2261,22 @@ const ONBOARD_STEPS: OnboardStep[] = [
     bgColor: "#F7EDE0",
     titleKey: "onboard_4_title",
     descKey: "onboard_4_desc",
+  },
+  {
+    // Step 5 — gift Shekel to other players
+    icon: "gift",
+    color: "#E879A0",
+    bgColor: "#FDF2F8",
+    titleKey: "onboard_5_title",
+    descKey: "onboard_5_desc",
+  },
+  {
+    // Step 6 — multilingual questions
+    icon: "language",
+    color: "#6366F1",
+    bgColor: "#EEF2FF",
+    titleKey: "onboard_6_title",
+    descKey: "onboard_6_desc",
   },
 ];
 

@@ -254,6 +254,22 @@ export async function notifyOrgOfNewEvent(params: {
 }
 
 /**
+ * Send a push notification to a single user by UID. Never throws.
+ */
+export async function notifyUser(
+  uid: string,
+  payload: PushPayload,
+): Promise<void> {
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    const tok = snap.data()?.expoPushToken;
+    if (typeof tok === "string" && tok.startsWith("ExponentPushToken[")) {
+      await sendPushNotifications([tok], payload);
+    }
+  } catch {}
+}
+
+/**
  * Detect @mentions in a comment and send push notifications to mentioned users.
  * Matches `@DisplayName` against org members. Never throws.
  */

@@ -100,6 +100,8 @@ export default function QuestQuestionsScreen() {
               translations: data.translations || undefined,
               createdBy: data.createdBy || "",
               createdByName: data.createdByName || null,
+              correctCount: typeof data.correctCount === "number" ? data.correctCount : 0,
+              wrongCount: typeof data.wrongCount === "number" ? data.wrongCount : 0,
             };
           })
           .filter(
@@ -284,6 +286,7 @@ function QuestionItem({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<QComment[]>([]);
+  const [answers, setAnswers] = useState<{ uid: string; displayName: string | null; correct: boolean }[]>([]);
 
   useEffect(() => {
     if (!orgId || !expanded) return;
@@ -304,6 +307,25 @@ function QuestionItem({
     }, () => {});
     return unsub;
   }, [orgId, question.id, expanded]);
+
+  // Load answer history for the question creator
+  useEffect(() => {
+    if (!orgId || !expanded || !ownedByMe) return;
+    const q = query(
+      collection(db, "organizations", orgId, "questQuestions", question.id, "answers"),
+      orderBy("answeredAt", "desc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setAnswers(
+        snap.docs.map((d) => ({
+          uid: d.data().uid || "",
+          displayName: d.data().displayName || null,
+          correct: !!d.data().correct,
+        })),
+      );
+    }, () => {});
+    return unsub;
+  }, [orgId, question.id, expanded, ownedByMe]);
 
   async function handleDeleteComment(cid: string) {
     if (!orgId) return;
@@ -430,6 +452,43 @@ function QuestionItem({
             <Text style={styles.qMsg}>😈 {question.failMsg}</Text>
           )}
 
+          {/* Answer history */}
+          {ownedByMe && answers.length > 0 && (
+            <View style={styles.qAnswers}>
+              <View style={styles.qCommentsHeader}>
+                <Ionicons name="people" size={14} color={C.primary} />
+                <Text style={styles.qCommentsTitle}>
+                  {t("qq_answers_title", lang)} ({answers.length})
+                </Text>
+                <View style={styles.qStatPill}>
+                  <Ionicons name="checkmark-circle" size={12} color={C.correct} />
+                  <Text style={[styles.qStatText, { color: C.correct }]}>
+                    {answers.filter((a) => a.correct).length}
+                  </Text>
+                </View>
+                <View style={styles.qStatPill}>
+                  <Ionicons name="close-circle" size={12} color={C.wrong} />
+                  <Text style={[styles.qStatText, { color: C.wrong }]}>
+                    {answers.filter((a) => !a.correct).length}
+                  </Text>
+                </View>
+              </View>
+              {answers.map((a, i) => (
+                <View key={i} style={styles.qAnswerRow}>
+                  <UserAvatar uid={a.uid} name={a.displayName} size={20} />
+                  <Text style={styles.qAnswerName} numberOfLines={1}>
+                    {a.displayName || t("notif_someone", lang)}
+                  </Text>
+                  <Ionicons
+                    name={a.correct ? "checkmark-circle" : "close-circle"}
+                    size={16}
+                    color={a.correct ? C.correct : C.wrong}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Comments */}
           {ownedByMe && (
             <View style={styles.qComments}>
@@ -532,14 +591,19 @@ function NewQuestionForm({
 
   function switchLanguage(next: Language) {
     // Save current form fields to translations map
+    const hasContent = q.trim().length > 0;
     setTranslationsMap((prev) => ({
       ...prev,
-      [language]: {
-        q: q.trim() ? q : undefined,
-        choices: choices.some((c) => c.trim()) ? choices : undefined,
-        successMsg: successMsg.trim() || undefined,
-        failMsg: failMsg.trim() || undefined,
-      } as QuestionTranslation,
+      ...(hasContent
+        ? {
+            [language]: {
+              q: q,
+              choices: [...choices],
+              successMsg: successMsg.trim() || null,
+              failMsg: failMsg.trim() || null,
+            },
+          }
+        : {}),
     }));
     // Load target language's fields
     const target = translationsMap[next];
@@ -581,19 +645,23 @@ function NewQuestionForm({
     setSaving(true);
     try {
       // Merge current form fields into translations map
-      const allTranslations: Record<string, QuestionTranslation> = {};
+      const allTranslations: Record<string, Record<string, unknown>> = {};
       const finalMap = {
         ...translationsMap,
         [language]: {
           q: q.trim(),
           choices: choices.map((c) => c.trim()),
-          successMsg: successMsg.trim() || undefined,
-          failMsg: failMsg.trim() || undefined,
+          successMsg: successMsg.trim() || null,
+          failMsg: failMsg.trim() || null,
         },
       };
       for (const [l, t] of Object.entries(finalMap)) {
         if (t && t.q && t.choices?.every((c: string) => c.trim())) {
-          allTranslations[l] = t;
+          // Strip undefined values — Firestore rejects them
+          const clean: Record<string, unknown> = { q: t.q, choices: t.choices };
+          if (t.successMsg) clean.successMsg = t.successMsg;
+          if (t.failMsg) clean.failMsg = t.failMsg;
+          allTranslations[l] = clean;
         }
       }
       // Use current language's content as primary fields
@@ -1018,6 +1086,45 @@ const styles = StyleSheet.create({
     color: C.textMuted,
     fontStyle: "italic",
     marginTop: 4,
+  },
+  qStatsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  qStatPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: "#F9F7F4",
+  },
+  qStatText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  qAnswers: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    gap: 6,
+  },
+  qAnswerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 2,
+  },
+  qAnswerName: {
+    flex: 1,
+    fontSize: 12,
+    color: C.text,
   },
   qComments: {
     marginTop: 8,

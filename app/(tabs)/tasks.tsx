@@ -27,6 +27,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import MentionInput from "@/components/MentionInput";
 import UserAvatar from "@/components/UserAvatar";
 import { notifyMentionedUsers } from "@/lib/notifications";
 import Snackbar from "@/components/Snackbar";
@@ -1111,7 +1112,8 @@ function TaskCard({
 
           {/* Comment input */}
           <View style={commentStyles.inputRow}>
-            <TextInput
+            <MentionInput
+              orgId={orgId}
               value={commentText}
               onChangeText={setCommentText}
               placeholder={t("tasks_add_comment", lang)}
@@ -1374,7 +1376,8 @@ function VoteCard({
 
           {/* Comment input */}
           <View style={commentStyles.inputRow}>
-            <TextInput
+            <MentionInput
+              orgId={orgId}
               value={commentText}
               onChangeText={setCommentText}
               placeholder={t("vote_add_comment", lang)}

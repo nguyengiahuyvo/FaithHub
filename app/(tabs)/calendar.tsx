@@ -1,3 +1,4 @@
+import MentionInput from "@/components/MentionInput";
 import UserAvatar from "@/components/UserAvatar";
 import Snackbar from "@/components/Snackbar";
 import TasksScreen from "./tasks";
@@ -810,7 +811,8 @@ function EventCard({
 
           {/* Comment input */}
           <View style={commentStyles.inputRow}>
-            <TextInput
+            <MentionInput
+              orgId={orgId}
               value={commentText}
               onChangeText={setCommentText}
               placeholder={t("cal_add_comment", lang)}

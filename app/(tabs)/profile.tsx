@@ -3,7 +3,6 @@ import UserAvatar, { invalidatePhotoCache } from "@/components/UserAvatar";
 import { auth, db } from "@/lib/firebase";
 import { languageLabels, t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
-import { scheduleBibleReminders } from "@/lib/notifications";
 import { useOrg } from "@/lib/org-context";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
@@ -626,7 +625,6 @@ export default function ProfileScreen() {
   const defaultNotifPrefs: NotifPrefs = { events: true, eventsBefore: "1h", tasks: true, quest: true, bible: false, bibleReminders: [{ hour: 9, minute: 0 }] };
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(defaultNotifPrefs);
   const [notifExpanded, setNotifExpanded] = useState(false);
-  const [editingBibleIdx, setEditingBibleIdx] = useState<number | null>(null);
 
   useEffect(() => {
     setPendingLang(lang);
@@ -657,9 +655,6 @@ export default function ProfileScreen() {
     setNotifPrefs(next);
     try {
       await setDoc(doc(db, "users", user.uid), { notifPrefs: next }, { merge: true });
-      if ("bible" in patch || "bibleReminders" in patch) {
-        scheduleBibleReminders(next.bible, next.bibleReminders);
-      }
     } catch (e) {
       console.error("Failed to save notification prefs:", e);
     }
@@ -1040,93 +1035,6 @@ export default function ProfileScreen() {
               thumbColor={notifPrefs.quest ? "#5B7553" : "#F4F4F5"}
             />
           </View>
-        </View>
-
-        {/* Daily Bible reminder */}
-        <View style={styles.notifItem}>
-          <View style={styles.notifRow}>
-            <View style={styles.notifIconCircle}>
-              <Ionicons name="book-outline" size={18} color="#5B7553" />
-            </View>
-            <Text style={styles.rowLabel}>{t("profile_notif_bible", lang)}</Text>
-            <Switch
-              value={notifPrefs.bible}
-              onValueChange={(v) => saveNotifPref({ bible: v })}
-              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
-              thumbColor={notifPrefs.bible ? "#5B7553" : "#F4F4F5"}
-            />
-          </View>
-          {notifPrefs.bible && (
-            <View style={styles.bibleTimesWrap}>
-              {notifPrefs.bibleReminders.map((r, i) => (
-                <View key={i} style={styles.bibleReminderRow}>
-                  <Pressable
-                    onPress={() => setEditingBibleIdx(i)}
-                    style={styles.timePickerRow}
-                  >
-                    <Ionicons name="time-outline" size={15} color="#5B7553" />
-                    <Text style={styles.timePickerText}>
-                      {String(r.hour).padStart(2, "0")}:{String(r.minute).padStart(2, "0")}
-                    </Text>
-                  </Pressable>
-                  {notifPrefs.bibleReminders.length > 1 && (
-                    <Pressable
-                      onPress={() => {
-                        const next = notifPrefs.bibleReminders.filter((_, j) => j !== i);
-                        saveNotifPref({ bibleReminders: next });
-                      }}
-                      hitSlop={8}
-                      style={styles.bibleRemoveBtn}
-                    >
-                      <Ionicons name="close-circle" size={16} color="#DC2626" />
-                    </Pressable>
-                  )}
-                </View>
-              ))}
-              <Pressable
-                onPress={() => {
-                  const next = [...notifPrefs.bibleReminders, { hour: 21, minute: 0 }];
-                  saveNotifPref({ bibleReminders: next });
-                }}
-                style={styles.bibleAddBtn}
-              >
-                <Ionicons name="add-circle-outline" size={16} color="#5B7553" />
-              </Pressable>
-              {editingBibleIdx !== null && (
-                <Modal transparent visible animationType="fade">
-                  <Pressable
-                    onPress={() => setEditingBibleIdx(null)}
-                    style={styles.timeModalBackdrop}
-                  >
-                    <View style={styles.timeModalCard}>
-                      <Text style={styles.timeModalTitle}>
-                        {t("profile_notif_bible", lang)}
-                      </Text>
-                      <LazyTimePicker
-                        mode="time"
-                        is24Hour
-                        display="spinner"
-                        value={(() => {
-                          const r = notifPrefs.bibleReminders[editingBibleIdx];
-                          const d = new Date();
-                          d.setHours(r?.hour ?? 9, r?.minute ?? 0, 0, 0);
-                          return d;
-                        })()}
-                        onChange={(_: unknown, date?: Date) => {
-                          if (date && editingBibleIdx !== null) {
-                            const next = [...notifPrefs.bibleReminders];
-                            next[editingBibleIdx] = { hour: date.getHours(), minute: date.getMinutes() };
-                            saveNotifPref({ bibleReminders: next });
-                          }
-                          setEditingBibleIdx(null);
-                        }}
-                      />
-                    </View>
-                  </Pressable>
-                </Modal>
-              )}
-            </View>
-          )}
         </View>
 
         </View>

@@ -513,6 +513,11 @@ const translations = {
     de: "Wiederholt sich bis zum Ende des laufenden Jahres.",
     vi: "Lặp lại đến hết năm hiện tại.",
   },
+  notif_new_prayer_title: {
+    en: "New prayer request",
+    de: "Neues Gebetsanliegen",
+    vi: "Nan đề cầu nguyện mới",
+  },
   notif_new_event_title: {
     en: "New event",
     de: "Neues Ereignis",
@@ -861,6 +866,31 @@ const translations = {
   game_correct: { en: "Correct", de: "Richtig", vi: "Đúng" },
   game_best_streak: { en: "Best streak", de: "Beste Serie", vi: "Chuỗi tốt nhất" },
   game_points: { en: "Shekel", de: "Schekel", vi: "Shekel" },
+  game_gift_title: {
+    en: "Send Shekel",
+    de: "Schekel senden",
+    vi: "Gửi Shekel",
+  },
+  game_gift_balance: {
+    en: "Your balance",
+    de: "Dein Guthaben",
+    vi: "Số dư của bạn",
+  },
+  game_gift_send: {
+    en: "Send Gift",
+    de: "Geschenk senden",
+    vi: "Gửi quà",
+  },
+  game_gift_received_title: {
+    en: "Shekel Gift!",
+    de: "Schekel-Geschenk!",
+    vi: "Quà Shekel!",
+  },
+  game_gift_received_body: {
+    en: "sent you",
+    de: "hat dir gesendet",
+    vi: "đã gửi cho bạn",
+  },
   game_new_best: { en: "New best score!", de: "Neuer Bestwert!", vi: "Kỷ lục mới!" },
   game_result_great: { en: "Outstanding!", de: "Ausgezeichnet!", vi: "Tuyệt vời!" },
   game_result_good: { en: "Well done!", de: "Gut gemacht!", vi: "Làm tốt lắm!" },
@@ -934,6 +964,26 @@ const translations = {
     en: "Create your own questions to challenge other members. You earn 2 Shekel per question — and your own questions won't appear in your rounds.",
     de: "Erstelle eigene Fragen, um andere herauszufordern. Du bekommst 2 Schekel pro Frage — und deine eigenen Fragen erscheinen nicht in deinen Runden.",
     vi: "Tạo câu hỏi của riêng bạn để thách thức người khác. Bạn nhận 2 Shekel mỗi câu — và câu hỏi của bạn sẽ không xuất hiện trong vòng chơi của bạn.",
+  },
+  onboard_5_title: {
+    en: "Send Shekel Gifts",
+    de: "Schekel verschenken",
+    vi: "Tặng Shekel",
+  },
+  onboard_5_desc: {
+    en: "Feeling generous? Tap any player on the Shekel Tycoons board to send them a gift. Share the wealth with your community!",
+    de: "Großzügig? Tippe auf einen Spieler in der Schekel-Tycoons-Liste, um ein Geschenk zu senden. Teile den Reichtum mit deiner Gemeinschaft!",
+    vi: "Hào phóng? Chạm vào người chơi trên bảng Đại gia Shekel để gửi quà. Chia sẻ tài sản với cộng đồng!",
+  },
+  onboard_6_title: {
+    en: "Multilingual Questions",
+    de: "Mehrsprachige Fragen",
+    vi: "Câu hỏi đa ngôn ngữ",
+  },
+  onboard_6_desc: {
+    en: "Add translations when creating questions so everyone can play in their language. During gameplay, tap the flag icons to switch languages on any question.",
+    de: "Füge beim Erstellen von Fragen Übersetzungen hinzu, damit alle in ihrer Sprache spielen können. Während des Spiels kannst du mit den Flaggen die Sprache wechseln.",
+    vi: "Thêm bản dịch khi tạo câu hỏi để mọi người chơi bằng ngôn ngữ của mình. Trong lúc chơi, chạm vào cờ để chuyển ngôn ngữ.",
   },
 
   // Verse Quest — community-authored questions (Challenge Mode)
@@ -1061,6 +1111,11 @@ const translations = {
     de: "Pro richtig",
     vi: "Mỗi câu đúng",
   },
+  game_questions_available: {
+    en: "Questions",
+    de: "Fragen",
+    vi: "Câu hỏi",
+  },
   game_play_cost: {
     en: "Override cost",
     de: "Kosten für Freischaltung",
@@ -1135,10 +1190,15 @@ const translations = {
     de: "Keine Leben mehr!",
     vi: "Hết mạng rồi!",
   },
+  game_contributors_title: {
+    en: "Brain Factory",
+    de: "Gehirnfabrik",
+    vi: "Xưởng chế câu hỏi",
+  },
   game_leaderboard_title: {
-    en: "Leaderboard",
-    de: "Bestenliste",
-    vi: "Bảng xếp hạng",
+    en: "Shekel Tycoons",
+    de: "Schekel-Tycoons",
+    vi: "Đại gia Shekel",
   },
   game_leaderboard_subtitle: {
     en: "See the top players in your community.",
@@ -1271,6 +1331,11 @@ const translations = {
   },
   quest_next: { en: "Next", de: "Weiter", vi: "Tiếp theo" },
   quest_finish: { en: "Finish", de: "Beenden", vi: "Kết thúc" },
+  qq_answers_title: {
+    en: "Answers",
+    de: "Antworten",
+    vi: "Câu trả lời",
+  },
   quest_comments_title: {
     en: "Comments",
     de: "Kommentare",

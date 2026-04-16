@@ -5,7 +5,6 @@
 import {
   doc,
   increment,
-  serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -73,24 +72,20 @@ export type CommunityQuestion = Question & {
 };
 
 /**
- * Increment a player's running total in the org leaderboard. Best-effort —
- * never throws so callers can fire-and-forget.
+ * Increment a player's Shekel balance on their org member document.
+ * Best-effort — never throws so callers can fire-and-forget.
  */
 export async function addToLeaderboard(
   orgId: string | undefined,
   uid: string | undefined,
-  displayName: string | null,
+  _displayName: string | null,
   delta: number,
 ): Promise<void> {
   if (!orgId || !uid || delta === 0) return;
   try {
     await setDoc(
-      doc(db, "organizations", orgId, "questScores", uid),
-      {
-        score: increment(delta),
-        displayName: displayName ?? null,
-        updatedAt: serverTimestamp(),
-      },
+      doc(db, "organizations", orgId, "members", uid),
+      { shekel: increment(delta) },
       { merge: true },
     );
   } catch {

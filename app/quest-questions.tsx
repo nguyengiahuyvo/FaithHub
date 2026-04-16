@@ -35,6 +35,7 @@ import {
   POINTS_PER_QUESTION_CREATED,
   addToLeaderboard,
   type CommunityQuestion,
+  type QuestionTranslation,
 } from "@/lib/quest-questions";
 import Snackbar, { useSnackbar } from "@/components/Snackbar";
 import UserAvatar from "@/components/UserAvatar";
@@ -96,6 +97,7 @@ export default function QuestQuestionsScreen() {
               successMsg: data.successMsg || undefined,
               failMsg: data.failMsg || undefined,
               language: (data.language as Language) || undefined,
+              translations: data.translations || undefined,
               createdBy: data.createdBy || "",
               createdByName: data.createdByName || null,
             };
@@ -116,17 +118,9 @@ export default function QuestQuestionsScreen() {
     return unsub;
   }, [org]);
 
-  // Filter chip for the My Questions list. "all" shows every language.
-  const [myLangFilter, setMyLangFilter] = useState<Language | "all">("all");
-  const myQuestionsAll = user
+  const myQuestions = user
     ? community.filter((c) => c.createdBy === user.uid)
     : [];
-  const myQuestions =
-    myLangFilter === "all"
-      ? myQuestionsAll
-      : myQuestionsAll.filter(
-          (c) => (c.language || "en") === myLangFilter,
-        );
 
   async function handleDelete(qid: string) {
     if (!org) return;
@@ -207,59 +201,8 @@ export default function QuestQuestionsScreen() {
               {/* My questions */}
               <Section
                 title={t("qq_mine", lang)}
-                count={myQuestionsAll.length}
+                count={myQuestions.length}
               >
-                {/* Language filter chips */}
-                {myQuestionsAll.length > 0 && (
-                  <View style={styles.myLangFilterRow}>
-                    <Pressable
-                      onPress={() => setMyLangFilter("all")}
-                      style={[
-                        styles.myLangChip,
-                        myLangFilter === "all" && styles.myLangChipActive,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.myLangChipText,
-                          myLangFilter === "all" &&
-                            styles.myLangChipTextActive,
-                        ]}
-                      >
-                        {t("qq_filter_all", lang)} ({myQuestionsAll.length})
-                      </Text>
-                    </Pressable>
-                    {(["en", "de", "vi"] as Language[]).map((l) => {
-                      const n = myQuestionsAll.filter(
-                        (c) => (c.language || "en") === l,
-                      ).length;
-                      if (n === 0) return null;
-                      return (
-                        <Pressable
-                          key={l}
-                          onPress={() => setMyLangFilter(l)}
-                          style={[
-                            styles.myLangChip,
-                            myLangFilter === l && styles.myLangChipActive,
-                          ]}
-                        >
-                          <Text style={styles.myLangFlag}>
-                            {LANG_FLAGS[l]}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.myLangChipText,
-                              myLangFilter === l &&
-                                styles.myLangChipTextActive,
-                            ]}
-                          >
-                            {n}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                )}
                 {myQuestions.length === 0 ? (
                   <Text style={styles.emptyHint}>
                     {t("qq_mine_empty", lang)}
@@ -551,18 +494,61 @@ function NewQuestionForm({
   lang: ReturnType<typeof useLanguage>["lang"];
 }) {
   const isEdit = editing !== null;
-  const [q, setQ] = useState(editing?.q ?? "");
+
+  // Build initial translations map from existing data
+  function buildInitialTranslations(): Partial<Record<Language, QuestionTranslation>> {
+    const map: Partial<Record<Language, QuestionTranslation>> = {};
+    if (editing) {
+      // Primary language content
+      const primary = editing.language || profileLang;
+      map[primary] = {
+        q: editing.q,
+        choices: [...editing.choices],
+        successMsg: editing.successMsg,
+        failMsg: editing.failMsg,
+      };
+      // Merge any saved translations
+      if (editing.translations) {
+        for (const [l, t] of Object.entries(editing.translations)) {
+          if (t) map[l as Language] = { ...t };
+        }
+      }
+    }
+    return map;
+  }
+
+  const [translationsMap, setTranslationsMap] = useState(buildInitialTranslations);
+  const [language, setLanguage] = useState<Language>(editing?.language ?? profileLang);
+  const current = translationsMap[language];
+  const [q, setQ] = useState(current?.q ?? "");
   const [choices, setChoices] = useState<string[]>(
-    editing?.choices ?? ["", "", "", ""],
+    current?.choices ? [...current.choices] : ["", "", "", ""],
   );
   const [answer, setAnswer] = useState(editing?.answer ?? 0);
   const [ref, setRef] = useState(editing?.ref ?? "");
-  const [successMsg, setSuccessMsg] = useState(editing?.successMsg ?? "");
-  const [failMsg, setFailMsg] = useState(editing?.failMsg ?? "");
-  const [language, setLanguage] = useState<Language>(
-    editing?.language ?? profileLang,
-  );
+  const [successMsg, setSuccessMsg] = useState(current?.successMsg ?? "");
+  const [failMsg, setFailMsg] = useState(current?.failMsg ?? "");
   const [saving, setSaving] = useState(false);
+
+  function switchLanguage(next: Language) {
+    // Save current form fields to translations map
+    setTranslationsMap((prev) => ({
+      ...prev,
+      [language]: {
+        q: q.trim() ? q : undefined,
+        choices: choices.some((c) => c.trim()) ? choices : undefined,
+        successMsg: successMsg.trim() || undefined,
+        failMsg: failMsg.trim() || undefined,
+      } as QuestionTranslation,
+    }));
+    // Load target language's fields
+    const target = translationsMap[next];
+    setQ(target?.q ?? "");
+    setChoices(target?.choices ? [...target.choices] : ["", "", "", ""]);
+    setSuccessMsg(target?.successMsg ?? "");
+    setFailMsg(target?.failMsg ?? "");
+    setLanguage(next);
+  }
 
   // Slide-in animation
   const opacity = useRef(new Animated.Value(0)).current;
@@ -594,6 +580,23 @@ function NewQuestionForm({
     Keyboard.dismiss();
     setSaving(true);
     try {
+      // Merge current form fields into translations map
+      const allTranslations: Record<string, QuestionTranslation> = {};
+      const finalMap = {
+        ...translationsMap,
+        [language]: {
+          q: q.trim(),
+          choices: choices.map((c) => c.trim()),
+          successMsg: successMsg.trim() || undefined,
+          failMsg: failMsg.trim() || undefined,
+        },
+      };
+      for (const [l, t] of Object.entries(finalMap)) {
+        if (t && t.q && t.choices?.every((c: string) => c.trim())) {
+          allTranslations[l] = t;
+        }
+      }
+      // Use current language's content as primary fields
       const payload = {
         q: q.trim(),
         choices: choices.map((c) => c.trim()),
@@ -602,6 +605,7 @@ function NewQuestionForm({
         successMsg: successMsg.trim() || null,
         failMsg: failMsg.trim() || null,
         language,
+        translations: allTranslations,
       };
       if (isEdit && editing) {
         // Editing — just update the existing doc; no points awarded.
@@ -657,7 +661,7 @@ function NewQuestionForm({
           {(["en", "de", "vi"] as Language[]).map((l) => (
             <Pressable
               key={l}
-              onPress={() => setLanguage(l)}
+              onPress={() => switchLanguage(l)}
               style={[
                 styles.langChip,
                 language === l && styles.langChipActive,
@@ -671,6 +675,9 @@ function NewQuestionForm({
               >
                 {LANG_FLAGS[l]}  {languageLabels[l]}
               </Text>
+              {l !== language && translationsMap[l]?.q ? (
+                <Ionicons name="checkmark-circle" size={14} color={C.correct} />
+              ) : null}
             </Pressable>
           ))}
         </View>

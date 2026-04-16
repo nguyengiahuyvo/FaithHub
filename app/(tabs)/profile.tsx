@@ -625,6 +625,7 @@ export default function ProfileScreen() {
   const snackOpacity = useRef(new Animated.Value(0)).current;
   const defaultNotifPrefs: NotifPrefs = { events: true, eventsBefore: "1h", tasks: true, quest: true, bible: false, bibleReminders: [{ hour: 9, minute: 0 }] };
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(defaultNotifPrefs);
+  const [notifExpanded, setNotifExpanded] = useState(false);
   const [editingBibleIdx, setEditingBibleIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -948,10 +949,21 @@ export default function ProfileScreen() {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>
-          {t("profile_notifications", lang)}
-        </Text>
+        <Pressable
+          onPress={() => setNotifExpanded((v) => !v)}
+          style={styles.notifHeader}
+        >
+          <Text style={styles.sectionLabel}>
+            {t("profile_notifications", lang)}
+          </Text>
+          <Ionicons
+            name={notifExpanded ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#A3A89E"
+          />
+        </Pressable>
 
+        {notifExpanded && (
         <View style={{ gap: 8 }}>
 
         {/* Event reminders */}
@@ -1045,7 +1057,7 @@ export default function ProfileScreen() {
             />
           </View>
           {notifPrefs.bible && (
-            <View style={styles.notifSub}>
+            <View style={styles.bibleTimesWrap}>
               {notifPrefs.bibleReminders.map((r, i) => (
                 <View key={i} style={styles.bibleReminderRow}>
                   <Pressable
@@ -1066,7 +1078,7 @@ export default function ProfileScreen() {
                       hitSlop={8}
                       style={styles.bibleRemoveBtn}
                     >
-                      <Ionicons name="close-circle" size={18} color="#DC2626" />
+                      <Ionicons name="close-circle" size={16} color="#DC2626" />
                     </Pressable>
                   )}
                 </View>
@@ -1079,33 +1091,46 @@ export default function ProfileScreen() {
                 style={styles.bibleAddBtn}
               >
                 <Ionicons name="add-circle-outline" size={16} color="#5B7553" />
-                <Text style={styles.bibleAddText}>{t("profile_notif_bible_add", lang)}</Text>
               </Pressable>
               {editingBibleIdx !== null && (
-                <LazyTimePicker
-                  mode="time"
-                  is24Hour
-                  value={(() => {
-                    const r = notifPrefs.bibleReminders[editingBibleIdx];
-                    const d = new Date();
-                    d.setHours(r?.hour ?? 9, r?.minute ?? 0, 0, 0);
-                    return d;
-                  })()}
-                  onChange={(_: unknown, date?: Date) => {
-                    if (date && editingBibleIdx !== null) {
-                      const next = [...notifPrefs.bibleReminders];
-                      next[editingBibleIdx] = { hour: date.getHours(), minute: date.getMinutes() };
-                      saveNotifPref({ bibleReminders: next });
-                    }
-                    setEditingBibleIdx(null);
-                  }}
-                />
+                <Modal transparent visible animationType="fade">
+                  <Pressable
+                    onPress={() => setEditingBibleIdx(null)}
+                    style={styles.timeModalBackdrop}
+                  >
+                    <View style={styles.timeModalCard}>
+                      <Text style={styles.timeModalTitle}>
+                        {t("profile_notif_bible", lang)}
+                      </Text>
+                      <LazyTimePicker
+                        mode="time"
+                        is24Hour
+                        display="spinner"
+                        value={(() => {
+                          const r = notifPrefs.bibleReminders[editingBibleIdx];
+                          const d = new Date();
+                          d.setHours(r?.hour ?? 9, r?.minute ?? 0, 0, 0);
+                          return d;
+                        })()}
+                        onChange={(_: unknown, date?: Date) => {
+                          if (date && editingBibleIdx !== null) {
+                            const next = [...notifPrefs.bibleReminders];
+                            next[editingBibleIdx] = { hour: date.getHours(), minute: date.getMinutes() };
+                            saveNotifPref({ bibleReminders: next });
+                          }
+                          setEditingBibleIdx(null);
+                        }}
+                      />
+                    </View>
+                  </Pressable>
+                </Modal>
               )}
             </View>
           )}
         </View>
 
         </View>
+        )}
       </View>
 
       <View style={styles.section}>
@@ -1415,6 +1440,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.04)",
     marginVertical: 8,
   },
+  notifHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   notifItem: {
     borderRadius: 12,
     backgroundColor: "rgba(0,0,0,0.02)",
@@ -1464,11 +1494,17 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
   },
+  bibleTimesWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginLeft: 42,
+  },
   bibleReminderRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 6,
+    gap: 2,
   },
   timePickerRow: {
     flexDirection: "row",
@@ -1487,17 +1523,34 @@ const styles = StyleSheet.create({
   bibleRemoveBtn: {
     padding: 2,
   },
-  bibleAddBtn: {
-    flexDirection: "row",
+  timeModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
     alignItems: "center",
-    alignSelf: "flex-end",
-    gap: 4,
-    paddingVertical: 4,
+    padding: 32,
   },
-  bibleAddText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#5B7553",
+  timeModalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    maxWidth: 320,
+  },
+  timeModalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2C3E2C",
+  },
+  bibleAddBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(91,117,83,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   langRow: {
     flexDirection: "row",

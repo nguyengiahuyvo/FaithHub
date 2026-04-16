@@ -2,7 +2,7 @@ import UserAvatar from "@/components/UserAvatar";
 import Snackbar from "@/components/Snackbar";
 import TasksScreen from "./tasks";
 import { useAuth } from "@/lib/auth-context";
-import { notifyOrgOfNewEvent } from "@/lib/notifications";
+import { notifyMentionedUsers, notifyOrgOfNewEvent } from "@/lib/notifications";
 import { db } from "@/lib/firebase";
 import { t, tArray } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
@@ -588,18 +588,26 @@ function EventCard({
 
   async function handleSendComment() {
     if (!commentText.trim() || !user) return;
+    const body = commentText.trim();
     setSending(true);
     try {
       await addDoc(
         collection(db, "organizations", orgId, "events", ev.id, "comments"),
         {
-          text: commentText.trim(),
+          text: body,
           createdBy: user.uid,
           createdByName: user.displayName,
           createdAt: serverTimestamp(),
         },
       );
       setCommentText("");
+      notifyMentionedUsers({
+        orgId,
+        senderUid: user.uid,
+        senderName: user.displayName,
+        text: body,
+        screen: "calendar",
+      });
     } catch {
       // ignore
     } finally {

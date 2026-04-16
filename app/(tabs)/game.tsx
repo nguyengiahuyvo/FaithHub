@@ -33,8 +33,11 @@ import { t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import UserAvatar from "@/components/UserAvatar";
 import Snackbar, { useSnackbar } from "@/components/Snackbar";
+import { notifyMentionedUsers } from "@/lib/notifications";
 import {
   addToLeaderboard,
+  availableLanguages,
+  resolveTranslation,
   type CommunityQuestion,
   type Question,
 } from "@/lib/quest-questions";
@@ -299,6 +302,7 @@ export default function GameScreen() {
               successMsg: data.successMsg || undefined,
               failMsg: data.failMsg || undefined,
               language: (data.language as Language) || undefined,
+              translations: data.translations || undefined,
               createdBy: data.createdBy || "",
               createdByName: data.createdByName || null,
             };
@@ -324,7 +328,6 @@ export default function GameScreen() {
     // Pool check always applies — there has to be something to play.
     const eligible = community.filter((c) => {
       if (user && c.createdBy === user.uid) return false;
-      if (c.language && c.language !== playLang) return false;
       return true;
     });
     if (eligible.length === 0) return;
@@ -496,24 +499,10 @@ export default function GameScreen() {
           eligibleCount={
             community.filter((c) => {
               if (user && c.createdBy === user.uid) return false;
-              if (c.language && c.language !== playLang) return false;
               return true;
             }).length
           }
-          playLang={playLang}
-          onChangePlayLang={setPlayLang}
           playCost={PLAY_COST_SHEKEL}
-          questionCountByLang={(["en", "de", "vi"] as Language[]).reduce(
-            (acc, l) => {
-              acc[l] = community.filter((c) => {
-                if (user && c.createdBy === user.uid) return false;
-                const qLang = c.language || "en";
-                return qLang === l;
-              }).length;
-              return acc;
-            },
-            { en: 0, de: 0, vi: 0 } as Record<Language, number>,
-          )}
           myCount={
             user ? community.filter((c) => c.createdBy === user.uid).length : 0
           }
@@ -624,10 +613,7 @@ function StartView({
   myCount,
   leaderboard,
   currentUid,
-  playLang,
-  onChangePlayLang,
   playCost,
-  questionCountByLang,
   lang,
 }: {
   totalScore: number;
@@ -644,10 +630,7 @@ function StartView({
   myCount: number;
   leaderboard: LeaderboardEntry[];
   currentUid: string | undefined;
-  playLang: Language;
-  onChangePlayLang: (l: Language) => void;
   playCost: number;
-  questionCountByLang: Record<Language, number>;
   lang: Language;
 }) {
   const playsLeft = Math.max(0, maxPlays - playsToday);
@@ -709,40 +692,6 @@ function StartView({
 
         <Text style={styles.startTitle}>{t("game_title", lang)}</Text>
         <Text style={styles.startSubtitle}>{t("game_subtitle", lang)}</Text>
-
-        {/* Language filter — flag + question count for each language */}
-        {hasOrg && (
-          <View style={styles.langFilterCard}>
-            <Text style={styles.langFilterLabel}>
-              {t("game_language_label", lang)}
-            </Text>
-            <View style={styles.langFilterRow}>
-              {(["en", "de", "vi"] as Language[]).map((l) => {
-                const count = questionCountByLang[l];
-                return (
-                  <Pressable
-                    key={l}
-                    onPress={() => onChangePlayLang(l)}
-                    style={[
-                      styles.langFilterChip,
-                      playLang === l && styles.langFilterChipActive,
-                    ]}
-                  >
-                    <Text style={styles.langFlag}>{LANG_FLAGS[l]}</Text>
-                    <Text
-                      style={[
-                        styles.langFilterChipCount,
-                        playLang === l && styles.langFilterChipTextActive,
-                      ]}
-                    >
-                      {count}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        )}
 
         {/* Cooldown / daily-limit / no-questions notice */}
         {cooldownActive && (
@@ -1032,6 +981,12 @@ function PlayView({
   const cardTranslate = useRef(new Animated.Value(12)).current;
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const [displayLang, setDisplayLang] = useState<Language>(lang);
+  const translated = resolveTranslation(question, displayLang);
+  const langs = availableLanguages(question);
+
+  // Reset display language to user's default when question changes
+  useEffect(() => { setDisplayLang(lang); }, [qIndex, lang]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
@@ -1201,7 +1156,28 @@ function PlayView({
             </View>
           )}
         </View>
-        <Text style={styles.questionText}>{question.q}</Text>
+        <Text style={styles.questionText}>{translated.q}</Text>
+        {langs.length > 1 && (
+          <View style={styles.langSwitchRow}>
+            {langs.map((l) => (
+              <Pressable
+                key={l}
+                onPress={() => setDisplayLang(l)}
+                style={[
+                  styles.langSwitchChip,
+                  displayLang === l && styles.langSwitchChipActive,
+                ]}
+              >
+                <Text style={[
+                  styles.langSwitchText,
+                  displayLang === l && styles.langSwitchTextActive,
+                ]}>
+                  {LANG_FLAGS[l]}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
         {question.ref && (
           <View style={styles.refPill}>
             <Ionicons name="book-outline" size={12} color={C.primary} />
@@ -1218,8 +1194,8 @@ function PlayView({
           const timedOut = selected === null;
           const tone = answeredCorrectly ? "success" : "fail";
           const customMsg = answeredCorrectly
-            ? question.successMsg
-            : question.failMsg;
+            ? translated.successMsg
+            : translated.failMsg;
           const defaultMsg = answeredCorrectly
             ? t("quest_correct_title", lang)
             : timedOut
@@ -1281,7 +1257,7 @@ function PlayView({
         })()}
 
       <View style={styles.choicesWrap}>
-        {question.choices.map((choice, idx) => {
+        {translated.choices.map((choice, idx) => {
           const isSelected = selected === idx;
           const isCorrect = idx === question.answer;
           const showResult = locked;
@@ -1726,6 +1702,13 @@ function QuestionComments({
           createdAt: serverTimestamp(),
         },
       );
+      notifyMentionedUsers({
+        orgId,
+        senderUid: userId,
+        senderName: userName,
+        text: body,
+        screen: "game",
+      });
     } catch {
       // restore input on failure so user can retry
       setText(body);
@@ -2518,6 +2501,26 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: C.primaryDark,
     lineHeight: 28,
+  },
+  langSwitchRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 4,
+  },
+  langSwitchChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  langSwitchChipActive: {
+    backgroundColor: C.primary,
+  },
+  langSwitchText: {
+    fontSize: 14,
+  },
+  langSwitchTextActive: {
+    fontSize: 14,
   },
   refPill: {
     alignSelf: "flex-start",

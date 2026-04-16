@@ -28,6 +28,7 @@ import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
+import { notifyMentionedUsers } from "@/lib/notifications";
 import Snackbar from "@/components/Snackbar";
 import {
   arrayRemove,
@@ -859,18 +860,26 @@ function TaskCard({
 
   async function handleSendComment() {
     if (!commentText.trim() || !user) return;
+    const body = commentText.trim();
     setSending(true);
     try {
       await addDoc(
         collection(db, "organizations", orgId, "tasks", task.id, "comments"),
         {
-          text: commentText.trim(),
+          text: body,
           createdBy: user.uid,
           createdByName: user.displayName,
           createdAt: serverTimestamp(),
         },
       );
       setCommentText("");
+      notifyMentionedUsers({
+        orgId,
+        senderUid: user.uid,
+        senderName: user.displayName,
+        text: body,
+        screen: "tasks",
+      });
     } catch {
       // ignore
     } finally {
@@ -1187,18 +1196,26 @@ function VoteCard({
 
   async function handleSendComment() {
     if (!commentText.trim() || !user) return;
+    const body = commentText.trim();
     setSending(true);
     try {
       await addDoc(
         collection(db, "organizations", orgId, "votes", vote.id, "comments"),
         {
-          text: commentText.trim(),
+          text: body,
           createdBy: user.uid,
           createdByName: user.displayName,
           createdAt: serverTimestamp(),
         },
       );
       setCommentText("");
+      notifyMentionedUsers({
+        orgId,
+        senderUid: user.uid,
+        senderName: user.displayName,
+        text: body,
+        screen: "tasks",
+      });
     } catch {
       // ignore
     } finally {

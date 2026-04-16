@@ -253,6 +253,65 @@ export async function notifyOrgOfNewEvent(params: {
   }
 }
 
+/**
+ * Detect @mentions in a comment and send push notifications to mentioned users.
+ * Matches `@DisplayName` against org members. Never throws.
+ */
+export async function notifyMentionedUsers(params: {
+  orgId: string;
+  senderUid: string;
+  senderName: string | null;
+  text: string;
+  screen?: string;
+}): Promise<void> {
+  try {
+    // Extract all @mentions from text — match @Name or @"Name With Spaces"
+    const mentionPattern = /@"([^"]+)"|@(\S+)/g;
+    const mentions: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = mentionPattern.exec(params.text)) !== null) {
+      mentions.push((match[1] || match[2]).toLowerCase());
+    }
+    if (mentions.length === 0) return;
+
+    // Load org members and match by displayName
+    const membersSnap = await getDocs(
+      collection(db, "organizations", params.orgId, "members"),
+    );
+    const matchedUids: string[] = [];
+    for (const m of membersSnap.docs) {
+      if (m.id === params.senderUid) continue;
+      const name = (m.data().displayName || "").toLowerCase();
+      if (name && mentions.some((mention) => name === mention || name.startsWith(mention))) {
+        matchedUids.push(m.id);
+      }
+    }
+    if (matchedUids.length === 0) return;
+
+    // Get push tokens for matched users
+    const tokens: string[] = [];
+    await Promise.all(
+      matchedUids.map(async (uid) => {
+        try {
+          const snap = await getDoc(doc(db, "users", uid));
+          const tok = snap.data()?.expoPushToken;
+          if (isExpoToken(tok)) tokens.push(tok);
+        } catch {}
+      }),
+    );
+    if (tokens.length === 0) return;
+
+    const sender = params.senderName || "Someone";
+    await sendPushNotifications(tokens, {
+      title: `${sender} mentioned you`,
+      body: params.text.length > 100 ? params.text.slice(0, 100) + "…" : params.text,
+      data: params.screen ? { screen: params.screen } : {},
+    });
+  } catch {
+    // swallow — never block the caller
+  }
+}
+
 type BibleTime = { hour: number; minute: number };
 
 /**

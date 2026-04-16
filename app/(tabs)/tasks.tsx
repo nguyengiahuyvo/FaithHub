@@ -127,6 +127,7 @@ export default function TasksScreen() {
         );
         setLoading(false);
       },
+      () => {},
     );
     return unsub;
   }, [org]);
@@ -152,7 +153,7 @@ export default function TasksScreen() {
         })),
       );
       setLoadingVotes(false);
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 
@@ -811,7 +812,7 @@ function TaskCard({
     );
     const unsub = onSnapshot(commentsRef, (snap) => {
       setCommentCount(snap.size);
-    });
+    }, () => {});
     return unsub;
   }, [orgId, task.id]);
 
@@ -832,7 +833,7 @@ function TaskCard({
           createdAt: d.data().createdAt?.toDate?.() || null,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [showComments, orgId, task.id]);
 
@@ -1154,7 +1155,7 @@ function VoteCard({
 
   useEffect(() => {
     const ref = collection(db, "organizations", orgId, "votes", vote.id, "comments");
-    const unsub = onSnapshot(ref, (snap) => setCommentCount(snap.size));
+    const unsub = onSnapshot(ref, (snap) => setCommentCount(snap.size), () => {});
     return unsub;
   }, [orgId, vote.id]);
 
@@ -1174,7 +1175,7 @@ function VoteCard({
           createdAt: d.data().createdAt?.toDate?.() || null,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [showComments, orgId, vote.id]);
 

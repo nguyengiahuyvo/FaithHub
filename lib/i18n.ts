@@ -1238,6 +1238,21 @@ const translations = {
   },
   quest_next: { en: "Next", de: "Weiter", vi: "Tiếp theo" },
   quest_finish: { en: "Finish", de: "Beenden", vi: "Kết thúc" },
+  quest_comments_title: {
+    en: "Comments",
+    de: "Kommentare",
+    vi: "Bình luận",
+  },
+  quest_comments_empty: {
+    en: "No comments yet. Be the first!",
+    de: "Noch keine Kommentare. Sei der Erste!",
+    vi: "Chưa có bình luận. Hãy là người đầu tiên!",
+  },
+  quest_comments_placeholder: {
+    en: "Write a comment…",
+    de: "Kommentar schreiben…",
+    vi: "Viết bình luận…",
+  },
 
   // Update dialog
   update_title: {

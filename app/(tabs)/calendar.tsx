@@ -192,6 +192,7 @@ function CalendarEventsView() {
         );
         setLoading(false);
       },
+      () => {},
     );
     return unsub;
   }, [org]);
@@ -540,7 +541,7 @@ function EventCard({
     );
     const unsub = onSnapshot(commentsRef, (snap) => {
       setCommentCount(snap.size);
-    });
+    }, () => {});
     return unsub;
   }, [orgId, ev.id]);
 
@@ -561,7 +562,7 @@ function EventCard({
           createdAt: d.data().createdAt?.toDate?.() || null,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [showComments, orgId, ev.id]);
 

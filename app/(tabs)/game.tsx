@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  Keyboard,
   Modal,
   ScrollView,
   StyleSheet,
@@ -239,7 +240,7 @@ export default function GameScreen() {
     const unsub = onSnapshot(ref, (snap) => {
       const s = snap.data()?.score;
       if (typeof s === "number") setTotalScore(s);
-    });
+    }, () => {});
     return unsub;
   }, [org, user]);
 
@@ -262,7 +263,7 @@ export default function GameScreen() {
           score: typeof d.data().score === "number" ? d.data().score : 0,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 
@@ -312,7 +313,7 @@ export default function GameScreen() {
               c.answer <= 3,
           ),
       );
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 
@@ -1029,6 +1030,14 @@ function PlayView({
   const shake = useRef(new Animated.Value(0)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
   const cardTranslate = useRef(new Animated.Value(12)).current;
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   useEffect(() => {
     Animated.parallel([
@@ -1110,9 +1119,11 @@ function PlayView({
   return (
     <View style={{ flex: 1 }}>
     <ScrollView
+      ref={scrollRef}
       contentContainerStyle={styles.playRootContent}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
+      automaticallyAdjustKeyboardInsets
     >
       <View style={styles.hudRow}>
         <Pressable onPress={onQuit} hitSlop={12} style={styles.hudBtn}>
@@ -1334,8 +1345,8 @@ function PlayView({
       )}
     </ScrollView>
 
-    {/* Bottom-docked Next button — appears once the player has answered */}
-    {locked && (
+    {/* Bottom-docked Next button — hidden when keyboard is open */}
+    {locked && !keyboardVisible && (
       <View style={styles.bottomBar}>
         <Pressable onPress={onNext} style={styles.playBtn}>
           <Text style={styles.playBtnText}>
@@ -1665,7 +1676,6 @@ function QuestionComments({
   const [comments, setComments] = useState<QuestionComment[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (!orgId || !questionId) return;
@@ -1690,7 +1700,7 @@ function QuestionComments({
           createdAt: d.data().createdAt?.toDate?.() || null,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [orgId, questionId]);
 
@@ -1745,88 +1755,76 @@ function QuestionComments({
 
   return (
     <View style={commentStyles.card}>
-      <Pressable
-        onPress={() => setExpanded((x) => !x)}
-        style={commentStyles.header}
-      >
+      <View style={commentStyles.header}>
         <Ionicons name="chatbubble-ellipses" size={16} color={C.primary} />
         <Text style={commentStyles.headerTitle}>
           {t("quest_comments_title", lang)} ({comments.length})
         </Text>
-        <Ionicons
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={18}
-          color={C.textMuted}
-        />
-      </Pressable>
+      </View>
 
-      {expanded && (
-        <>
-          {comments.length === 0 ? (
-            <Text style={commentStyles.empty}>
-              {t("quest_comments_empty", lang)}
-            </Text>
-          ) : (
-            <View style={{ gap: 8 }}>
-              {comments.map((c) => (
-                <View key={c.id} style={commentStyles.row}>
-                  <UserAvatar
-                    uid={c.createdBy}
-                    name={c.createdByName}
-                    size={26}
+      {comments.length === 0 ? (
+        <Text style={commentStyles.empty}>
+          {t("quest_comments_empty", lang)}
+        </Text>
+      ) : (
+        <View style={{ gap: 8 }}>
+          {comments.map((c) => (
+            <View key={c.id} style={commentStyles.row}>
+              <UserAvatar
+                uid={c.createdBy}
+                name={c.createdByName}
+                size={26}
+              />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={commentStyles.name} numberOfLines={1}>
+                  {c.createdByName || t("notif_someone", lang)}
+                </Text>
+                <Text style={commentStyles.text}>{c.text}</Text>
+              </View>
+              {c.createdBy === userId && (
+                <Pressable
+                  onPress={() => handleDelete(c.id)}
+                  hitSlop={6}
+                  style={{ padding: 4 }}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={14}
+                    color={C.wrong}
                   />
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={commentStyles.name} numberOfLines={1}>
-                      {c.createdByName || t("notif_someone", lang)}
-                    </Text>
-                    <Text style={commentStyles.text}>{c.text}</Text>
-                  </View>
-                  {c.createdBy === userId && (
-                    <Pressable
-                      onPress={() => handleDelete(c.id)}
-                      hitSlop={6}
-                      style={{ padding: 4 }}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={14}
-                        color={C.wrong}
-                      />
-                    </Pressable>
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Input */}
-          <View style={commentStyles.inputRow}>
-            <TextInput
-              value={text}
-              onChangeText={setText}
-              placeholder={t("quest_comments_placeholder", lang)}
-              placeholderTextColor="#A3A89E"
-              style={commentStyles.input}
-              multiline
-              maxLength={280}
-            />
-            <Pressable
-              onPress={handleSend}
-              disabled={!text.trim() || sending}
-              style={[
-                commentStyles.sendBtn,
-                (!text.trim() || sending) && { opacity: 0.5 },
-              ]}
-            >
-              {sending ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Ionicons name="send" size={16} color="#FFFFFF" />
+                </Pressable>
               )}
-            </Pressable>
-          </View>
-        </>
+            </View>
+          ))}
+        </View>
       )}
+
+      {/* Input */}
+      <View style={commentStyles.inputRow}>
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          placeholder={t("quest_comments_placeholder", lang)}
+          placeholderTextColor="#A3A89E"
+          style={commentStyles.input}
+          multiline
+          maxLength={280}
+        />
+        <Pressable
+          onPress={handleSend}
+          disabled={!text.trim() || sending}
+          style={[
+            commentStyles.sendBtn,
+            (!text.trim() || sending) && { opacity: 0.5 },
+          ]}
+        >
+          {sending ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Ionicons name="send" size={16} color="#FFFFFF" />
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }

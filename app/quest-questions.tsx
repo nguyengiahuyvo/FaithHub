@@ -37,6 +37,7 @@ import {
   type CommunityQuestion,
 } from "@/lib/quest-questions";
 import Snackbar, { useSnackbar } from "@/components/Snackbar";
+import UserAvatar from "@/components/UserAvatar";
 
 const C = {
   bg: "#F9F7F4",
@@ -111,7 +112,7 @@ export default function QuestQuestionsScreen() {
               c.answer <= 3,
           ),
       );
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 
@@ -269,6 +270,8 @@ export default function QuestQuestionsScreen() {
                       key={q.id}
                       question={q}
                       ownedByMe
+                      orgId={org.orgId}
+                      userId={user?.uid}
                       onDelete={() => handleDelete(q.id)}
                       onEdit={() => {
                         setShowForm(false);
@@ -311,20 +314,63 @@ function Section({
   );
 }
 
+type QComment = {
+  id: string;
+  text: string;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
+};
+
 function QuestionItem({
   question,
   ownedByMe,
+  orgId,
+  userId,
   onDelete,
   onEdit,
   lang,
 }: {
   question: CommunityQuestion;
   ownedByMe: boolean;
+  orgId?: string;
+  userId?: string;
   onDelete?: () => void;
   onEdit?: () => void;
   lang: ReturnType<typeof useLanguage>["lang"];
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [comments, setComments] = useState<QComment[]>([]);
+
+  useEffect(() => {
+    if (!orgId || !expanded) return;
+    const q = query(
+      collection(db, "organizations", orgId, "questQuestions", question.id, "comments"),
+      orderBy("createdAt", "asc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setComments(
+        snap.docs.map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+    }, () => {});
+    return unsub;
+  }, [orgId, question.id, expanded]);
+
+  async function handleDeleteComment(cid: string) {
+    if (!orgId) return;
+    try {
+      await deleteDoc(
+        doc(db, "organizations", orgId, "questQuestions", question.id, "comments", cid),
+      );
+    } catch {}
+  }
+
   return (
     <Pressable
       onPress={() => setExpanded((x) => !x)}
@@ -439,6 +485,44 @@ function QuestionItem({
           )}
           {question.failMsg && (
             <Text style={styles.qMsg}>😈 {question.failMsg}</Text>
+          )}
+
+          {/* Comments */}
+          {ownedByMe && (
+            <View style={styles.qComments}>
+              <View style={styles.qCommentsHeader}>
+                <Ionicons name="chatbubble-ellipses" size={14} color={C.primary} />
+                <Text style={styles.qCommentsTitle}>
+                  {t("quest_comments_title", lang)} ({comments.length})
+                </Text>
+              </View>
+              {comments.length === 0 ? (
+                <Text style={styles.qCommentsEmpty}>
+                  {t("quest_comments_empty", lang)}
+                </Text>
+              ) : (
+                comments.map((c) => (
+                  <View key={c.id} style={styles.qCommentRow}>
+                    <UserAvatar uid={c.createdBy} name={c.createdByName} size={22} />
+                    <View style={{ flex: 1, gap: 1 }}>
+                      <Text style={styles.qCommentName} numberOfLines={1}>
+                        {c.createdByName || t("notif_someone", lang)}
+                      </Text>
+                      <Text style={styles.qCommentText}>{c.text}</Text>
+                    </View>
+                    {c.createdBy === userId && (
+                      <Pressable
+                        onPress={(e) => { e.stopPropagation(); handleDeleteComment(c.id); }}
+                        hitSlop={6}
+                        style={{ padding: 4 }}
+                      >
+                        <Ionicons name="trash-outline" size={13} color={C.wrong} />
+                      </Pressable>
+                    )}
+                  </View>
+                ))
+              )}
+            </View>
           )}
         </View>
       )}
@@ -927,6 +1011,46 @@ const styles = StyleSheet.create({
     color: C.textMuted,
     fontStyle: "italic",
     marginTop: 4,
+  },
+  qComments: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    gap: 6,
+  },
+  qCommentsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  qCommentsTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.primaryDark,
+  },
+  qCommentsEmpty: {
+    fontSize: 11,
+    fontStyle: "italic",
+    color: C.textMuted,
+  },
+  qCommentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#F9F7F4",
+    borderRadius: 8,
+    padding: 6,
+  },
+  qCommentName: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: C.textMuted,
+  },
+  qCommentText: {
+    fontSize: 12,
+    color: C.text,
+    lineHeight: 16,
   },
 
   // Form

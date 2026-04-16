@@ -577,7 +577,7 @@ function OrgDashboard() {
           prayingFor: d.data().prayingFor || [],
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 

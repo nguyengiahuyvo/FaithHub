@@ -7,6 +7,8 @@ import { router } from "expo-router";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
+const BIBLE_NOTIF_PREFIX = "daily-bible-reminder";
+
 // Configure how notifications are presented when the app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -87,6 +89,14 @@ export function useNotifications(userId: string | undefined) {
       }
     });
 
+    // Restore daily Bible reminders if user had them enabled
+    getDoc(doc(db, "users", userId)).then((snap) => {
+      const prefs = snap.exists() ? snap.data().notifPrefs : null;
+      if (prefs?.bible === true) {
+        scheduleBibleReminders(true, prefs.bibleReminders ?? [{ hour: 9, minute: 0 }]);
+      }
+    }).catch(() => {});
+
     // Listen for incoming notifications while app is foregrounded
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
@@ -129,6 +139,8 @@ type PushPayload = {
   data?: Record<string, string>;
 };
 
+export type NotifType = "events" | "tasks" | "quest" | "bible";
+
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 // Expo accepts up to 100 messages per request.
 const EXPO_BATCH = 100;
@@ -140,10 +152,13 @@ function isExpoToken(value: unknown): value is string {
 /**
  * Collect all push tokens for members of an organization, optionally
  * excluding a specific user (e.g. the creator of the event).
+ * When `notifType` is provided, only returns tokens for users who have
+ * that notification type enabled in their preferences.
  */
 export async function getOrgMemberPushTokens(
   orgId: string,
   excludeUid?: string,
+  notifType?: NotifType,
 ): Promise<string[]> {
   const membersSnap = await getDocs(
     collection(db, "organizations", orgId, "members"),
@@ -158,8 +173,12 @@ export async function getOrgMemberPushTokens(
     uids.map(async (uid) => {
       try {
         const userSnap = await getDoc(doc(db, "users", uid));
-        const tok = userSnap.data()?.expoPushToken;
-        if (isExpoToken(tok)) tokens.push(tok);
+        const data = userSnap.data();
+        const tok = data?.expoPushToken;
+        if (!isExpoToken(tok)) return;
+        // Check notification preference if a type is specified
+        if (notifType && data?.notifPrefs?.[notifType] === false) return;
+        tokens.push(tok);
       } catch {
         // ignore per-user failures
       }
@@ -215,11 +234,13 @@ export async function notifyOrgOfNewEvent(params: {
   title: string;
   body: string;
   data?: Record<string, string>;
+  notifType?: NotifType;
 }): Promise<void> {
   try {
     const tokens = await getOrgMemberPushTokens(
       params.orgId,
       params.creatorUid,
+      params.notifType,
     );
     if (tokens.length === 0) return;
     await sendPushNotifications(tokens, {
@@ -229,5 +250,117 @@ export async function notifyOrgOfNewEvent(params: {
     });
   } catch {
     // swallow — do not block the caller's flow
+  }
+}
+
+/**
+ * Send a push notification to a single user by UID. Never throws.
+ */
+export async function notifyUser(
+  uid: string,
+  payload: PushPayload,
+): Promise<void> {
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    const tok = snap.data()?.expoPushToken;
+    if (typeof tok === "string" && tok.startsWith("ExponentPushToken[")) {
+      await sendPushNotifications([tok], payload);
+    }
+  } catch {}
+}
+
+/**
+ * Detect @mentions in a comment and send push notifications to mentioned users.
+ * Matches `@DisplayName` against org members. Never throws.
+ */
+export async function notifyMentionedUsers(params: {
+  orgId: string;
+  senderUid: string;
+  senderName: string | null;
+  text: string;
+  screen?: string;
+}): Promise<void> {
+  try {
+    // Extract all @mentions from text — match @Name or @"Name With Spaces"
+    const mentionPattern = /@"([^"]+)"|@(\S+)/g;
+    const mentions: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = mentionPattern.exec(params.text)) !== null) {
+      mentions.push((match[1] || match[2]).toLowerCase());
+    }
+    if (mentions.length === 0) return;
+
+    // Load org members and match by displayName
+    const membersSnap = await getDocs(
+      collection(db, "organizations", params.orgId, "members"),
+    );
+    const matchedUids: string[] = [];
+    for (const m of membersSnap.docs) {
+      if (m.id === params.senderUid) continue;
+      const name = (m.data().displayName || "").toLowerCase();
+      if (name && mentions.some((mention) => name === mention || name.startsWith(mention))) {
+        matchedUids.push(m.id);
+      }
+    }
+    if (matchedUids.length === 0) return;
+
+    // Get push tokens for matched users
+    const tokens: string[] = [];
+    await Promise.all(
+      matchedUids.map(async (uid) => {
+        try {
+          const snap = await getDoc(doc(db, "users", uid));
+          const tok = snap.data()?.expoPushToken;
+          if (isExpoToken(tok)) tokens.push(tok);
+        } catch {}
+      }),
+    );
+    if (tokens.length === 0) return;
+
+    const sender = params.senderName || "Someone";
+    await sendPushNotifications(tokens, {
+      title: `${sender} mentioned you`,
+      body: params.text.length > 100 ? params.text.slice(0, 100) + "…" : params.text,
+      data: params.screen ? { screen: params.screen } : {},
+    });
+  } catch {
+    // swallow — never block the caller
+  }
+}
+
+type BibleTime = { hour: number; minute: number };
+
+/**
+ * Schedule (or cancel) daily local notifications reminding the user to
+ * read the Bible. Supports multiple reminder times.
+ */
+export async function scheduleBibleReminders(
+  enabled: boolean,
+  reminders: BibleTime[] = [{ hour: 9, minute: 0 }],
+) {
+  // Cancel all existing bible reminders first
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
+  for (const n of scheduled) {
+    if (n.identifier.startsWith(BIBLE_NOTIF_PREFIX)) {
+      await Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {});
+    }
+  }
+  if (!enabled) return;
+  for (let i = 0; i < reminders.length; i++) {
+    const { hour, minute } = reminders[i];
+    await Notifications.scheduleNotificationAsync({
+      identifier: `${BIBLE_NOTIF_PREFIX}-${i}`,
+      content: {
+        title: "✞ FaithHub",
+        body: "Time to read the Bible today!",
+        sound: "default",
+        data: { screen: "home" },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      },
+    });
   }
 }

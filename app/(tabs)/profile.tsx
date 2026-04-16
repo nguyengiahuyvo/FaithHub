@@ -23,6 +23,7 @@ import {ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,} from "react-native";
@@ -30,6 +31,22 @@ import { Pressable } from "@/components/HapticPressable";
 
 type ModalType = "confirm" | "error" | null;
 type DeleteModalStep = "confirm" | "type-to-delete" | "error" | null;
+type EventRemindBefore = "30m" | "1h" | "1d";
+type BibleReminder = { hour: number; minute: number };
+type NotifPrefs = {
+  events: boolean;
+  eventsBefore: EventRemindBefore;
+  tasks: boolean;
+  quest: boolean;
+  bible: boolean;
+  bibleReminders: BibleReminder[];
+};
+
+function LazyTimePicker(props: Record<string, unknown>) {
+  const DateTimePicker =
+    require("@react-native-community/datetimepicker").default;
+  return <DateTimePicker {...props} />;
+}
 
 function SignOutModal({
   type,
@@ -605,6 +622,9 @@ export default function ProfileScreen() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [snackbar, setSnackbar] = useState<string | null>(null);
   const snackOpacity = useRef(new Animated.Value(0)).current;
+  const defaultNotifPrefs: NotifPrefs = { events: true, eventsBefore: "1h", tasks: true, quest: true, bible: false, bibleReminders: [{ hour: 9, minute: 0 }] };
+  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(defaultNotifPrefs);
+  const [notifExpanded, setNotifExpanded] = useState(false);
 
   useEffect(() => {
     setPendingLang(lang);
@@ -613,11 +633,32 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (!user) return;
     getDoc(doc(db, "users", user.uid)).then((snap) => {
-      if (snap.exists() && snap.data().photoBase64) {
-        setPhotoURI(snap.data().photoBase64);
+      if (!snap.exists()) return;
+      const data = snap.data();
+      if (data.photoBase64) setPhotoURI(data.photoBase64);
+      if (data.notifPrefs) {
+        const saved = { ...defaultNotifPrefs, ...data.notifPrefs };
+        // Migrate old single-time format to array
+        if (!Array.isArray(saved.bibleReminders)) {
+          const h = (data.notifPrefs as Record<string, unknown>).bibleHour;
+          const m = (data.notifPrefs as Record<string, unknown>).bibleMinute;
+          saved.bibleReminders = [{ hour: typeof h === "number" ? h : 9, minute: typeof m === "number" ? m : 0 }];
+        }
+        setNotifPrefs(saved);
       }
     });
   }, [user]);
+
+  async function saveNotifPref(patch: Partial<NotifPrefs>) {
+    if (!user) return;
+    const next = { ...notifPrefs, ...patch };
+    setNotifPrefs(next);
+    try {
+      await setDoc(doc(db, "users", user.uid), { notifPrefs: next }, { merge: true });
+    } catch (e) {
+      console.error("Failed to save notification prefs:", e);
+    }
+  }
 
   async function saveDisplayName(newName: string) {
     if (!user) return;
@@ -901,6 +942,104 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       )}
+
+      <View style={styles.section}>
+        <Pressable
+          onPress={() => setNotifExpanded((v) => !v)}
+          style={styles.notifHeader}
+        >
+          <Text style={styles.sectionLabel}>
+            {t("profile_notifications", lang)}
+          </Text>
+          <Ionicons
+            name={notifExpanded ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#A3A89E"
+          />
+        </Pressable>
+
+        {notifExpanded && (
+        <View style={{ gap: 8 }}>
+
+        {/* Event reminders */}
+        <View style={styles.notifItem}>
+          <View style={styles.notifRow}>
+            <View style={styles.notifIconCircle}>
+              <Ionicons name="calendar-outline" size={18} color="#5B7553" />
+            </View>
+            <Text style={styles.rowLabel}>{t("profile_notif_events", lang)}</Text>
+            <Switch
+              value={notifPrefs.events}
+              onValueChange={(v) => saveNotifPref({ events: v })}
+              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
+              thumbColor={notifPrefs.events ? "#5B7553" : "#F4F4F5"}
+            />
+          </View>
+          {notifPrefs.events && (
+            <View style={styles.notifSub}>
+              <Text style={styles.notifSubLabel}>
+                {t("profile_notif_events_before", lang)}
+              </Text>
+              <View style={styles.notifChipRow}>
+                {(["30m", "1h", "1d"] as EventRemindBefore[]).map((v) => (
+                  <Pressable
+                    key={v}
+                    onPress={() => saveNotifPref({ eventsBefore: v })}
+                    style={[
+                      styles.notifChip,
+                      notifPrefs.eventsBefore === v && styles.notifChipActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.notifChipText,
+                        notifPrefs.eventsBefore === v && styles.notifChipTextActive,
+                      ]}
+                    >
+                      {t(`profile_notif_events_${v}` as const, lang)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Task reminders */}
+        <View style={styles.notifItem}>
+          <View style={styles.notifRow}>
+            <View style={styles.notifIconCircle}>
+              <Ionicons name="checkmark-circle-outline" size={18} color="#5B7553" />
+            </View>
+            <Text style={styles.rowLabel}>{t("profile_notif_tasks", lang)}</Text>
+            <Switch
+              value={notifPrefs.tasks}
+              onValueChange={(v) => saveNotifPref({ tasks: v })}
+              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
+              thumbColor={notifPrefs.tasks ? "#5B7553" : "#F4F4F5"}
+            />
+          </View>
+        </View>
+
+        {/* New quest questions */}
+        <View style={styles.notifItem}>
+          <View style={styles.notifRow}>
+            <View style={styles.notifIconCircle}>
+              <Ionicons name="help-circle-outline" size={18} color="#5B7553" />
+            </View>
+            <Text style={styles.rowLabel}>{t("profile_notif_quest", lang)}</Text>
+            <Switch
+              value={notifPrefs.quest}
+              onValueChange={(v) => saveNotifPref({ quest: v })}
+              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
+              thumbColor={notifPrefs.quest ? "#5B7553" : "#F4F4F5"}
+            />
+          </View>
+        </View>
+
+        </View>
+        )}
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>
@@ -1208,6 +1347,118 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "rgba(0,0,0,0.04)",
     marginVertical: 8,
+  },
+  notifHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  notifItem: {
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.02)",
+    padding: 12,
+    gap: 10,
+  },
+  notifRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  notifIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(91,117,83,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notifSub: {
+    marginLeft: 42,
+    gap: 6,
+  },
+  notifSubLabel: {
+    color: "#8A8F84",
+    fontSize: 13,
+  },
+  notifChipRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  notifChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  notifChipActive: {
+    backgroundColor: "#5B7553",
+  },
+  notifChipText: {
+    color: "#6B7264",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  notifChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  bibleTimesWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginLeft: 42,
+  },
+  bibleReminderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  timePickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    borderRadius: 10,
+  },
+  timePickerText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2C3E2C",
+  },
+  bibleRemoveBtn: {
+    padding: 2,
+  },
+  timeModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  timeModalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    maxWidth: 320,
+  },
+  timeModalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2C3E2C",
+  },
+  bibleAddBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(91,117,83,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   langRow: {
     flexDirection: "row",

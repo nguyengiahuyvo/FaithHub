@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
+  Alert,
   Animated,
   Modal,
   ScrollView,
@@ -30,6 +31,7 @@ import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import UserAvatar from "@/components/UserAvatar";
 import Snackbar from "@/components/Snackbar";
+import { notifyOrgOfNewEvent } from "@/lib/notifications";
 
 type MemberInfo = { uid: string; displayName: string | null; email: string; role: string };
 
@@ -577,7 +579,7 @@ function OrgDashboard() {
           prayingFor: d.data().prayingFor || [],
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 
@@ -593,10 +595,22 @@ function OrgDashboard() {
         createdAt: serverTimestamp(),
         prayingFor: [],
       });
+      const sender = anonymous ? t("prayer_anonymous", lang) : (user.displayName || t("notif_someone", lang));
+      const preview = prayerText.trim().length > 80
+        ? prayerText.trim().slice(0, 80) + "…"
+        : prayerText.trim();
+      notifyOrgOfNewEvent({
+        orgId: org.orgId,
+        creatorUid: user.uid,
+        title: t("notif_new_prayer_title", lang),
+        body: `${sender}: ${preview}`,
+        data: { screen: "home" },
+      });
       setPrayerText("");
       setAnonymous(false);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Prayer post failed:", e);
+      Alert.alert("Error", "Failed to post prayer request.");
     } finally {
       setSendingPrayer(false);
     }

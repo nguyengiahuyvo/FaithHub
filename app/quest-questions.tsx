@@ -3,11 +3,10 @@ import { Stack, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Easing,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +19,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -35,8 +35,10 @@ import {
   POINTS_PER_QUESTION_CREATED,
   addToLeaderboard,
   type CommunityQuestion,
+  type QuestionTranslation,
 } from "@/lib/quest-questions";
 import Snackbar, { useSnackbar } from "@/components/Snackbar";
+import UserAvatar from "@/components/UserAvatar";
 
 const C = {
   bg: "#F9F7F4",
@@ -66,9 +68,23 @@ export default function QuestQuestionsScreen() {
   const [community, setCommunity] = useState<CommunityQuestion[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<CommunityQuestion | null>(null);
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const snack = useSnackbar();
   const [snackMsg, setSnackMsg] = useState<string | null>(null);
   snack.setMessage.current = setSnackMsg;
+
+  // Load org members for resolving UIDs to display names
+  useEffect(() => {
+    if (!org) return;
+    getDocs(collection(db, "organizations", org.orgId, "members")).then((snap) => {
+      const map: Record<string, string> = {};
+      for (const d of snap.docs) {
+        const name = d.data().displayName;
+        if (name) map[d.id] = name;
+      }
+      setMemberNames(map);
+    }).catch(() => {});
+  }, [org]);
 
   // Live-subscribe to community questions in the org.
   useEffect(() => {
@@ -95,8 +111,12 @@ export default function QuestQuestionsScreen() {
               successMsg: data.successMsg || undefined,
               failMsg: data.failMsg || undefined,
               language: (data.language as Language) || undefined,
+              translations: data.translations || undefined,
               createdBy: data.createdBy || "",
               createdByName: data.createdByName || null,
+              correctCount: typeof data.correctCount === "number" ? data.correctCount : 0,
+              wrongCount: typeof data.wrongCount === "number" ? data.wrongCount : 0,
+              answeredUsers: (data.answeredUsers as Record<string, boolean>) || {},
             };
           })
           .filter(
@@ -111,21 +131,13 @@ export default function QuestQuestionsScreen() {
               c.answer <= 3,
           ),
       );
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 
-  // Filter chip for the My Questions list. "all" shows every language.
-  const [myLangFilter, setMyLangFilter] = useState<Language | "all">("all");
-  const myQuestionsAll = user
+  const myQuestions = user
     ? community.filter((c) => c.createdBy === user.uid)
     : [];
-  const myQuestions =
-    myLangFilter === "all"
-      ? myQuestionsAll
-      : myQuestionsAll.filter(
-          (c) => (c.language || "en") === myLangFilter,
-        );
 
   async function handleDelete(qid: string) {
     if (!org) return;
@@ -133,18 +145,16 @@ export default function QuestQuestionsScreen() {
       await deleteDoc(
         doc(db, "organizations", org.orgId, "questQuestions", qid),
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Question delete failed:", e);
+      Alert.alert("Error", "Failed to delete question.");
     }
   }
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <KeyboardAvoidingView
-        style={styles.screen}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <View style={styles.screen}>
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
@@ -206,59 +216,8 @@ export default function QuestQuestionsScreen() {
               {/* My questions */}
               <Section
                 title={t("qq_mine", lang)}
-                count={myQuestionsAll.length}
+                count={myQuestions.length}
               >
-                {/* Language filter chips */}
-                {myQuestionsAll.length > 0 && (
-                  <View style={styles.myLangFilterRow}>
-                    <Pressable
-                      onPress={() => setMyLangFilter("all")}
-                      style={[
-                        styles.myLangChip,
-                        myLangFilter === "all" && styles.myLangChipActive,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.myLangChipText,
-                          myLangFilter === "all" &&
-                            styles.myLangChipTextActive,
-                        ]}
-                      >
-                        {t("qq_filter_all", lang)} ({myQuestionsAll.length})
-                      </Text>
-                    </Pressable>
-                    {(["en", "de", "vi"] as Language[]).map((l) => {
-                      const n = myQuestionsAll.filter(
-                        (c) => (c.language || "en") === l,
-                      ).length;
-                      if (n === 0) return null;
-                      return (
-                        <Pressable
-                          key={l}
-                          onPress={() => setMyLangFilter(l)}
-                          style={[
-                            styles.myLangChip,
-                            myLangFilter === l && styles.myLangChipActive,
-                          ]}
-                        >
-                          <Text style={styles.myLangFlag}>
-                            {LANG_FLAGS[l]}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.myLangChipText,
-                              myLangFilter === l &&
-                                styles.myLangChipTextActive,
-                            ]}
-                          >
-                            {n}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                )}
                 {myQuestions.length === 0 ? (
                   <Text style={styles.emptyHint}>
                     {t("qq_mine_empty", lang)}
@@ -269,6 +228,9 @@ export default function QuestQuestionsScreen() {
                       key={q.id}
                       question={q}
                       ownedByMe
+                      orgId={org.orgId}
+                      userId={user?.uid}
+                      memberNames={memberNames}
                       onDelete={() => handleDelete(q.id)}
                       onEdit={() => {
                         setShowForm(false);
@@ -284,7 +246,7 @@ export default function QuestQuestionsScreen() {
           )}
         </ScrollView>
         <Snackbar message={snackMsg} opacity={snack.opacity} />
-      </KeyboardAvoidingView>
+      </View>
     </>
   );
 }
@@ -311,20 +273,87 @@ function Section({
   );
 }
 
+type QComment = {
+  id: string;
+  text: string;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: Date | null;
+};
+
 function QuestionItem({
   question,
   ownedByMe,
+  orgId,
+  userId,
+  memberNames,
   onDelete,
   onEdit,
   lang,
 }: {
   question: CommunityQuestion;
   ownedByMe: boolean;
+  orgId?: string;
+  userId?: string;
+  memberNames?: Record<string, string>;
   onDelete?: () => void;
   onEdit?: () => void;
   lang: ReturnType<typeof useLanguage>["lang"];
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [comments, setComments] = useState<QComment[]>([]);
+  const [answers, setAnswers] = useState<{ uid: string; displayName: string | null; correct: boolean }[]>([]);
+
+  useEffect(() => {
+    if (!orgId || !expanded) return;
+    const q = query(
+      collection(db, "organizations", orgId, "questQuestions", question.id, "comments"),
+      orderBy("createdAt", "asc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setComments(
+        snap.docs.map((d) => ({
+          id: d.id,
+          text: d.data().text || "",
+          createdBy: d.data().createdBy || "",
+          createdByName: d.data().createdByName || null,
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })),
+      );
+    }, () => {});
+    return unsub;
+  }, [orgId, question.id, expanded]);
+
+  // Load answer history for the question creator
+  useEffect(() => {
+    if (!orgId || !expanded || !ownedByMe) return;
+    const q = query(
+      collection(db, "organizations", orgId, "questQuestions", question.id, "answers"),
+      orderBy("answeredAt", "desc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setAnswers(
+        snap.docs.map((d) => ({
+          uid: d.data().uid || "",
+          displayName: d.data().displayName || null,
+          correct: !!d.data().correct,
+        })),
+      );
+    }, () => {});
+    return unsub;
+  }, [orgId, question.id, expanded, ownedByMe]);
+
+  async function handleDeleteComment(cid: string) {
+    if (!orgId) return;
+    try {
+      await deleteDoc(
+        doc(db, "organizations", orgId, "questQuestions", question.id, "comments", cid),
+      );
+    } catch (e) {
+      console.error("Comment delete failed:", e);
+    }
+  }
+
   return (
     <Pressable
       onPress={() => setExpanded((x) => !x)}
@@ -396,6 +425,30 @@ function QuestionItem({
         )}
       </View>
 
+      {/* Answered users — always visible for the creator */}
+      {ownedByMe && (() => {
+        const au = (question as Record<string, unknown>).answeredUsers as Record<string, boolean> | undefined;
+        const entries = au ? Object.entries(au) : [];
+        if (entries.length === 0) return null;
+        return (
+          <View style={styles.answeredRow}>
+            {entries.map(([uid, correct]) => (
+              <View key={uid} style={styles.answeredChip}>
+                <UserAvatar uid={uid} name={memberNames?.[uid] ?? null} size={18} />
+                <Text style={styles.answeredName} numberOfLines={1}>
+                  {memberNames?.[uid] || uid.slice(0, 6)}
+                </Text>
+                <Ionicons
+                  name={correct ? "checkmark-circle" : "close-circle"}
+                  size={14}
+                  color={correct ? C.correct : C.wrong}
+                />
+              </View>
+            ))}
+          </View>
+        );
+      })()}
+
       {expanded && (
         <View style={styles.qExpand}>
           {question.choices.map((c, i) => {
@@ -440,6 +493,81 @@ function QuestionItem({
           {question.failMsg && (
             <Text style={styles.qMsg}>😈 {question.failMsg}</Text>
           )}
+
+          {/* Answer history */}
+          {ownedByMe && answers.length > 0 && (
+            <View style={styles.qAnswers}>
+              <View style={styles.qCommentsHeader}>
+                <Ionicons name="people" size={14} color={C.primary} />
+                <Text style={styles.qCommentsTitle}>
+                  {t("qq_answers_title", lang)} ({answers.length})
+                </Text>
+                <View style={styles.qStatPill}>
+                  <Ionicons name="checkmark-circle" size={12} color={C.correct} />
+                  <Text style={[styles.qStatText, { color: C.correct }]}>
+                    {answers.filter((a) => a.correct).length}
+                  </Text>
+                </View>
+                <View style={styles.qStatPill}>
+                  <Ionicons name="close-circle" size={12} color={C.wrong} />
+                  <Text style={[styles.qStatText, { color: C.wrong }]}>
+                    {answers.filter((a) => !a.correct).length}
+                  </Text>
+                </View>
+              </View>
+              {answers.map((a, i) => (
+                <View key={i} style={styles.qAnswerRow}>
+                  <UserAvatar uid={a.uid} name={a.displayName} size={20} />
+                  <Text style={styles.qAnswerName} numberOfLines={1}>
+                    {a.displayName || t("notif_someone", lang)}
+                  </Text>
+                  <Ionicons
+                    name={a.correct ? "checkmark-circle" : "close-circle"}
+                    size={16}
+                    color={a.correct ? C.correct : C.wrong}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Comments */}
+          {ownedByMe && (
+            <View style={styles.qComments}>
+              <View style={styles.qCommentsHeader}>
+                <Ionicons name="chatbubble-ellipses" size={14} color={C.primary} />
+                <Text style={styles.qCommentsTitle}>
+                  {t("quest_comments_title", lang)} ({comments.length})
+                </Text>
+              </View>
+              {comments.length === 0 ? (
+                <Text style={styles.qCommentsEmpty}>
+                  {t("quest_comments_empty", lang)}
+                </Text>
+              ) : (
+                comments.map((c) => (
+                  <View key={c.id} style={styles.qCommentRow}>
+                    <UserAvatar uid={c.createdBy} name={c.createdByName} size={22} />
+                    <View style={{ flex: 1, gap: 1 }}>
+                      <Text style={styles.qCommentName} numberOfLines={1}>
+                        {c.createdByName || t("notif_someone", lang)}
+                      </Text>
+                      <Text style={styles.qCommentText}>{c.text}</Text>
+                    </View>
+                    {c.createdBy === userId && (
+                      <Pressable
+                        onPress={(e) => { e.stopPropagation(); handleDeleteComment(c.id); }}
+                        hitSlop={6}
+                        style={{ padding: 4 }}
+                      >
+                        <Ionicons name="trash-outline" size={13} color={C.wrong} />
+                      </Pressable>
+                    )}
+                  </View>
+                ))
+              )}
+            </View>
+          )}
         </View>
       )}
     </Pressable>
@@ -467,18 +595,66 @@ function NewQuestionForm({
   lang: ReturnType<typeof useLanguage>["lang"];
 }) {
   const isEdit = editing !== null;
-  const [q, setQ] = useState(editing?.q ?? "");
+
+  // Build initial translations map from existing data
+  function buildInitialTranslations(): Partial<Record<Language, QuestionTranslation>> {
+    const map: Partial<Record<Language, QuestionTranslation>> = {};
+    if (editing) {
+      // Primary language content
+      const primary = editing.language || profileLang;
+      map[primary] = {
+        q: editing.q,
+        choices: [...editing.choices],
+        successMsg: editing.successMsg,
+        failMsg: editing.failMsg,
+      };
+      // Merge any saved translations
+      if (editing.translations) {
+        for (const [l, t] of Object.entries(editing.translations)) {
+          if (t) map[l as Language] = { ...t };
+        }
+      }
+    }
+    return map;
+  }
+
+  const [translationsMap, setTranslationsMap] = useState(buildInitialTranslations);
+  const [language, setLanguage] = useState<Language>(editing?.language ?? profileLang);
+  const current = translationsMap[language];
+  const [q, setQ] = useState(current?.q ?? "");
   const [choices, setChoices] = useState<string[]>(
-    editing?.choices ?? ["", "", "", ""],
+    current?.choices ? [...current.choices] : ["", "", "", ""],
   );
   const [answer, setAnswer] = useState(editing?.answer ?? 0);
   const [ref, setRef] = useState(editing?.ref ?? "");
-  const [successMsg, setSuccessMsg] = useState(editing?.successMsg ?? "");
-  const [failMsg, setFailMsg] = useState(editing?.failMsg ?? "");
-  const [language, setLanguage] = useState<Language>(
-    editing?.language ?? profileLang,
-  );
+  const [successMsg, setSuccessMsg] = useState(current?.successMsg ?? "");
+  const [failMsg, setFailMsg] = useState(current?.failMsg ?? "");
   const [saving, setSaving] = useState(false);
+
+  function switchLanguage(next: Language) {
+    // Save current form fields to translations map
+    const hasContent = q.trim().length > 0;
+    setTranslationsMap((prev) => ({
+      ...prev,
+      ...(hasContent
+        ? {
+            [language]: {
+              q: q,
+              choices: [...choices],
+              successMsg: successMsg.trim() || null,
+              failMsg: failMsg.trim() || null,
+            },
+          }
+        : {}),
+    }));
+    // Load target language's fields
+    const target = translationsMap[next];
+    setQ(target?.q ?? "");
+    setChoices(target?.choices ? [...target.choices] : ["", "", "", ""]);
+    setSuccessMsg(target?.successMsg ?? "");
+    setFailMsg(target?.failMsg ?? "");
+    setLanguage(next);
+  }
 
   // Slide-in animation
   const opacity = useRef(new Animated.Value(0)).current;
@@ -510,6 +686,27 @@ function NewQuestionForm({
     Keyboard.dismiss();
     setSaving(true);
     try {
+      // Merge current form fields into translations map
+      const allTranslations: Record<string, Record<string, unknown>> = {};
+      const finalMap = {
+        ...translationsMap,
+        [language]: {
+          q: q.trim(),
+          choices: choices.map((c) => c.trim()),
+          successMsg: successMsg.trim() || null,
+          failMsg: failMsg.trim() || null,
+        },
+      };
+      for (const [l, t] of Object.entries(finalMap)) {
+        if (t && t.q && t.choices?.every((c: string) => c.trim())) {
+          // Strip undefined values — Firestore rejects them
+          const clean: Record<string, unknown> = { q: t.q, choices: t.choices };
+          if (t.successMsg) clean.successMsg = t.successMsg;
+          if (t.failMsg) clean.failMsg = t.failMsg;
+          allTranslations[l] = clean;
+        }
+      }
+      // Use current language's content as primary fields
       const payload = {
         q: q.trim(),
         choices: choices.map((c) => c.trim()),
@@ -518,6 +715,7 @@ function NewQuestionForm({
         successMsg: successMsg.trim() || null,
         failMsg: failMsg.trim() || null,
         language,
+        translations: allTranslations,
       };
       if (isEdit && editing) {
         // Editing — just update the existing doc; no points awarded.
@@ -544,8 +742,9 @@ function NewQuestionForm({
         );
       }
       onSaved(isEdit);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Question save failed:", e);
+      Alert.alert("Error", "Failed to save question.");
     } finally {
       setSaving(false);
     }
@@ -573,7 +772,7 @@ function NewQuestionForm({
           {(["en", "de", "vi"] as Language[]).map((l) => (
             <Pressable
               key={l}
-              onPress={() => setLanguage(l)}
+              onPress={() => switchLanguage(l)}
               style={[
                 styles.langChip,
                 language === l && styles.langChipActive,
@@ -587,6 +786,9 @@ function NewQuestionForm({
               >
                 {LANG_FLAGS[l]}  {languageLabels[l]}
               </Text>
+              {l !== language && translationsMap[l]?.q ? (
+                <Ionicons name="checkmark-circle" size={14} color={C.correct} />
+              ) : null}
             </Pressable>
           ))}
         </View>
@@ -927,6 +1129,105 @@ const styles = StyleSheet.create({
     color: C.textMuted,
     fontStyle: "italic",
     marginTop: 4,
+  },
+  qStatsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  qStatPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: "#F9F7F4",
+  },
+  qStatText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  answeredRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 4,
+  },
+  answeredChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: "#F9F7F4",
+  },
+  answeredName: {
+    fontSize: 11,
+    color: C.textMuted,
+    maxWidth: 80,
+  },
+  qAnswers: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    gap: 6,
+  },
+  qAnswerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 2,
+  },
+  qAnswerName: {
+    flex: 1,
+    fontSize: 12,
+    color: C.text,
+  },
+  qComments: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    gap: 6,
+  },
+  qCommentsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  qCommentsTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: C.primaryDark,
+  },
+  qCommentsEmpty: {
+    fontSize: 11,
+    fontStyle: "italic",
+    color: C.textMuted,
+  },
+  qCommentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#F9F7F4",
+    borderRadius: 8,
+    padding: 6,
+  },
+  qCommentName: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: C.textMuted,
+  },
+  qCommentText: {
+    fontSize: 12,
+    color: C.text,
+    lineHeight: 16,
   },
 
   // Form

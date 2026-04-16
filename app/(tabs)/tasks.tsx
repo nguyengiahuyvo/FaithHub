@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
+  Alert,
   Animated,
   Keyboard,
   Modal,
@@ -27,7 +28,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useOrg } from "@/lib/org-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import MentionInput from "@/components/MentionInput";
 import UserAvatar from "@/components/UserAvatar";
+import { notifyMentionedUsers } from "@/lib/notifications";
 import Snackbar from "@/components/Snackbar";
 import {
   arrayRemove,
@@ -127,6 +130,7 @@ export default function TasksScreen() {
         );
         setLoading(false);
       },
+      () => {},
     );
     return unsub;
   }, [org]);
@@ -152,7 +156,7 @@ export default function TasksScreen() {
         })),
       );
       setLoadingVotes(false);
-    });
+    }, () => {});
     return unsub;
   }, [org]);
 
@@ -458,8 +462,9 @@ function CreateVoteModal({
       setDeadline(null);
       setShowDatePicker(false);
       onDismiss();
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Task save failed:", e);
+      Alert.alert("Error", "Failed to save task.");
     } finally {
       setSaving(false);
     }
@@ -811,7 +816,7 @@ function TaskCard({
     );
     const unsub = onSnapshot(commentsRef, (snap) => {
       setCommentCount(snap.size);
-    });
+    }, () => {});
     return unsub;
   }, [orgId, task.id]);
 
@@ -832,7 +837,7 @@ function TaskCard({
           createdAt: d.data().createdAt?.toDate?.() || null,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [showComments, orgId, task.id]);
 
@@ -850,28 +855,37 @@ function TaskCard({
           deleteCommentTarget,
         ),
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Comment delete failed:", e);
     }
     setDeleteCommentTarget(null);
   }
 
   async function handleSendComment() {
     if (!commentText.trim() || !user) return;
+    const body = commentText.trim();
     setSending(true);
     try {
       await addDoc(
         collection(db, "organizations", orgId, "tasks", task.id, "comments"),
         {
-          text: commentText.trim(),
+          text: body,
           createdBy: user.uid,
           createdByName: user.displayName,
           createdAt: serverTimestamp(),
         },
       );
       setCommentText("");
-    } catch {
-      // ignore
+      notifyMentionedUsers({
+        orgId,
+        senderUid: user.uid,
+        senderName: user.displayName,
+        text: body,
+        screen: "tasks",
+      });
+    } catch (e) {
+      console.error("Comment post failed:", e);
+      Alert.alert("Error", "Failed to post comment.");
     } finally {
       setSending(false);
     }
@@ -1101,7 +1115,8 @@ function TaskCard({
 
           {/* Comment input */}
           <View style={commentStyles.inputRow}>
-            <TextInput
+            <MentionInput
+              orgId={orgId}
               value={commentText}
               onChangeText={setCommentText}
               placeholder={t("tasks_add_comment", lang)}
@@ -1154,7 +1169,7 @@ function VoteCard({
 
   useEffect(() => {
     const ref = collection(db, "organizations", orgId, "votes", vote.id, "comments");
-    const unsub = onSnapshot(ref, (snap) => setCommentCount(snap.size));
+    const unsub = onSnapshot(ref, (snap) => setCommentCount(snap.size), () => {});
     return unsub;
   }, [orgId, vote.id]);
 
@@ -1174,7 +1189,7 @@ function VoteCard({
           createdAt: d.data().createdAt?.toDate?.() || null,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [showComments, orgId, vote.id]);
 
@@ -1186,20 +1201,29 @@ function VoteCard({
 
   async function handleSendComment() {
     if (!commentText.trim() || !user) return;
+    const body = commentText.trim();
     setSending(true);
     try {
       await addDoc(
         collection(db, "organizations", orgId, "votes", vote.id, "comments"),
         {
-          text: commentText.trim(),
+          text: body,
           createdBy: user.uid,
           createdByName: user.displayName,
           createdAt: serverTimestamp(),
         },
       );
       setCommentText("");
-    } catch {
-      // ignore
+      notifyMentionedUsers({
+        orgId,
+        senderUid: user.uid,
+        senderName: user.displayName,
+        text: body,
+        screen: "tasks",
+      });
+    } catch (e) {
+      console.error("Comment post failed:", e);
+      Alert.alert("Error", "Failed to post comment.");
     } finally {
       setSending(false);
     }
@@ -1356,7 +1380,8 @@ function VoteCard({
 
           {/* Comment input */}
           <View style={commentStyles.inputRow}>
-            <TextInput
+            <MentionInput
+              orgId={orgId}
               value={commentText}
               onChangeText={setCommentText}
               placeholder={t("vote_add_comment", lang)}

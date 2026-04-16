@@ -1,8 +1,9 @@
+import MentionInput from "@/components/MentionInput";
 import UserAvatar from "@/components/UserAvatar";
 import Snackbar from "@/components/Snackbar";
 import TasksScreen from "./tasks";
 import { useAuth } from "@/lib/auth-context";
-import { notifyOrgOfNewEvent } from "@/lib/notifications";
+import { notifyMentionedUsers, notifyOrgOfNewEvent } from "@/lib/notifications";
 import { db } from "@/lib/firebase";
 import { t, tArray } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
@@ -23,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
+  Alert,
   Animated,
   Keyboard,
   Modal,
@@ -192,6 +194,7 @@ function CalendarEventsView() {
         );
         setLoading(false);
       },
+      () => {},
     );
     return unsub;
   }, [org]);
@@ -540,7 +543,7 @@ function EventCard({
     );
     const unsub = onSnapshot(commentsRef, (snap) => {
       setCommentCount(snap.size);
-    });
+    }, () => {});
     return unsub;
   }, [orgId, ev.id]);
 
@@ -561,7 +564,7 @@ function EventCard({
           createdAt: d.data().createdAt?.toDate?.() || null,
         })),
       );
-    });
+    }, () => {});
     return unsub;
   }, [showComments, orgId, ev.id]);
 
@@ -579,28 +582,37 @@ function EventCard({
           deleteCommentTarget,
         ),
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Comment delete failed:", e);
     }
     setDeleteCommentTarget(null);
   }
 
   async function handleSendComment() {
     if (!commentText.trim() || !user) return;
+    const body = commentText.trim();
     setSending(true);
     try {
       await addDoc(
         collection(db, "organizations", orgId, "events", ev.id, "comments"),
         {
-          text: commentText.trim(),
+          text: body,
           createdBy: user.uid,
           createdByName: user.displayName,
           createdAt: serverTimestamp(),
         },
       );
       setCommentText("");
-    } catch {
-      // ignore
+      notifyMentionedUsers({
+        orgId,
+        senderUid: user.uid,
+        senderName: user.displayName,
+        text: body,
+        screen: "calendar",
+      });
+    } catch (e) {
+      console.error("Comment post failed:", e);
+      Alert.alert("Error", "Failed to post comment.");
     } finally {
       setSending(false);
     }
@@ -801,7 +813,8 @@ function EventCard({
 
           {/* Comment input */}
           <View style={commentStyles.inputRow}>
-            <TextInput
+            <MentionInput
+              orgId={orgId}
               value={commentText}
               onChangeText={setCommentText}
               placeholder={t("cal_add_comment", lang)}
@@ -1042,6 +1055,7 @@ function CreateEventModal({
           eventId: evRef.id,
           screen: "calendar",
         },
+        notifType: "events",
       });
 
       setTitle("");
@@ -1050,8 +1064,9 @@ function CreateEventModal({
       setIsBirthday(false);
       setRepeat("none");
       onDismiss();
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Event save failed:", e);
+      Alert.alert("Error", "Failed to save event.");
     } finally {
       setSaving(false);
     }

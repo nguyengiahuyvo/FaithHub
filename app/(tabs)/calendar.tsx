@@ -1043,6 +1043,7 @@ function CreateEventModal({
           eventId: evRef.id,
           screen: "calendar",
         },
+        notifType: "events",
       });
 
       setTitle("");

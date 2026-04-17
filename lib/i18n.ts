@@ -1177,6 +1177,21 @@ const translations = {
     de: "Fragen",
     vi: "Câu hỏi",
   },
+  game_revision: {
+    en: "Revision",
+    de: "Wiederholung",
+    vi: "Ôn tập",
+  },
+  game_quit_revision_msg: {
+    en: "Do you want to quit this revision round?",
+    de: "Möchtest du diese Wiederholungsrunde beenden?",
+    vi: "Bạn muốn thoát vòng ôn tập này?",
+  },
+  game_quit_revision_yes: {
+    en: "Quit",
+    de: "Beenden",
+    vi: "Thoát",
+  },
   game_play_cost: {
     en: "Override cost",
     de: "Kosten für Freischaltung",

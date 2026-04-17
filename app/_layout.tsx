@@ -6,21 +6,20 @@ import {
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import {ActivityIndicator,
+import {
   Animated,
   Linking,
   Modal,
   Platform,
   StyleSheet,
   Text,
-  TextInput,
-  View,} from "react-native";
+  View,
+} from "react-native";
 import { Pressable } from "@/components/HapticPressable";
 import "react-native-reanimated";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
-import { updateProfile } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
@@ -108,174 +107,6 @@ const splashStyles = StyleSheet.create({
     color: "#8A8F84",
     fontSize: 16,
     fontWeight: "500",
-  },
-});
-
-function AppleNamePrompt({
-  visible,
-  onSave,
-  onSkip,
-  loading,
-  lang,
-}: {
-  visible: boolean;
-  onSave: (name: string) => void;
-  onSkip: () => void;
-  loading: boolean;
-  lang: Language;
-}) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.9)).current;
-  const [name, setName] = useState("");
-
-  useEffect(() => {
-    if (visible) {
-      setName("");
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          damping: 20,
-          stiffness: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible, opacity, scale]);
-
-  if (!visible) return null;
-
-  return (
-    <Modal transparent visible animationType="none">
-      <Animated.View style={[promptStyles.backdrop, { opacity }]}>
-        <Animated.View
-          style={[promptStyles.card, { opacity, transform: [{ scale }] }]}
-        >
-          <View style={promptStyles.iconCircle}>
-            <Ionicons name="person-add-outline" size={32} color="#5B7553" />
-          </View>
-
-          <Text style={promptStyles.title}>
-            {t("apple_name_prompt_title", lang)}
-          </Text>
-          <Text style={promptStyles.message}>
-            {t("apple_name_prompt_msg", lang)}
-          </Text>
-
-          <TextInput
-            style={promptStyles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder={t("profile_edit_name_placeholder", lang)}
-            placeholderTextColor="#D1D5DB"
-            autoCapitalize="words"
-            autoFocus
-          />
-
-          <Pressable
-            onPress={() => onSave(name.trim())}
-            disabled={!name.trim() || loading}
-            style={[
-              promptStyles.saveButton,
-              (!name.trim() || loading) && { opacity: 0.5 },
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={promptStyles.saveButtonText}>
-                {t("save", lang)}
-              </Text>
-            )}
-          </Pressable>
-
-          <Pressable onPress={onSkip} disabled={loading} style={promptStyles.skipButton}>
-            <Text style={promptStyles.skipButtonText}>
-              {t("apple_name_prompt_skip", lang)}
-            </Text>
-          </Pressable>
-        </Animated.View>
-      </Animated.View>
-    </Modal>
-  );
-}
-
-const promptStyles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 340,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 28,
-    alignItems: "center",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#F0FDF4",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  title: {
-    color: "#1F2A1F",
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  message: {
-    color: "#5C625C",
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
-  },
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: "#1F2A1F",
-  },
-  saveButton: {
-    width: "100%",
-    alignItems: "center",
-    backgroundColor: "#5B7553",
-    borderRadius: 16,
-    paddingVertical: 14,
-    marginTop: 4,
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  skipButton: {
-    paddingVertical: 8,
-  },
-  skipButtonText: {
-    color: "#8A8F84",
-    fontSize: 14,
   },
 });
 
@@ -409,13 +240,10 @@ const updateStyles = StyleSheet.create({
 });
 
 function RootNavigator() {
-  const { user, isLoading, refreshUser } = useAuth();
+  const { user, isLoading } = useAuth();
   const { lang } = useLanguage();
   const segments = useSegments();
   const router = useRouter();
-  const [showNamePrompt, setShowNamePrompt] = useState(false);
-  const [savingName, setSavingName] = useState(false);
-  const checkedRef = useRef(false);
   const [showUpdate, setShowUpdate] = useState(false);
   const storeLinksRef = useRef({ ios: "", android: "" });
 
@@ -468,39 +296,6 @@ function RootNavigator() {
     }
   }, [user, isLoading, segments]);
 
-  // Check if Apple user needs to set display name (once per session)
-  useEffect(() => {
-    if (isLoading || !user || !user.emailVerified || checkedRef.current) return;
-    checkedRef.current = true;
-
-    if (user.displayName) return;
-
-    getDoc(doc(db, "users", user.uid)).then((snap) => {
-      if (snap.exists() && snap.data().authProvider === "apple.com") {
-        setShowNamePrompt(true);
-      }
-    });
-  }, [isLoading, user]);
-
-  async function handleSaveName(name: string) {
-    if (!user) return;
-    setSavingName(true);
-    try {
-      await updateProfile(user, { displayName: name });
-      await setDoc(doc(db, "users", user.uid), { displayName: name }, { merge: true });
-      await refreshUser();
-      setShowNamePrompt(false);
-    } catch (e) {
-      console.error("Failed to set display name:", e);
-    } finally {
-      setSavingName(false);
-    }
-  }
-
-  function handleSkipName() {
-    setShowNamePrompt(false);
-  }
-
   function handleUpdate() {
     const link =
       Platform.OS === "ios"
@@ -526,13 +321,6 @@ function RootNavigator() {
           options={{ presentation: "modal", headerShown: false }}
         />
       </Stack>
-      <AppleNamePrompt
-        visible={showNamePrompt}
-        onSave={handleSaveName}
-        onSkip={handleSkipName}
-        loading={savingName}
-        lang={lang}
-      />
       <UpdateModal
         visible={showUpdate}
         onUpdate={handleUpdate}

@@ -47,13 +47,12 @@ import {
 
 // ===== Game constants =====
 const QUESTIONS_PER_ROUND = 10;
-const TIME_PER_QUESTION_MS = 15000;
+const TIME_PER_QUESTION_MS = 20000;
 // Scoring — all balances are in Shekel, the in-game currency:
 //   +5 Shekel per correct answer
 //   +2 Shekel per question authored
 //   -10 Shekel cost to start a round
 const POINTS_PER_CORRECT = 5;
-const POINTS_PER_QUESTION_CREATED = 2;
 const PLAY_COST_SHEKEL = 10;
 const STARTING_HEARTS = 3;
 
@@ -180,6 +179,7 @@ export default function GameScreen() {
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>("idle");
+  const [revisionMode, setRevisionMode] = useState(false);
   const [round, setRound] = useState<Question[]>([]);
   const [qIndex, setQIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -348,6 +348,7 @@ export default function GameScreen() {
                 failMsg: data.failMsg || undefined,
                 language: (data.language as Language) || undefined,
                 translations: data.translations || undefined,
+                answeredUsers: (data.answeredUsers as Record<string, boolean>) || undefined,
                 createdBy: data.createdBy || "",
                 createdByName: data.createdByName || null,
               };
@@ -373,10 +374,35 @@ export default function GameScreen() {
   // Playing is normally free. `override=true` means the player chose to
   // pay the Shekel fee to bypass a cooldown or daily-limit block and start
   // an extra round right now.
+  function startRevision() {
+    const revisable = community.filter((c) => {
+      if (user && c.createdBy === user.uid) return false;
+      // Only questions the user answered correctly
+      if (!user || !c.answeredUsers?.[user.uid]) return false;
+      return true;
+    });
+    if (revisable.length === 0) return;
+    setRevisionMode(true);
+    setRound(buildRound(revisable));
+    setQIndex(0);
+    setScore(0);
+    setStreak(0);
+    setBestStreak(0);
+    setCorrectCount(0);
+    setHearts(STARTING_HEARTS);
+    heartsRef.current = STARTING_HEARTS;
+    setSelected(null);
+    setLocked(false);
+    setRoundFailed(false);
+    setMode("playing");
+  }
+
   async function startGame(override: boolean = false) {
     // Pool check always applies — there has to be something to play.
+    // Exclude own questions and questions already answered correctly.
     const eligible = community.filter((c) => {
       if (user && c.createdBy === user.uid) return false;
+      if (user && c.answeredUsers?.[user.uid] === true) return false;
       return true;
     });
     if (eligible.length === 0) return;
@@ -416,6 +442,7 @@ export default function GameScreen() {
     const next = await bumpPlaysToday();
     setPlaysToday(next);
 
+    setRevisionMode(false);
     setRound(buildRound(eligible));
     setQIndex(0);
     setScore(0);
@@ -423,6 +450,7 @@ export default function GameScreen() {
     setBestStreak(0);
     setCorrectCount(0);
     setHearts(STARTING_HEARTS);
+    heartsRef.current = STARTING_HEARTS;
     setSelected(null);
     setLocked(false);
     setRoundFailed(false);
@@ -449,7 +477,8 @@ export default function GameScreen() {
     setRoundFailed(failed);
 
     // Persist the round's points to the leaderboard (or local fallback).
-    if (roundScore > 0) {
+    // Revision mode earns no Shekel.
+    if (roundScore > 0 && !revisionMode) {
       if (org && user) {
         await addToLeaderboard(
           org.orgId,
@@ -479,14 +508,27 @@ export default function GameScreen() {
   function recordAnswerStat(questionId: string | undefined, correct: boolean) {
     if (!questionId || !org || !user) return;
     const field = correct ? "correctCount" : "wrongCount";
-    const ref = doc(db, "organizations", org.orgId, "questQuestions", questionId);
+    const ref = doc(
+      db,
+      "organizations",
+      org.orgId,
+      "questQuestions",
+      questionId,
+    );
     updateDoc(ref, {
       [field]: increment(1),
       [`answeredUsers.${user.uid}`]: correct,
     }).catch((e) => console.error("Answer stat update failed:", e));
     // Store individual answer record
     addDoc(
-      collection(db, "organizations", org.orgId, "questQuestions", questionId, "answers"),
+      collection(
+        db,
+        "organizations",
+        org.orgId,
+        "questQuestions",
+        questionId,
+        "answers",
+      ),
       {
         uid: user.uid,
         displayName: user.displayName ?? null,
@@ -573,9 +615,17 @@ export default function GameScreen() {
           eligibleCount={
             community.filter((c) => {
               if (user && c.createdBy === user.uid) return false;
+              if (user && c.answeredUsers?.[user.uid] === true) return false;
               return true;
             }).length
           }
+          revisionCount={
+            community.filter((c) => {
+              if (!user || c.createdBy === user.uid) return false;
+              return c.answeredUsers?.[user.uid] === true;
+            }).length
+          }
+          onRevision={startRevision}
           playCost={PLAY_COST_SHEKEL}
           myCount={
             user ? community.filter((c) => c.createdBy === user.uid).length : 0
@@ -683,10 +733,10 @@ export default function GameScreen() {
       <ConfirmDialog
         visible={showQuitConfirm}
         title={t("game_quit_confirm_title", lang)}
-        message={t("game_quit_confirm_msg", lang)}
-        confirmText={t("game_quit_confirm_yes", lang)}
+        message={revisionMode ? t("game_quit_revision_msg", lang) : t("game_quit_confirm_msg", lang)}
+        confirmText={revisionMode ? t("game_quit_revision_yes", lang) : t("game_quit_confirm_yes", lang)}
         cancelText={t("game_quit_confirm_no", lang)}
-        tone="danger"
+        tone={revisionMode ? "accent" : "danger"}
         onCancel={() => setShowQuitConfirm(false)}
         onConfirm={() => {
           setShowQuitConfirm(false);
@@ -780,6 +830,8 @@ function StartView({
   onPayToPlayNow,
   onShowHelp,
   onManageQuestions,
+  revisionCount,
+  onRevision,
   hasOrg,
   communityCount,
   eligibleCount,
@@ -801,6 +853,8 @@ function StartView({
   onPayToPlayNow: () => void;
   onShowHelp: () => void;
   onManageQuestions: () => void;
+  revisionCount: number;
+  onRevision: () => void;
   hasOrg: boolean;
   communityCount: number;
   eligibleCount: number;
@@ -873,7 +927,12 @@ function StartView({
 
         {/* Community chat */}
         {hasOrg && orgId && currentUid && (
-          <QuestChat orgId={orgId} userId={currentUid} userName={currentUserName} lang={lang} />
+          <QuestChat
+            orgId={orgId}
+            userId={currentUid}
+            userName={currentUserName}
+            lang={lang}
+          />
         )}
 
         {/* Cooldown / daily-limit / no-questions notice */}
@@ -942,7 +1001,7 @@ function StartView({
 
         <View style={styles.statsGrid}>
           <StatCard
-            icon="trophy"
+            icon="cash-outline"
             iconColor={C.gold}
             label={t("game_total_score", lang)}
             value={String(totalScore)}
@@ -1077,7 +1136,6 @@ function StartView({
             </View>
           )}
         </View>
-
       </ScrollView>
 
       {/* Bottom-docked action group: Play + Create question + Help */}
@@ -1115,6 +1173,16 @@ function StartView({
         >
           <Ionicons name="add" size={22} color={C.primary} />
         </Pressable>
+        {revisionCount > 0 && (
+          <Pressable
+            onPress={onRevision}
+            style={styles.helpBtn}
+            accessibilityLabel={t("game_revision", lang)}
+            hitSlop={6}
+          >
+            <Ionicons name="refresh" size={22} color={C.accent} />
+          </Pressable>
+        )}
         <Pressable
           onPress={onShowHelp}
           style={styles.helpBtn}
@@ -1715,8 +1783,8 @@ function DoneView({
             value={String(bestStreak)}
           />
           <StatCard
-            icon="trophy"
-            iconColor={C.accent}
+            icon="logo-usd"
+            iconColor={C.gold}
             label={t("game_total_score", lang)}
             value={String(totalScore)}
           />
@@ -2098,17 +2166,21 @@ function QuestChat({
       collection(db, "organizations", orgId, "questChat"),
       orderBy("createdAt", "desc"),
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setMessages(
-        snap.docs.slice(0, 30).map((d) => ({
-          id: d.id,
-          text: d.data().text || "",
-          createdBy: d.data().createdBy || "",
-          createdByName: d.data().createdByName || null,
-          createdAt: d.data().createdAt?.toDate?.() || null,
-        })),
-      );
-    }, () => {});
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setMessages(
+          snap.docs.slice(0, 30).map((d) => ({
+            id: d.id,
+            text: d.data().text || "",
+            createdBy: d.data().createdBy || "",
+            createdByName: d.data().createdByName || null,
+            createdAt: d.data().createdAt?.toDate?.() || null,
+          })),
+        );
+      },
+      () => {},
+    );
     return unsub;
   }, [orgId]);
 
@@ -2173,7 +2245,11 @@ function QuestChat({
                 <Text style={commentStyles.text}>{m.text}</Text>
               </View>
               {m.createdBy === userId && (
-                <Pressable onPress={() => handleDelete(m.id)} hitSlop={6} style={{ padding: 4 }}>
+                <Pressable
+                  onPress={() => handleDelete(m.id)}
+                  hitSlop={6}
+                  style={{ padding: 4 }}
+                >
                   <Ionicons name="trash-outline" size={14} color={C.wrong} />
                 </Pressable>
               )}
@@ -2196,7 +2272,10 @@ function QuestChat({
         <Pressable
           onPress={handleSend}
           disabled={!text.trim() || sending}
-          style={[commentStyles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}
+          style={[
+            commentStyles.sendBtn,
+            (!text.trim() || sending) && { opacity: 0.5 },
+          ]}
         >
           {sending ? (
             <ActivityIndicator color="#FFFFFF" size="small" />

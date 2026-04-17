@@ -1,0 +1,98 @@
+{
+    {
+        "q": "Đức Chúa Trời dựng nên mặt trời vào ngày thứ mấy trong tuần lễ sáng tạo?",
+        "choices": [
+            "Ngày thứ nhất",
+            "Ngày thứ hai",
+            "Ngày thứ ba",
+            "Ngày thứ tư"
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời dựng nên mặt trời vào ngày thứ mấy trong tuần lễ sáng tạo?",
+                "choices": [
+                    "Ngày thứ nhất",
+                    "Ngày thứ hai",
+                    "Ngày thứ ba",
+                    "Ngày thứ tư"
+                ],
+                "successMsg": "Giỏi quá ta! Không phải ai cũng biết đâu nhé 🌞",
+                "failMsg": "Vậy mà bạn lại chọn sai 😅 Mặt trời được tạo ra vào ngày thứ tư đấy!",
+            },
+            "de": {
+                "q": "An welchem Tag der Schöpfungswoche hat Gott die Sonne erschaffen?",
+                "choices": [
+                    "Erster Tag",
+                    "Zweiter Tag",
+                    "Dritter Tag",
+                    "Vierter Tag"
+                ],
+                "successMsg": "Gut gemacht! Nicht jeder weiß das 🌞",
+                "failMsg": "Leider falsch 😅 Die Sonne wurde am vierten Tag erschaffen!",
+            },
+            "en": {
+                "q": "On which day of the creation week did God create the sun?",
+                "choices": [
+                    "First Day",
+                    "Second Day",
+                    "Third Day",
+                    "Fourth Day"
+                ],
+                "successMsg": "Well done! Not everyone knows this 🌞",
+                "failMsg": "Oops 😅 The sun was created on the fourth day!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-16T17:46:22.764Z"
+    },
+    {
+        "q": "",
+        "choices": [
+            "",
+            "",
+            "",
+            ""
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "",
+                "choices": [
+                    "",
+                    "",
+                    "",
+                    ""
+                ],
+                "successMsg": "",
+                "failMsg": ""
+            },
+            "de": {
+                "q": "",
+                "choices": [
+                    "",
+                    "",
+                    "",
+                    ""
+                ],
+                "successMsg": "",
+                "failMsg": ""
+            },
+            "en": {
+                "q": "",
+                "choices": [
+                    "",
+                    "",
+                    "",
+                    ""
+                ],
+                "successMsg": "",
+                "failMsg": ""
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-16T17:46:22.764Z"
+    }
+}

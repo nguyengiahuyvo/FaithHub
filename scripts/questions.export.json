@@ -1,0 +1,319 @@
+[
+  {
+    "answer": 1,
+    "ref": null,
+    "createdBy": "7uP3UAhK9ac1ohVaWAMgekUquyH2",
+    "createdByName": "Jan Maximiliano",
+    "createdAt": "2026-04-13T14:32:26.265Z",
+    "translations": {
+      "de": {
+        "q": "Wer taufte Jesus?",
+        "choices": [
+          "Petrus",
+          "Johannes der Täufer",
+          "Paulus",
+          "Jakobus"
+        ],
+        "successMsg": "Richtig! Weiter so!",
+        "failMsg": "Oh man! Das kann nicht wahr sein oder?"
+      },
+      "en": {
+        "q": "english (a)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      },
+      "vi": {
+        "q": "tieng viet",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      }
+    },
+    "q": "Wer taufte Jesus?",
+    "failMsg": "Oh man! Das kann nicht wahr sein oder?",
+    "language": "de",
+    "successMsg": "Richtig! Weiter so!",
+    "choices": [
+      "Petrus",
+      "Johannes der Täufer",
+      "Paulus",
+      "Jakobus"
+    ],
+    "updatedAt": "2026-04-16T16:55:16.264Z",
+    "answeredUsers": {
+      "OAtnDtxzD0WJXDPQharN2JI6jvD3": false
+    },
+    "wrongCount": 1
+  },
+  {
+    "answer": 0,
+    "ref": "1. Könige 6",
+    "createdBy": "7uP3UAhK9ac1ohVaWAMgekUquyH2",
+    "createdByName": "Jan Maximiliano",
+    "createdAt": "2026-04-13T15:09:48.145Z",
+    "translations": {
+      "vi": {
+        "q": "tieng viet (a)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      },
+      "de": {
+        "q": "Wer baute den Tempel in Jerusalem?",
+        "choices": [
+          "David",
+          "Salomo",
+          "Saul",
+          "Mose"
+        ],
+        "successMsg": "Stark! Salamo war der Bau-CEO",
+        "failMsg": "Bro…"
+      },
+      "en": {
+        "q": "english a",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      }
+    },
+    "q": "Wer baute den Tempel in Jerusalem?",
+    "failMsg": "Bro…",
+    "language": "de",
+    "successMsg": "Stark! Salamo war der Bau-CEO",
+    "choices": [
+      "David",
+      "Salomo",
+      "Saul",
+      "Mose"
+    ],
+    "updatedAt": "2026-04-16T16:54:34.574Z",
+    "correctCount": 1,
+    "answeredUsers": {
+      "OAtnDtxzD0WJXDPQharN2JI6jvD3": true
+    }
+  },
+  {
+    "answer": 2,
+    "ref": "Daniel 3",
+    "createdBy": "7uP3UAhK9ac1ohVaWAMgekUquyH2",
+    "createdByName": "Jan Maximiliano",
+    "createdAt": "2026-04-13T15:12:04.631Z",
+    "translations": {
+      "de": {
+        "q": "Wer wurde in einen Feuerofen geworfen, überlebte aber?",
+        "choices": [
+          "Daniel",
+          "Elia",
+          "Schadrach, Meschach und Abed-Nego",
+          "Mose"
+        ],
+        "successMsg": "Heiß geraten, aber daneben!!!",
+        "failMsg": "Ich bin stolz uaf dich"
+      },
+      "vi": {
+        "q": "tieng viet (c)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      },
+      "en": {
+        "q": "english (c)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      }
+    },
+    "q": "Wer wurde in einen Feuerofen geworfen, überlebte aber?",
+    "failMsg": "Ich bin stolz uaf dich",
+    "language": "de",
+    "successMsg": "Heiß geraten, aber daneben!!!",
+    "choices": [
+      "Daniel",
+      "Elia",
+      "Schadrach, Meschach und Abed-Nego",
+      "Mose"
+    ],
+    "updatedAt": "2026-04-16T16:53:54.755Z",
+    "correctCount": 1,
+    "answeredUsers": {
+      "OAtnDtxzD0WJXDPQharN2JI6jvD3": true
+    }
+  },
+  {
+    "ref": null,
+    "createdBy": "OAtnDtxzD0WJXDPQharN2JI6jvD3",
+    "createdByName": "Gia Huy Nguyen",
+    "createdAt": "2026-04-13T15:58:07.109Z",
+    "answer": 0,
+    "translations": {
+      "en": {
+        "q": "english (a)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "successMsg": "correct",
+        "failMsg": "false"
+      },
+      "vi": {
+        "q": "Ai là người đầu tiên được Chúa tạo dựng?",
+        "choices": [
+          "Nô-ê",
+          "A-đam",
+          "Áp-ra-ham",
+          "Môi-se"
+        ],
+        "successMsg": "Chuẩn không cần chỉnh! Người đầu tiên luôn 💯",
+        "failMsg": "Trời ơi câu này mà sai nữa thì chịu luôn 😭"
+      },
+      "de": {
+        "q": "deutsch (a)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "successMsg": "ja",
+        "failMsg": "nein"
+      }
+    },
+    "q": "Ai là người đầu tiên được Chúa tạo dựng?",
+    "failMsg": "Trời ơi câu này mà sai nữa thì chịu luôn 😭",
+    "language": "vi",
+    "successMsg": "Chuẩn không cần chỉnh! Người đầu tiên luôn 💯",
+    "choices": [
+      "Nô-ê",
+      "A-đam",
+      "Áp-ra-ham",
+      "Môi-se"
+    ],
+    "updatedAt": "2026-04-16T16:47:06.985Z"
+  },
+  {
+    "answer": 1,
+    "ref": "1 Sa-mu-ên 17",
+    "createdBy": "OAtnDtxzD0WJXDPQharN2JI6jvD3",
+    "createdByName": "Gia Huy Nguyen",
+    "createdAt": "2026-04-13T15:59:39.291Z",
+    "translations": {
+      "de": {
+        "q": "deutsch (b)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "successMsg": "korrekt deutsch",
+        "failMsg": "fail deutsch"
+      },
+      "en": {
+        "q": "english (b)",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "successMsg": "correct",
+        "failMsg": "false"
+      },
+      "vi": {
+        "q": "Ai đã giết người khổng lồ Gô-li-át?",
+        "choices": [
+          "Sau-lơ",
+          "Đa-vít",
+          "Sa-mu-ên",
+          "Sa-lô-môn"
+        ],
+        "successMsg": "Quá chuẩn! Đa-vít ném đá đỉnh cao 🎯",
+        "failMsg": "Người nhỏ mà làm chuyện lớn, mà bạn lại chọn sai 😅"
+      }
+    },
+    "q": "Ai đã giết người khổng lồ Gô-li-át?",
+    "failMsg": "Người nhỏ mà làm chuyện lớn, mà bạn lại chọn sai 😅",
+    "language": "vi",
+    "successMsg": "Quá chuẩn! Đa-vít ném đá đỉnh cao 🎯",
+    "choices": [
+      "Sau-lơ",
+      "Đa-vít",
+      "Sa-mu-ên",
+      "Sa-lô-môn"
+    ],
+    "updatedAt": "2026-04-16T16:47:01.308Z"
+  },
+  {
+    "q": "test a",
+    "choices": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "answer": 0,
+    "ref": null,
+    "successMsg": "aa",
+    "failMsg": "bb",
+    "language": "en",
+    "translations": {
+      "vi": {
+        "q": "test b",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "successMsg": "aa",
+        "failMsg": "bb"
+      },
+      "de": {
+        "q": "test d",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "successMsg": "aa",
+        "failMsg": "bb"
+      },
+      "en": {
+        "q": "test a",
+        "choices": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "successMsg": "aa",
+        "failMsg": "bb"
+      }
+    },
+    "createdBy": "OAtnDtxzD0WJXDPQharN2JI6jvD3",
+    "createdByName": "Gia Huy Nguyen",
+    "createdAt": "2026-04-16T17:46:22.764Z"
+  }
+]

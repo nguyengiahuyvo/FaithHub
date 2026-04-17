@@ -1,0 +1,722 @@
+[
+    {
+        "q": "What is the default testing framework provided by Apple for iOS applications?",
+        "choices": [
+            "JUnit",
+            "XCTest",
+            "Mocha",
+            "Jasmine"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Framework kiểm thử mặc định mà Apple cung cấp cho ứng dụng iOS là gì?",
+                "choices": [
+                    "JUnit",
+                    "XCTest",
+                    "Mocha",
+                    "Jasmine"
+                ],
+                "successMsg": "Chính xác! XCTest là framework chuẩn cho iOS 🎯",
+                "failMsg": "Sai rồi 😅 XCTest mới là câu trả lời đúng!"
+            },
+            "de": {
+                "q": "Welches ist das Standard-Test-Framework von Apple für iOS-Anwendungen?",
+                "choices": [
+                    "JUnit",
+                    "XCTest",
+                    "Mocha",
+                    "Jasmine"
+                ],
+                "successMsg": "Richtig! XCTest ist das Standard-Framework für iOS 🎯",
+                "failMsg": "Leider falsch 😅 Die richtige Antwort ist XCTest!"
+            },
+            "en": {
+                "q": "What is the default testing framework provided by Apple for iOS applications?",
+                "choices": [
+                    "JUnit",
+                    "XCTest",
+                    "Mocha",
+                    "Jasmine"
+                ],
+                "successMsg": "Correct! XCTest is the standard framework for iOS 🎯",
+                "failMsg": "Oops 😅 The correct answer is XCTest!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which Xcode keyboard shortcut runs all tests in a project?",
+        "choices": [
+            "Cmd + R",
+            "Cmd + B",
+            "Cmd + U",
+            "Cmd + T"
+        ],
+        "answer": 2,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Phím tắt nào trong Xcode dùng để chạy toàn bộ test của dự án?",
+                "choices": [
+                    "Cmd + R",
+                    "Cmd + B",
+                    "Cmd + U",
+                    "Cmd + T"
+                ],
+                "successMsg": "Đúng rồi! Cmd + U là phím tắt chạy test 🚀",
+                "failMsg": "Chưa đúng 😅 Phím tắt chính xác là Cmd + U!"
+            },
+            "de": {
+                "q": "Mit welchem Xcode-Tastaturkürzel werden alle Tests eines Projekts ausgeführt?",
+                "choices": [
+                    "Cmd + R",
+                    "Cmd + B",
+                    "Cmd + U",
+                    "Cmd + T"
+                ],
+                "successMsg": "Richtig! Cmd + U startet alle Tests 🚀",
+                "failMsg": "Leider falsch 😅 Das richtige Kürzel ist Cmd + U!"
+            },
+            "en": {
+                "q": "Which Xcode keyboard shortcut runs all tests in a project?",
+                "choices": [
+                    "Cmd + R",
+                    "Cmd + B",
+                    "Cmd + U",
+                    "Cmd + T"
+                ],
+                "successMsg": "Correct! Cmd + U runs all tests 🚀",
+                "failMsg": "Oops 😅 The right shortcut is Cmd + U!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "What is the purpose of the setUp() method in XCTestCase?",
+        "choices": [
+            "To run after all tests finish",
+            "To initialize state before each test",
+            "To delete the test target",
+            "To generate a code coverage report"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Phương thức setUp() trong XCTestCase dùng để làm gì?",
+                "choices": [
+                    "Chạy sau khi tất cả test kết thúc",
+                    "Khởi tạo trạng thái trước mỗi test",
+                    "Xóa test target",
+                    "Tạo báo cáo code coverage"
+                ],
+                "successMsg": "Chuẩn luôn! setUp() giúp chuẩn bị dữ liệu cho mỗi test ✅",
+                "failMsg": "Chưa đúng 😅 setUp() được gọi trước mỗi test để khởi tạo trạng thái!"
+            },
+            "de": {
+                "q": "Wozu dient die Methode setUp() in XCTestCase?",
+                "choices": [
+                    "Sie läuft nach allen Tests",
+                    "Sie initialisiert den Zustand vor jedem Test",
+                    "Sie löscht das Test-Target",
+                    "Sie erstellt einen Coverage-Bericht"
+                ],
+                "successMsg": "Richtig! setUp() bereitet jeden Test vor ✅",
+                "failMsg": "Leider falsch 😅 setUp() wird vor jedem Test aufgerufen!"
+            },
+            "en": {
+                "q": "What is the purpose of the setUp() method in XCTestCase?",
+                "choices": [
+                    "To run after all tests finish",
+                    "To initialize state before each test",
+                    "To delete the test target",
+                    "To generate a code coverage report"
+                ],
+                "successMsg": "Correct! setUp() prepares state before each test ✅",
+                "failMsg": "Oops 😅 setUp() runs before each test to initialize state!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "What is the purpose of tearDown() in XCTestCase?",
+        "choices": [
+            "To prepare data before each test",
+            "To launch the simulator",
+            "To clean up after each test",
+            "To compile the test target"
+        ],
+        "answer": 2,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Phương thức tearDown() trong XCTestCase dùng để làm gì?",
+                "choices": [
+                    "Chuẩn bị dữ liệu trước mỗi test",
+                    "Khởi chạy simulator",
+                    "Dọn dẹp sau mỗi test",
+                    "Biên dịch test target"
+                ],
+                "successMsg": "Đúng rồi! tearDown() dọn dẹp tài nguyên sau mỗi test 🧹",
+                "failMsg": "Chưa đúng 😅 tearDown() được gọi sau mỗi test để dọn dẹp!"
+            },
+            "de": {
+                "q": "Wofür wird tearDown() in XCTestCase verwendet?",
+                "choices": [
+                    "Daten vor jedem Test vorbereiten",
+                    "Den Simulator starten",
+                    "Nach jedem Test aufräumen",
+                    "Das Test-Target kompilieren"
+                ],
+                "successMsg": "Richtig! tearDown() räumt nach jedem Test auf 🧹",
+                "failMsg": "Leider falsch 😅 tearDown() wird nach jedem Test aufgerufen!"
+            },
+            "en": {
+                "q": "What is the purpose of tearDown() in XCTestCase?",
+                "choices": [
+                    "To prepare data before each test",
+                    "To launch the simulator",
+                    "To clean up after each test",
+                    "To compile the test target"
+                ],
+                "successMsg": "Correct! tearDown() cleans up after each test 🧹",
+                "failMsg": "Oops 😅 tearDown() runs after each test to clean up!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which XCTest assertion verifies that two values are equal?",
+        "choices": [
+            "XCTAssertTrue",
+            "XCTAssertEqual",
+            "XCTAssertNil",
+            "XCTFail"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Assertion nào trong XCTest dùng để kiểm tra hai giá trị bằng nhau?",
+                "choices": [
+                    "XCTAssertTrue",
+                    "XCTAssertEqual",
+                    "XCTAssertNil",
+                    "XCTFail"
+                ],
+                "successMsg": "Chính xác! XCTAssertEqual kiểm tra bằng nhau ✨",
+                "failMsg": "Chưa đúng 😅 Đáp án là XCTAssertEqual!"
+            },
+            "de": {
+                "q": "Welche XCTest-Assertion prüft, ob zwei Werte gleich sind?",
+                "choices": [
+                    "XCTAssertTrue",
+                    "XCTAssertEqual",
+                    "XCTAssertNil",
+                    "XCTFail"
+                ],
+                "successMsg": "Richtig! XCTAssertEqual prüft auf Gleichheit ✨",
+                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertEqual!"
+            },
+            "en": {
+                "q": "Which XCTest assertion verifies that two values are equal?",
+                "choices": [
+                    "XCTAssertTrue",
+                    "XCTAssertEqual",
+                    "XCTAssertNil",
+                    "XCTFail"
+                ],
+                "successMsg": "Correct! XCTAssertEqual checks equality ✨",
+                "failMsg": "Oops 😅 The answer is XCTAssertEqual!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which framework does Apple provide for writing UI tests on iOS?",
+        "choices": [
+            "XCUITest",
+            "Appium",
+            "Espresso",
+            "Selenium"
+        ],
+        "answer": 0,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Framework nào của Apple được dùng để viết UI test trên iOS?",
+                "choices": [
+                    "XCUITest",
+                    "Appium",
+                    "Espresso",
+                    "Selenium"
+                ],
+                "successMsg": "Đúng rồi! XCUITest là framework chính thức cho UI test 📱",
+                "failMsg": "Chưa đúng 😅 Apple cung cấp XCUITest cho UI test!"
+            },
+            "de": {
+                "q": "Welches Framework bietet Apple für UI-Tests unter iOS an?",
+                "choices": [
+                    "XCUITest",
+                    "Appium",
+                    "Espresso",
+                    "Selenium"
+                ],
+                "successMsg": "Richtig! XCUITest ist das offizielle UI-Test-Framework 📱",
+                "failMsg": "Leider falsch 😅 Apple bietet XCUITest für UI-Tests!"
+            },
+            "en": {
+                "q": "Which framework does Apple provide for writing UI tests on iOS?",
+                "choices": [
+                    "XCUITest",
+                    "Appium",
+                    "Espresso",
+                    "Selenium"
+                ],
+                "successMsg": "Correct! XCUITest is Apple's official UI test framework 📱",
+                "failMsg": "Oops 😅 Apple provides XCUITest for UI testing!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "How must a test method be named in XCTest so it is discovered?",
+        "choices": [
+            "It must end with 'Test'",
+            "It must begin with the word 'test'",
+            "It must be marked @objc",
+            "It must be declared private"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Phương thức test trong XCTest phải được đặt tên thế nào để được nhận diện?",
+                "choices": [
+                    "Kết thúc bằng 'Test'",
+                    "Bắt đầu bằng từ 'test'",
+                    "Được đánh dấu @objc",
+                    "Được khai báo private"
+                ],
+                "successMsg": "Chuẩn! Tên phương thức phải bắt đầu bằng 'test' 🧪",
+                "failMsg": "Chưa đúng 😅 Phương thức phải bắt đầu bằng 'test'!"
+            },
+            "de": {
+                "q": "Wie muss eine Testmethode in XCTest benannt sein, damit sie erkannt wird?",
+                "choices": [
+                    "Sie muss mit 'Test' enden",
+                    "Sie muss mit dem Wort 'test' beginnen",
+                    "Sie muss mit @objc markiert sein",
+                    "Sie muss privat deklariert sein"
+                ],
+                "successMsg": "Richtig! Der Methodenname muss mit 'test' beginnen 🧪",
+                "failMsg": "Leider falsch 😅 Der Name muss mit 'test' beginnen!"
+            },
+            "en": {
+                "q": "How must a test method be named in XCTest so it is discovered?",
+                "choices": [
+                    "It must end with 'Test'",
+                    "It must begin with the word 'test'",
+                    "It must be marked @objc",
+                    "It must be declared private"
+                ],
+                "successMsg": "Correct! The method name must start with 'test' 🧪",
+                "failMsg": "Oops 😅 The method must start with 'test'!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which XCTest class is used to test asynchronous code?",
+        "choices": [
+            "XCTestExpectation",
+            "XCTAssertAsync",
+            "XCWaiter",
+            "XCAsyncTest"
+        ],
+        "answer": 0,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Lớp nào trong XCTest được dùng để kiểm thử code bất đồng bộ?",
+                "choices": [
+                    "XCTestExpectation",
+                    "XCTAssertAsync",
+                    "XCWaiter",
+                    "XCAsyncTest"
+                ],
+                "successMsg": "Đúng rồi! XCTestExpectation kết hợp với wait(for:timeout:) ⏱️",
+                "failMsg": "Chưa đúng 😅 XCTestExpectation mới là câu trả lời!"
+            },
+            "de": {
+                "q": "Welche XCTest-Klasse wird zum Testen asynchronen Codes verwendet?",
+                "choices": [
+                    "XCTestExpectation",
+                    "XCTAssertAsync",
+                    "XCWaiter",
+                    "XCAsyncTest"
+                ],
+                "successMsg": "Richtig! XCTestExpectation mit wait(for:timeout:) ⏱️",
+                "failMsg": "Leider falsch 😅 Die Antwort ist XCTestExpectation!"
+            },
+            "en": {
+                "q": "Which XCTest class is used to test asynchronous code?",
+                "choices": [
+                    "XCTestExpectation",
+                    "XCTAssertAsync",
+                    "XCWaiter",
+                    "XCAsyncTest"
+                ],
+                "successMsg": "Correct! XCTestExpectation with wait(for:timeout:) ⏱️",
+                "failMsg": "Oops 😅 The answer is XCTestExpectation!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which assertion checks that a condition evaluates to true?",
+        "choices": [
+            "XCTAssertEqual",
+            "XCTAssertTrue",
+            "XCTAssertNotNil",
+            "XCTAssertThrows"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Assertion nào kiểm tra một điều kiện có giá trị true?",
+                "choices": [
+                    "XCTAssertEqual",
+                    "XCTAssertTrue",
+                    "XCTAssertNotNil",
+                    "XCTAssertThrows"
+                ],
+                "successMsg": "Chính xác! XCTAssertTrue là đáp án ✔️",
+                "failMsg": "Chưa đúng 😅 Đáp án là XCTAssertTrue!"
+            },
+            "de": {
+                "q": "Welche Assertion prüft, ob eine Bedingung wahr ist?",
+                "choices": [
+                    "XCTAssertEqual",
+                    "XCTAssertTrue",
+                    "XCTAssertNotNil",
+                    "XCTAssertThrows"
+                ],
+                "successMsg": "Richtig! XCTAssertTrue ist die Antwort ✔️",
+                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertTrue!"
+            },
+            "en": {
+                "q": "Which assertion checks that a condition evaluates to true?",
+                "choices": [
+                    "XCTAssertEqual",
+                    "XCTAssertTrue",
+                    "XCTAssertNotNil",
+                    "XCTAssertThrows"
+                ],
+                "successMsg": "Correct! XCTAssertTrue is the answer ✔️",
+                "failMsg": "Oops 😅 The answer is XCTAssertTrue!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "What does code coverage measure in iOS testing?",
+        "choices": [
+            "The number of test files",
+            "The percentage of code executed by tests",
+            "The execution time of tests",
+            "The memory used by tests"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Code coverage đo lường điều gì trong kiểm thử iOS?",
+                "choices": [
+                    "Số lượng file test",
+                    "Phần trăm code được chạy bởi test",
+                    "Thời gian chạy test",
+                    "Bộ nhớ mà test sử dụng"
+                ],
+                "successMsg": "Đúng rồi! Code coverage là tỷ lệ code được test thực thi 📊",
+                "failMsg": "Chưa đúng 😅 Code coverage đo tỷ lệ code được test chạy qua!"
+            },
+            "de": {
+                "q": "Was misst Code Coverage beim iOS-Testen?",
+                "choices": [
+                    "Die Anzahl der Testdateien",
+                    "Den Prozentsatz des vom Test ausgeführten Codes",
+                    "Die Ausführungszeit der Tests",
+                    "Den Speicherverbrauch der Tests"
+                ],
+                "successMsg": "Richtig! Code Coverage misst den getesteten Code-Anteil 📊",
+                "failMsg": "Leider falsch 😅 Es ist der Prozentsatz des ausgeführten Codes!"
+            },
+            "en": {
+                "q": "What does code coverage measure in iOS testing?",
+                "choices": [
+                    "The number of test files",
+                    "The percentage of code executed by tests",
+                    "The execution time of tests",
+                    "The memory used by tests"
+                ],
+                "successMsg": "Correct! Code coverage measures the code exercised by tests 📊",
+                "failMsg": "Oops 😅 It's the percentage of code executed by tests!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "What is the main difference between unit tests and UI tests?",
+        "choices": [
+            "Unit tests only run on simulators, UI tests on real devices",
+            "Unit tests verify logic in isolation, UI tests simulate user interaction",
+            "Unit tests are slower than UI tests",
+            "There is no difference"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Khác biệt chính giữa unit test và UI test là gì?",
+                "choices": [
+                    "Unit test chỉ chạy trên simulator, UI test trên thiết bị thật",
+                    "Unit test kiểm tra logic riêng lẻ, UI test mô phỏng thao tác người dùng",
+                    "Unit test chậm hơn UI test",
+                    "Không có khác biệt nào"
+                ],
+                "successMsg": "Chính xác! Unit test tập trung logic, UI test kiểm tra giao diện 🧩",
+                "failMsg": "Chưa đúng 😅 Unit test kiểm tra logic, UI test mô phỏng người dùng!"
+            },
+            "de": {
+                "q": "Was ist der Hauptunterschied zwischen Unit-Tests und UI-Tests?",
+                "choices": [
+                    "Unit-Tests laufen nur im Simulator, UI-Tests auf echten Geräten",
+                    "Unit-Tests prüfen Logik isoliert, UI-Tests simulieren Nutzerinteraktion",
+                    "Unit-Tests sind langsamer als UI-Tests",
+                    "Es gibt keinen Unterschied"
+                ],
+                "successMsg": "Richtig! Unit-Tests prüfen Logik, UI-Tests die Oberfläche 🧩",
+                "failMsg": "Leider falsch 😅 Unit-Tests prüfen Logik, UI-Tests das Interface!"
+            },
+            "en": {
+                "q": "What is the main difference between unit tests and UI tests?",
+                "choices": [
+                    "Unit tests only run on simulators, UI tests on real devices",
+                    "Unit tests verify logic in isolation, UI tests simulate user interaction",
+                    "Unit tests are slower than UI tests",
+                    "There is no difference"
+                ],
+                "successMsg": "Correct! Unit tests target logic, UI tests target the interface 🧩",
+                "failMsg": "Oops 😅 Unit tests verify logic, UI tests simulate users!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "What is snapshot testing in iOS?",
+        "choices": [
+            "Testing that captures UI images and compares them to references",
+            "Testing memory snapshots",
+            "Testing database backups",
+            "Testing network requests"
+        ],
+        "answer": 0,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Snapshot testing trong iOS là gì?",
+                "choices": [
+                    "Chụp ảnh UI và so sánh với ảnh tham chiếu",
+                    "Kiểm tra snapshot bộ nhớ",
+                    "Kiểm tra backup cơ sở dữ liệu",
+                    "Kiểm tra request mạng"
+                ],
+                "successMsg": "Đúng rồi! Snapshot test giúp phát hiện thay đổi giao diện 📸",
+                "failMsg": "Chưa đúng 😅 Snapshot test so sánh ảnh UI với ảnh tham chiếu!"
+            },
+            "de": {
+                "q": "Was ist Snapshot-Testing in iOS?",
+                "choices": [
+                    "Es nimmt UI-Bilder auf und vergleicht sie mit Referenzen",
+                    "Es testet Speicher-Snapshots",
+                    "Es testet Datenbank-Backups",
+                    "Es testet Netzwerkanfragen"
+                ],
+                "successMsg": "Richtig! Snapshot-Tests erkennen UI-Änderungen 📸",
+                "failMsg": "Leider falsch 😅 Snapshot-Tests vergleichen UI-Bilder!"
+            },
+            "en": {
+                "q": "What is snapshot testing in iOS?",
+                "choices": [
+                    "Testing that captures UI images and compares them to references",
+                    "Testing memory snapshots",
+                    "Testing database backups",
+                    "Testing network requests"
+                ],
+                "successMsg": "Correct! Snapshot tests detect visual UI changes 📸",
+                "failMsg": "Oops 😅 Snapshot tests compare UI images to references!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which command-line tool is used to run iOS tests from the terminal?",
+        "choices": [
+            "swift test",
+            "xcodebuild test",
+            "pod test",
+            "ios-test"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Công cụ dòng lệnh nào được dùng để chạy test iOS từ terminal?",
+                "choices": [
+                    "swift test",
+                    "xcodebuild test",
+                    "pod test",
+                    "ios-test"
+                ],
+                "successMsg": "Chính xác! xcodebuild test rất tiện cho CI/CD ⚙️",
+                "failMsg": "Chưa đúng 😅 Câu trả lời là xcodebuild test!"
+            },
+            "de": {
+                "q": "Welches Kommandozeilen-Tool wird verwendet, um iOS-Tests im Terminal auszuführen?",
+                "choices": [
+                    "swift test",
+                    "xcodebuild test",
+                    "pod test",
+                    "ios-test"
+                ],
+                "successMsg": "Richtig! xcodebuild test ist ideal für CI/CD ⚙️",
+                "failMsg": "Leider falsch 😅 Die Antwort ist xcodebuild test!"
+            },
+            "en": {
+                "q": "Which command-line tool is used to run iOS tests from the terminal?",
+                "choices": [
+                    "swift test",
+                    "xcodebuild test",
+                    "pod test",
+                    "ios-test"
+                ],
+                "successMsg": "Correct! xcodebuild test is great for CI/CD ⚙️",
+                "failMsg": "Oops 😅 The answer is xcodebuild test!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which assertion verifies that a value is nil?",
+        "choices": [
+            "XCTAssertNotNil",
+            "XCTAssertTrue",
+            "XCTAssertNil",
+            "XCTAssertEqual"
+        ],
+        "answer": 2,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Assertion nào dùng để kiểm tra giá trị là nil?",
+                "choices": [
+                    "XCTAssertNotNil",
+                    "XCTAssertTrue",
+                    "XCTAssertNil",
+                    "XCTAssertEqual"
+                ],
+                "successMsg": "Đúng rồi! XCTAssertNil kiểm tra giá trị nil 🎯",
+                "failMsg": "Chưa đúng 😅 XCTAssertNil mới là đáp án!"
+            },
+            "de": {
+                "q": "Welche Assertion prüft, ob ein Wert nil ist?",
+                "choices": [
+                    "XCTAssertNotNil",
+                    "XCTAssertTrue",
+                    "XCTAssertNil",
+                    "XCTAssertEqual"
+                ],
+                "successMsg": "Richtig! XCTAssertNil prüft auf nil 🎯",
+                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertNil!"
+            },
+            "en": {
+                "q": "Which assertion verifies that a value is nil?",
+                "choices": [
+                    "XCTAssertNotNil",
+                    "XCTAssertTrue",
+                    "XCTAssertNil",
+                    "XCTAssertEqual"
+                ],
+                "successMsg": "Correct! XCTAssertNil checks for nil values 🎯",
+                "failMsg": "Oops 😅 The answer is XCTAssertNil!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    },
+    {
+        "q": "Which Xcode navigator displays the list of tests in a project?",
+        "choices": [
+            "Project Navigator",
+            "Test Navigator",
+            "Debug Navigator",
+            "Issue Navigator"
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Navigator nào trong Xcode hiển thị danh sách test của dự án?",
+                "choices": [
+                    "Project Navigator",
+                    "Test Navigator",
+                    "Debug Navigator",
+                    "Issue Navigator"
+                ],
+                "successMsg": "Chính xác! Test Navigator liệt kê toàn bộ test 📂",
+                "failMsg": "Chưa đúng 😅 Test Navigator mới là câu trả lời!"
+            },
+            "de": {
+                "q": "Welcher Xcode-Navigator zeigt die Liste der Tests eines Projekts an?",
+                "choices": [
+                    "Project Navigator",
+                    "Test Navigator",
+                    "Debug Navigator",
+                    "Issue Navigator"
+                ],
+                "successMsg": "Richtig! Der Test Navigator listet alle Tests auf 📂",
+                "failMsg": "Leider falsch 😅 Die Antwort ist Test Navigator!"
+            },
+            "en": {
+                "q": "Which Xcode navigator displays the list of tests in a project?",
+                "choices": [
+                    "Project Navigator",
+                    "Test Navigator",
+                    "Debug Navigator",
+                    "Issue Navigator"
+                ],
+                "successMsg": "Correct! The Test Navigator lists all tests 📂",
+                "failMsg": "Oops 😅 The answer is Test Navigator!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-17T00:00:00.000Z"
+    }
+]

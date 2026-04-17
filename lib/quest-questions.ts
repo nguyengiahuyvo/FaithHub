@@ -35,6 +35,7 @@ export type Question = {
   createdByName?: string | null;
   successMsg?: string;
   failMsg?: string;
+  answeredUsers?: Record<string, boolean>;
 };
 
 /**

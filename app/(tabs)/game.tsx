@@ -479,14 +479,27 @@ export default function GameScreen() {
   function recordAnswerStat(questionId: string | undefined, correct: boolean) {
     if (!questionId || !org || !user) return;
     const field = correct ? "correctCount" : "wrongCount";
-    const ref = doc(db, "organizations", org.orgId, "questQuestions", questionId);
+    const ref = doc(
+      db,
+      "organizations",
+      org.orgId,
+      "questQuestions",
+      questionId,
+    );
     updateDoc(ref, {
       [field]: increment(1),
       [`answeredUsers.${user.uid}`]: correct,
     }).catch((e) => console.error("Answer stat update failed:", e));
     // Store individual answer record
     addDoc(
-      collection(db, "organizations", org.orgId, "questQuestions", questionId, "answers"),
+      collection(
+        db,
+        "organizations",
+        org.orgId,
+        "questQuestions",
+        questionId,
+        "answers",
+      ),
       {
         uid: user.uid,
         displayName: user.displayName ?? null,
@@ -873,7 +886,12 @@ function StartView({
 
         {/* Community chat */}
         {hasOrg && orgId && currentUid && (
-          <QuestChat orgId={orgId} userId={currentUid} userName={currentUserName} lang={lang} />
+          <QuestChat
+            orgId={orgId}
+            userId={currentUid}
+            userName={currentUserName}
+            lang={lang}
+          />
         )}
 
         {/* Cooldown / daily-limit / no-questions notice */}
@@ -942,7 +960,7 @@ function StartView({
 
         <View style={styles.statsGrid}>
           <StatCard
-            icon="trophy"
+            icon="cash-outline"
             iconColor={C.gold}
             label={t("game_total_score", lang)}
             value={String(totalScore)}
@@ -1077,7 +1095,6 @@ function StartView({
             </View>
           )}
         </View>
-
       </ScrollView>
 
       {/* Bottom-docked action group: Play + Create question + Help */}
@@ -1715,8 +1732,8 @@ function DoneView({
             value={String(bestStreak)}
           />
           <StatCard
-            icon="trophy"
-            iconColor={C.accent}
+            icon="logo-usd"
+            iconColor={C.gold}
             label={t("game_total_score", lang)}
             value={String(totalScore)}
           />
@@ -2098,17 +2115,21 @@ function QuestChat({
       collection(db, "organizations", orgId, "questChat"),
       orderBy("createdAt", "desc"),
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setMessages(
-        snap.docs.slice(0, 30).map((d) => ({
-          id: d.id,
-          text: d.data().text || "",
-          createdBy: d.data().createdBy || "",
-          createdByName: d.data().createdByName || null,
-          createdAt: d.data().createdAt?.toDate?.() || null,
-        })),
-      );
-    }, () => {});
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setMessages(
+          snap.docs.slice(0, 30).map((d) => ({
+            id: d.id,
+            text: d.data().text || "",
+            createdBy: d.data().createdBy || "",
+            createdByName: d.data().createdByName || null,
+            createdAt: d.data().createdAt?.toDate?.() || null,
+          })),
+        );
+      },
+      () => {},
+    );
     return unsub;
   }, [orgId]);
 
@@ -2173,7 +2194,11 @@ function QuestChat({
                 <Text style={commentStyles.text}>{m.text}</Text>
               </View>
               {m.createdBy === userId && (
-                <Pressable onPress={() => handleDelete(m.id)} hitSlop={6} style={{ padding: 4 }}>
+                <Pressable
+                  onPress={() => handleDelete(m.id)}
+                  hitSlop={6}
+                  style={{ padding: 4 }}
+                >
                   <Ionicons name="trash-outline" size={14} color={C.wrong} />
                 </Pressable>
               )}
@@ -2196,7 +2221,10 @@ function QuestChat({
         <Pressable
           onPress={handleSend}
           disabled={!text.trim() || sending}
-          style={[commentStyles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}
+          style={[
+            commentStyles.sendBtn,
+            (!text.trim() || sending) && { opacity: 0.5 },
+          ]}
         >
           {sending ? (
             <ActivityIndicator color="#FFFFFF" size="small" />

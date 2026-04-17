@@ -235,12 +235,22 @@ export default function AuthScreen() {
       });
 
       const result = await signInWithCredential(auth, oauthCredential);
-      // Store auth provider so we can prompt for display name later
-      await setDoc(
-        doc(db, "users", result.user.uid),
-        { authProvider: "apple.com", email: result.user.email },
-        { merge: true },
-      );
+
+      // Apple only provides fullName on the very first sign-in.
+      // Capture it immediately and set it as displayName.
+      const givenName = credential.fullName?.givenName;
+      const familyName = credential.fullName?.familyName;
+      const appleName = [givenName, familyName].filter(Boolean).join(" ") || null;
+
+      const userData: Record<string, unknown> = {
+        authProvider: "apple.com",
+        email: result.user.email,
+      };
+      if (appleName && !result.user.displayName) {
+        await updateProfile(result.user, { displayName: appleName });
+        userData.displayName = appleName;
+      }
+      await setDoc(doc(db, "users", result.user.uid), userData, { merge: true });
       router.replace("/(tabs)");
     } catch (error: any) {
       if (error.code !== "ERR_REQUEST_CANCELED") {

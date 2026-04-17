@@ -47,13 +47,12 @@ import {
 
 // ===== Game constants =====
 const QUESTIONS_PER_ROUND = 10;
-const TIME_PER_QUESTION_MS = 15000;
+const TIME_PER_QUESTION_MS = 20000;
 // Scoring — all balances are in Shekel, the in-game currency:
 //   +5 Shekel per correct answer
 //   +2 Shekel per question authored
 //   -10 Shekel cost to start a round
 const POINTS_PER_CORRECT = 5;
-const POINTS_PER_QUESTION_CREATED = 2;
 const PLAY_COST_SHEKEL = 10;
 const STARTING_HEARTS = 3;
 

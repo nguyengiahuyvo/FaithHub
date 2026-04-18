@@ -16,6 +16,7 @@ function parseArgs(argv) {
 		title: null,
 		body: null,
 		data: null,
+		url: null,
 		dryRun: false,
 	};
 
@@ -24,6 +25,7 @@ function parseArgs(argv) {
 		if (token === '--orgId') args.orgId = argv[i + 1];
 		if (token === '--title') args.title = argv[i + 1];
 		if (token === '--body') args.body = argv[i + 1];
+		if (token === '--url') args.url = argv[i + 1];
 		if (token === '--data') {
 			try {
 				args.data = JSON.parse(argv[i + 1]);
@@ -40,9 +42,23 @@ function parseArgs(argv) {
 function assertRequiredArgs(args) {
 	if (!args.orgId || !args.title || !args.body) {
 		throw new Error(
-			'Usage: node sendNotification.js --orgId <orgId> --title <title> --body <body> [--data \'{"key":"value"}\'] [--dry-run]'
+			'Usage: node sendNotification.js --orgId <orgId> --title <title> --body <body> [--url <https://...>] [--data \'{"key":"value"}\'] [--dry-run]'
 		);
 	}
+}
+
+function buildPayloadData(args) {
+	const payload = args.data ? { ...args.data } : {};
+
+	if (args.url) {
+		payload.url = args.url;
+	}
+
+	if (Object.keys(payload).length === 0) {
+		return undefined;
+	}
+
+	return payload;
 }
 
 async function collectMemberUids(orgId) {
@@ -180,12 +196,13 @@ async function main() {
 		}
 
 		console.log(`Ready to send to ${valid.length} device(s)`);
+		const payloadData = buildPayloadData(args);
 
 		if (args.dryRun) {
 			console.log('\n[DRY RUN] Would send:');
 			console.log(`  Title: ${args.title}`);
 			console.log(`  Body:  ${args.body}`);
-			if (args.data) console.log(`  Data:  ${JSON.stringify(args.data)}`);
+			if (payloadData) console.log(`  Data:  ${JSON.stringify(payloadData)}`);
 			console.log(`  To ${valid.length} device(s)`);
 			process.exit(0);
 		}
@@ -198,7 +215,7 @@ async function main() {
 			valid,
 			args.title,
 			args.body,
-			args.data
+			payloadData
 		);
 
 		console.log(`\nDone!`);

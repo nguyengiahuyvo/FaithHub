@@ -216,3 +216,74 @@ node sendNotification.js --orgId YOUR_ORG_ID --title "Test" --body "Test" --dry-
 ```
 
 After sending, the script prints success and failure counts. Failed deliveries are listed with the member uid and the FCM error message (useful for detecting stale tokens that should be removed).
+
+## Android push setup (FCM V1 credentials)
+
+Android deliveries go through Firebase Cloud Messaging. Expo's push service needs an FCM V1 service account key uploaded to EAS; without it every Android send fails with:
+
+```
+Unable to retrieve the FCM server key for the recipient's app. (InvalidCredentials)
+```
+
+iOS is unaffected — it uses APNs credentials which EAS manages separately.
+
+FCM Legacy was shut down by Google in June 2024. Do **not** use the "Push Notifications (Legacy)" menu in `eas credentials`; only FCM V1 works.
+
+### 1) Generate the service account JSON from Firebase
+
+1. Open the [Firebase Console](https://console.firebase.google.com/) and select the FaithHub project (the one tied to `google-services.json`, project id `faithhub-dbdbb`).
+2. Click the gear icon next to *Project Overview* → **Project settings**.
+3. Open the **Cloud Messaging** tab and confirm **Firebase Cloud Messaging API (V1)** is **Enabled**. Enable it via the linked Google Cloud Console page if not.
+4. Switch to the **Service accounts** tab.
+5. Click **Generate new private key** → **Generate key**. A JSON file downloads (e.g. `faithhub-dbdbb-firebase-adminsdk-fbsvc-*.json`).
+6. Treat this file like a password. Do not commit it to git and do not leave it in `Downloads/` long-term — anyone with it can send pushes as your app.
+
+### 2) Upload it to EAS
+
+Run from the project root (`d:\Person\FaithHub`):
+
+```bash
+eas whoami     # confirm you're signed in as the project owner (nguyengiahuy.vo)
+eas credentials
+```
+
+Navigate the interactive menu in this order:
+
+1. Platform → **Android**
+2. Build profile → **production** (repeat for `preview` if you also send pushes from preview builds)
+3. From the Android menu → **Google Service Account** *(not "Push Notifications (Legacy)")*
+4. Sub-menu → **Manage your Google Service Account Key for Push Notifications (FCM V1)** *(not the one for Play Store Submissions — that's for uploads, not pushes)*
+5. Choose **Upload a new service account key**
+6. Paste the absolute path to the JSON file, e.g.:
+
+   ```
+   C:\Users\nguye\Downloads\faithhub-dbdbb-firebase-adminsdk-fbsvc-7678518641.json
+   ```
+
+7. EAS prints the service account email and project id — confirm the project id matches `google-services.json` (`faithhub-dbdbb`).
+8. Back at the top Android menu, the summary should now show **Push Notifications (FCM V1)** as assigned.
+
+No app rebuild is required — the credential lives on Expo's servers, not in the app binary.
+
+### 3) Clean up any wrong upload
+
+If the key was accidentally uploaded under **Push Notifications (Legacy)**, delete it:
+
+1. Top Android menu → **Push Notifications (Legacy): Manage your FCM (Legacy) API Key**
+2. **Delete your FCM API Key** → confirm.
+
+Legacy entries are ignored by Expo once V1 is configured, but removing them avoids confusion.
+
+### 4) Verify
+
+Re-run a send and confirm Android recipients succeed:
+
+```bash
+node sendNotification.js --orgId YOUR_ORG_ID --title "Ping" --body "FCM V1 test"
+```
+
+### Troubleshooting
+
+- **`project_id` mismatch** — the `project_id` field inside the uploaded JSON must equal `project_id` in `android/app/google-services.json`. If you manage multiple Firebase projects, the key came from the wrong one.
+- **API disabled** — Google Cloud Console → APIs & Services → enable *Firebase Cloud Messaging API* for project `faithhub-dbdbb`.
+- **Still Legacy errors after upload** — make sure you uploaded via **Google Service Account → FCM V1**, not the Legacy menu. The Legacy option expects a server-key string and won't accept a service-account JSON correctly.

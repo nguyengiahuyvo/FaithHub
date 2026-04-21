@@ -1,722 +1,1250 @@
 [
     {
-        "q": "What is the default testing framework provided by Apple for iOS applications?",
+        "q": "Đức Chúa Trời dựng nên mặt trời vào ngày thứ mấy trong tuần lễ sáng tạo?",
         "choices": [
-            "JUnit",
-            "XCTest",
-            "Mocha",
-            "Jasmine"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Framework kiểm thử mặc định mà Apple cung cấp cho ứng dụng iOS là gì?",
-                "choices": [
-                    "JUnit",
-                    "XCTest",
-                    "Mocha",
-                    "Jasmine"
-                ],
-                "successMsg": "Chính xác! XCTest là framework chuẩn cho iOS 🎯",
-                "failMsg": "Sai rồi 😅 XCTest mới là câu trả lời đúng!"
-            },
-            "de": {
-                "q": "Welches ist das Standard-Test-Framework von Apple für iOS-Anwendungen?",
-                "choices": [
-                    "JUnit",
-                    "XCTest",
-                    "Mocha",
-                    "Jasmine"
-                ],
-                "successMsg": "Richtig! XCTest ist das Standard-Framework für iOS 🎯",
-                "failMsg": "Leider falsch 😅 Die richtige Antwort ist XCTest!"
-            },
-            "en": {
-                "q": "What is the default testing framework provided by Apple for iOS applications?",
-                "choices": [
-                    "JUnit",
-                    "XCTest",
-                    "Mocha",
-                    "Jasmine"
-                ],
-                "successMsg": "Correct! XCTest is the standard framework for iOS 🎯",
-                "failMsg": "Oops 😅 The correct answer is XCTest!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which Xcode keyboard shortcut runs all tests in a project?",
-        "choices": [
-            "Cmd + R",
-            "Cmd + B",
-            "Cmd + U",
-            "Cmd + T"
+            "Thứ hai.",
+            "Thứ ba.",
+            "Thứ tư.",
+            "Thứ năm."
         ],
         "answer": 2,
         "ref": null,
         "translations": {
             "vi": {
-                "q": "Phím tắt nào trong Xcode dùng để chạy toàn bộ test của dự án?",
+                "q": "Đức Chúa Trời dựng nên mặt trời vào ngày thứ mấy trong tuần lễ sáng tạo?",
                 "choices": [
-                    "Cmd + R",
-                    "Cmd + B",
-                    "Cmd + U",
-                    "Cmd + T"
+                    "Thứ hai.",
+                    "Thứ ba.",
+                    "Thứ tư.",
+                    "Thứ năm."
                 ],
-                "successMsg": "Đúng rồi! Cmd + U là phím tắt chạy test 🚀",
-                "failMsg": "Chưa đúng 😅 Phím tắt chính xác là Cmd + U!"
+                "successMsg": "Giỏi quá ta! Không phải ai cũng nhớ ngày này đâu nha 🌞",
+                "failMsg": "Ơ kìa, mặt trời mọc mỗi ngày mà không nhớ nổi ngày nó được tạo ra à? 😅 Mặt trời được tạo vào ngày thứ tư (Sáng 1:14-19)!"
             },
             "de": {
-                "q": "Mit welchem Xcode-Tastaturkürzel werden alle Tests eines Projekts ausgeführt?",
+                "q": "An welchem Tag der Schöpfungswoche hat Gott die Sonne erschaffen?",
                 "choices": [
-                    "Cmd + R",
-                    "Cmd + B",
-                    "Cmd + U",
-                    "Cmd + T"
+                    "Am zweiten Tag.",
+                    "Am dritten Tag.",
+                    "Am vierten Tag.",
+                    "Am fünften Tag."
                 ],
-                "successMsg": "Richtig! Cmd + U startet alle Tests 🚀",
-                "failMsg": "Leider falsch 😅 Das richtige Kürzel ist Cmd + U!"
+                "successMsg": "Sehr gut! Das weiß nicht jeder 🌞",
+                "failMsg": "Hoppla, die Sonne geht jeden Tag auf und du weißt nicht, an welchem Tag sie erschaffen wurde? 😅 Am vierten Tag (1. Mose 1,14-19)!"
             },
             "en": {
-                "q": "Which Xcode keyboard shortcut runs all tests in a project?",
+                "q": "On which day of the creation week did God create the sun?",
                 "choices": [
-                    "Cmd + R",
-                    "Cmd + B",
-                    "Cmd + U",
-                    "Cmd + T"
+                    "Second day.",
+                    "Third day.",
+                    "Fourth day.",
+                    "Fifth day."
                 ],
-                "successMsg": "Correct! Cmd + U runs all tests 🚀",
-                "failMsg": "Oops 😅 The right shortcut is Cmd + U!"
+                "successMsg": "Well done! Not everyone remembers this 🌞",
+                "failMsg": "Bro, the sun rises every day and you can't remember when it was made? 😅 Fourth day (Gen 1:14-19)!"
             }
         },
         "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        "createdAt": "2026-04-20T10:00:00.000Z"
     },
     {
-        "q": "What is the purpose of the setUp() method in XCTestCase?",
+        "q": "Lời hứa đầu tiên về Đấng Mê-si được chép ở đâu?",
         "choices": [
-            "To run after all tests finish",
-            "To initialize state before each test",
-            "To delete the test target",
-            "To generate a code coverage report"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Phương thức setUp() trong XCTestCase dùng để làm gì?",
-                "choices": [
-                    "Chạy sau khi tất cả test kết thúc",
-                    "Khởi tạo trạng thái trước mỗi test",
-                    "Xóa test target",
-                    "Tạo báo cáo code coverage"
-                ],
-                "successMsg": "Chuẩn luôn! setUp() giúp chuẩn bị dữ liệu cho mỗi test ✅",
-                "failMsg": "Chưa đúng 😅 setUp() được gọi trước mỗi test để khởi tạo trạng thái!"
-            },
-            "de": {
-                "q": "Wozu dient die Methode setUp() in XCTestCase?",
-                "choices": [
-                    "Sie läuft nach allen Tests",
-                    "Sie initialisiert den Zustand vor jedem Test",
-                    "Sie löscht das Test-Target",
-                    "Sie erstellt einen Coverage-Bericht"
-                ],
-                "successMsg": "Richtig! setUp() bereitet jeden Test vor ✅",
-                "failMsg": "Leider falsch 😅 setUp() wird vor jedem Test aufgerufen!"
-            },
-            "en": {
-                "q": "What is the purpose of the setUp() method in XCTestCase?",
-                "choices": [
-                    "To run after all tests finish",
-                    "To initialize state before each test",
-                    "To delete the test target",
-                    "To generate a code coverage report"
-                ],
-                "successMsg": "Correct! setUp() prepares state before each test ✅",
-                "failMsg": "Oops 😅 setUp() runs before each test to initialize state!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "What is the purpose of tearDown() in XCTestCase?",
-        "choices": [
-            "To prepare data before each test",
-            "To launch the simulator",
-            "To clean up after each test",
-            "To compile the test target"
+            "Ê-sai 7:14.",
+            "Ê-sai 9:5.",
+            "Sáng Thế ký 3:15.",
+            "Mi-chê 5:2."
         ],
         "answer": 2,
         "ref": null,
         "translations": {
             "vi": {
-                "q": "Phương thức tearDown() trong XCTestCase dùng để làm gì?",
+                "q": "Lời hứa đầu tiên về Đấng Mê-si được chép ở đâu?",
                 "choices": [
-                    "Chuẩn bị dữ liệu trước mỗi test",
-                    "Khởi chạy simulator",
-                    "Dọn dẹp sau mỗi test",
-                    "Biên dịch test target"
+                    "Ê-sai 7:14.",
+                    "Ê-sai 9:5.",
+                    "Sáng Thế ký 3:15.",
+                    "Mi-chê 5:2."
                 ],
-                "successMsg": "Đúng rồi! tearDown() dọn dẹp tài nguyên sau mỗi test 🧹",
-                "failMsg": "Chưa đúng 😅 tearDown() được gọi sau mỗi test để dọn dẹp!"
+                "successMsg": "Wao, bạn biết luôn à? Xịn! 📖",
+                "failMsg": "Ê, lời hứa đầu tiên thì phải ở sách đầu tiên chứ! 🤦 Sáng Thế ký 3:15 - dòng dõi người nữ sẽ giày đạp đầu con rắn!"
             },
             "de": {
-                "q": "Wofür wird tearDown() in XCTestCase verwendet?",
+                "q": "Wo steht die erste Verheißung über den Messias?",
                 "choices": [
-                    "Daten vor jedem Test vorbereiten",
-                    "Den Simulator starten",
-                    "Nach jedem Test aufräumen",
-                    "Das Test-Target kompilieren"
+                    "Jesaja 7,14.",
+                    "Jesaja 9,5.",
+                    "1. Mose 3,15.",
+                    "Micha 5,2."
                 ],
-                "successMsg": "Richtig! tearDown() räumt nach jedem Test auf 🧹",
-                "failMsg": "Leider falsch 😅 tearDown() wird nach jedem Test aufgerufen!"
+                "successMsg": "Wow, Respekt! 📖",
+                "failMsg": "Die erste Verheißung muss logischerweise im ersten Buch stehen! 🤦 1. Mose 3,15 - der Same der Frau wird der Schlange den Kopf zertreten!"
             },
             "en": {
-                "q": "What is the purpose of tearDown() in XCTestCase?",
+                "q": "Where is the first promise about the Messiah recorded?",
                 "choices": [
-                    "To prepare data before each test",
-                    "To launch the simulator",
-                    "To clean up after each test",
-                    "To compile the test target"
+                    "Isaiah 7:14.",
+                    "Isaiah 9:5.",
+                    "Genesis 3:15.",
+                    "Micah 5:2."
                 ],
-                "successMsg": "Correct! tearDown() cleans up after each test 🧹",
-                "failMsg": "Oops 😅 tearDown() runs after each test to clean up!"
+                "successMsg": "Wow, respect! 📖",
+                "failMsg": "First promise = first book, come on! 🤦 Genesis 3:15 - the seed of the woman will crush the serpent's head!"
             }
         },
         "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        "createdAt": "2026-04-20T10:00:00.000Z"
     },
     {
-        "q": "Which XCTest assertion verifies that two values are equal?",
+        "q": "Con gái của Gia-cốp tên là gì?",
         "choices": [
-            "XCTAssertTrue",
-            "XCTAssertEqual",
-            "XCTAssertNil",
-            "XCTFail"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Assertion nào trong XCTest dùng để kiểm tra hai giá trị bằng nhau?",
-                "choices": [
-                    "XCTAssertTrue",
-                    "XCTAssertEqual",
-                    "XCTAssertNil",
-                    "XCTFail"
-                ],
-                "successMsg": "Chính xác! XCTAssertEqual kiểm tra bằng nhau ✨",
-                "failMsg": "Chưa đúng 😅 Đáp án là XCTAssertEqual!"
-            },
-            "de": {
-                "q": "Welche XCTest-Assertion prüft, ob zwei Werte gleich sind?",
-                "choices": [
-                    "XCTAssertTrue",
-                    "XCTAssertEqual",
-                    "XCTAssertNil",
-                    "XCTFail"
-                ],
-                "successMsg": "Richtig! XCTAssertEqual prüft auf Gleichheit ✨",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertEqual!"
-            },
-            "en": {
-                "q": "Which XCTest assertion verifies that two values are equal?",
-                "choices": [
-                    "XCTAssertTrue",
-                    "XCTAssertEqual",
-                    "XCTAssertNil",
-                    "XCTFail"
-                ],
-                "successMsg": "Correct! XCTAssertEqual checks equality ✨",
-                "failMsg": "Oops 😅 The answer is XCTAssertEqual!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which framework does Apple provide for writing UI tests on iOS?",
-        "choices": [
-            "XCUITest",
-            "Appium",
-            "Espresso",
-            "Selenium"
+            "Đi-na.",
+            "Ra-chên.",
+            "Ta-ma.",
+            "Ta-bi-tha."
         ],
         "answer": 0,
         "ref": null,
         "translations": {
             "vi": {
-                "q": "Framework nào của Apple được dùng để viết UI test trên iOS?",
+                "q": "Con gái của Gia-cốp tên là gì?",
                 "choices": [
-                    "XCUITest",
-                    "Appium",
-                    "Espresso",
-                    "Selenium"
+                    "Đi-na.",
+                    "Ra-chên.",
+                    "Ta-ma.",
+                    "Ta-bi-tha."
                 ],
-                "successMsg": "Đúng rồi! XCUITest là framework chính thức cho UI test 📱",
-                "failMsg": "Chưa đúng 😅 Apple cung cấp XCUITest cho UI test!"
+                "successMsg": "Hay quá! Biết cả những nhân vật ít được nhắc đến 👏",
+                "failMsg": "Ra-chên là vợ Gia-cốp chứ không phải con gái nha bạn ơi! 🙈 Con gái của Gia-cốp tên là Đi-na (Sáng 30:21)!"
             },
             "de": {
-                "q": "Welches Framework bietet Apple für UI-Tests unter iOS an?",
+                "q": "Wie hieß die Tochter Jakobs?",
                 "choices": [
-                    "XCUITest",
-                    "Appium",
-                    "Espresso",
-                    "Selenium"
+                    "Dina.",
+                    "Rahel.",
+                    "Tamar.",
+                    "Tabita."
                 ],
-                "successMsg": "Richtig! XCUITest ist das offizielle UI-Test-Framework 📱",
-                "failMsg": "Leider falsch 😅 Apple bietet XCUITest für UI-Tests!"
+                "successMsg": "Sehr gut! Sogar die selten erwähnten Figuren kennst du 👏",
+                "failMsg": "Rahel war Jakobs Ehefrau, nicht seine Tochter! 🙈 Die Tochter hieß Dina (1. Mose 30,21)!"
             },
             "en": {
-                "q": "Which framework does Apple provide for writing UI tests on iOS?",
+                "q": "What was the name of Jacob's daughter?",
                 "choices": [
-                    "XCUITest",
-                    "Appium",
-                    "Espresso",
-                    "Selenium"
+                    "Dinah.",
+                    "Rachel.",
+                    "Tamar.",
+                    "Tabitha."
                 ],
-                "successMsg": "Correct! XCUITest is Apple's official UI test framework 📱",
-                "failMsg": "Oops 😅 Apple provides XCUITest for UI testing!"
+                "successMsg": "Nice! You even know the lesser-known characters 👏",
+                "failMsg": "Rachel was Jacob's wife, not his daughter! 🙈 Jacob's daughter was Dinah (Gen 30:21)!"
             }
         },
         "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        "createdAt": "2026-04-20T10:00:00.000Z"
     },
     {
-        "q": "How must a test method be named in XCTest so it is discovered?",
+        "q": "Ba người cầu thay được Chúa đề cập trong Ê-xê-chi-ên 14 là ai?",
         "choices": [
-            "It must end with 'Test'",
-            "It must begin with the word 'test'",
-            "It must be marked @objc",
-            "It must be declared private"
+            "Đa-ni-ên, Sa-mu-ên, Đa-vít.",
+            "Nô-ê, Gióp, Đa-ni-ên.",
+            "Đa-vít, Gióp, Sa-mu-ên.",
+            "Đa-ni-ên, Gióp, Nê-hê-mi."
         ],
         "answer": 1,
         "ref": null,
         "translations": {
             "vi": {
-                "q": "Phương thức test trong XCTest phải được đặt tên thế nào để được nhận diện?",
+                "q": "Ba người cầu thay được Chúa đề cập trong Ê-xê-chi-ên 14 là ai?",
                 "choices": [
-                    "Kết thúc bằng 'Test'",
-                    "Bắt đầu bằng từ 'test'",
-                    "Được đánh dấu @objc",
-                    "Được khai báo private"
+                    "Đa-ni-ên, Sa-mu-ên, Đa-vít.",
+                    "Nô-ê, Gióp, Đa-ni-ên.",
+                    "Đa-vít, Gióp, Sa-mu-ên.",
+                    "Đa-ni-ên, Gióp, Nê-hê-mi."
                 ],
-                "successMsg": "Chuẩn! Tên phương thức phải bắt đầu bằng 'test' 🧪",
-                "failMsg": "Chưa đúng 😅 Phương thức phải bắt đầu bằng 'test'!"
+                "successMsg": "Xuất sắc! Đọc Ê-xê-chi-ên kỹ thật đấy! 🙏",
+                "failMsg": "Trật lất! Đây là câu hỏi kinh điển mà vẫn sai 😤 Ba người cầu thay là Nô-ê, Gióp và Đa-ni-ên (Ê-xê-chi-ên 14:14)!"
             },
             "de": {
-                "q": "Wie muss eine Testmethode in XCTest benannt sein, damit sie erkannt wird?",
+                "q": "Welche drei Fürbitter werden in Hesekiel 14 erwähnt?",
                 "choices": [
-                    "Sie muss mit 'Test' enden",
-                    "Sie muss mit dem Wort 'test' beginnen",
-                    "Sie muss mit @objc markiert sein",
-                    "Sie muss privat deklariert sein"
+                    "Daniel, Samuel, David.",
+                    "Noah, Hiob, Daniel.",
+                    "David, Hiob, Samuel.",
+                    "Daniel, Hiob, Nehemia."
                 ],
-                "successMsg": "Richtig! Der Methodenname muss mit 'test' beginnen 🧪",
-                "failMsg": "Leider falsch 😅 Der Name muss mit 'test' beginnen!"
+                "successMsg": "Ausgezeichnet! Du hast Hesekiel wirklich gelesen 🙏",
+                "failMsg": "Daneben! Eine klassische Frage und trotzdem falsch 😤 Die drei sind Noah, Hiob und Daniel (Hesekiel 14,14)!"
             },
             "en": {
-                "q": "How must a test method be named in XCTest so it is discovered?",
+                "q": "Who are the three intercessors mentioned in Ezekiel 14?",
                 "choices": [
-                    "It must end with 'Test'",
-                    "It must begin with the word 'test'",
-                    "It must be marked @objc",
-                    "It must be declared private"
+                    "Daniel, Samuel, David.",
+                    "Noah, Job, Daniel.",
+                    "David, Job, Samuel.",
+                    "Daniel, Job, Nehemiah."
                 ],
-                "successMsg": "Correct! The method name must start with 'test' 🧪",
-                "failMsg": "Oops 😅 The method must start with 'test'!"
+                "successMsg": "Excellent! You actually read Ezekiel 🙏",
+                "failMsg": "Wrong! A classic question and you still missed it 😤 Noah, Job, and Daniel (Ezekiel 14:14)!"
             }
         },
         "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        "createdAt": "2026-04-20T10:00:00.000Z"
     },
     {
-        "q": "Which XCTest class is used to test asynchronous code?",
+        "q": "Ở đâu chép: \"Đức Giê-hô-va hay làm ơn, chậm nóng giận và đầy dẫy lòng nhân từ…\"?",
         "choices": [
-            "XCTestExpectation",
-            "XCTAssertAsync",
-            "XCWaiter",
-            "XCAsyncTest"
-        ],
-        "answer": 0,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Lớp nào trong XCTest được dùng để kiểm thử code bất đồng bộ?",
-                "choices": [
-                    "XCTestExpectation",
-                    "XCTAssertAsync",
-                    "XCWaiter",
-                    "XCAsyncTest"
-                ],
-                "successMsg": "Đúng rồi! XCTestExpectation kết hợp với wait(for:timeout:) ⏱️",
-                "failMsg": "Chưa đúng 😅 XCTestExpectation mới là câu trả lời!"
-            },
-            "de": {
-                "q": "Welche XCTest-Klasse wird zum Testen asynchronen Codes verwendet?",
-                "choices": [
-                    "XCTestExpectation",
-                    "XCTAssertAsync",
-                    "XCWaiter",
-                    "XCAsyncTest"
-                ],
-                "successMsg": "Richtig! XCTestExpectation mit wait(for:timeout:) ⏱️",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTestExpectation!"
-            },
-            "en": {
-                "q": "Which XCTest class is used to test asynchronous code?",
-                "choices": [
-                    "XCTestExpectation",
-                    "XCTAssertAsync",
-                    "XCWaiter",
-                    "XCAsyncTest"
-                ],
-                "successMsg": "Correct! XCTestExpectation with wait(for:timeout:) ⏱️",
-                "failMsg": "Oops 😅 The answer is XCTestExpectation!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which assertion checks that a condition evaluates to true?",
-        "choices": [
-            "XCTAssertEqual",
-            "XCTAssertTrue",
-            "XCTAssertNotNil",
-            "XCTAssertThrows"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Assertion nào kiểm tra một điều kiện có giá trị true?",
-                "choices": [
-                    "XCTAssertEqual",
-                    "XCTAssertTrue",
-                    "XCTAssertNotNil",
-                    "XCTAssertThrows"
-                ],
-                "successMsg": "Chính xác! XCTAssertTrue là đáp án ✔️",
-                "failMsg": "Chưa đúng 😅 Đáp án là XCTAssertTrue!"
-            },
-            "de": {
-                "q": "Welche Assertion prüft, ob eine Bedingung wahr ist?",
-                "choices": [
-                    "XCTAssertEqual",
-                    "XCTAssertTrue",
-                    "XCTAssertNotNil",
-                    "XCTAssertThrows"
-                ],
-                "successMsg": "Richtig! XCTAssertTrue ist die Antwort ✔️",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertTrue!"
-            },
-            "en": {
-                "q": "Which assertion checks that a condition evaluates to true?",
-                "choices": [
-                    "XCTAssertEqual",
-                    "XCTAssertTrue",
-                    "XCTAssertNotNil",
-                    "XCTAssertThrows"
-                ],
-                "successMsg": "Correct! XCTAssertTrue is the answer ✔️",
-                "failMsg": "Oops 😅 The answer is XCTAssertTrue!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "What does code coverage measure in iOS testing?",
-        "choices": [
-            "The number of test files",
-            "The percentage of code executed by tests",
-            "The execution time of tests",
-            "The memory used by tests"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Code coverage đo lường điều gì trong kiểm thử iOS?",
-                "choices": [
-                    "Số lượng file test",
-                    "Phần trăm code được chạy bởi test",
-                    "Thời gian chạy test",
-                    "Bộ nhớ mà test sử dụng"
-                ],
-                "successMsg": "Đúng rồi! Code coverage là tỷ lệ code được test thực thi 📊",
-                "failMsg": "Chưa đúng 😅 Code coverage đo tỷ lệ code được test chạy qua!"
-            },
-            "de": {
-                "q": "Was misst Code Coverage beim iOS-Testen?",
-                "choices": [
-                    "Die Anzahl der Testdateien",
-                    "Den Prozentsatz des vom Test ausgeführten Codes",
-                    "Die Ausführungszeit der Tests",
-                    "Den Speicherverbrauch der Tests"
-                ],
-                "successMsg": "Richtig! Code Coverage misst den getesteten Code-Anteil 📊",
-                "failMsg": "Leider falsch 😅 Es ist der Prozentsatz des ausgeführten Codes!"
-            },
-            "en": {
-                "q": "What does code coverage measure in iOS testing?",
-                "choices": [
-                    "The number of test files",
-                    "The percentage of code executed by tests",
-                    "The execution time of tests",
-                    "The memory used by tests"
-                ],
-                "successMsg": "Correct! Code coverage measures the code exercised by tests 📊",
-                "failMsg": "Oops 😅 It's the percentage of code executed by tests!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "What is the main difference between unit tests and UI tests?",
-        "choices": [
-            "Unit tests only run on simulators, UI tests on real devices",
-            "Unit tests verify logic in isolation, UI tests simulate user interaction",
-            "Unit tests are slower than UI tests",
-            "There is no difference"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Khác biệt chính giữa unit test và UI test là gì?",
-                "choices": [
-                    "Unit test chỉ chạy trên simulator, UI test trên thiết bị thật",
-                    "Unit test kiểm tra logic riêng lẻ, UI test mô phỏng thao tác người dùng",
-                    "Unit test chậm hơn UI test",
-                    "Không có khác biệt nào"
-                ],
-                "successMsg": "Chính xác! Unit test tập trung logic, UI test kiểm tra giao diện 🧩",
-                "failMsg": "Chưa đúng 😅 Unit test kiểm tra logic, UI test mô phỏng người dùng!"
-            },
-            "de": {
-                "q": "Was ist der Hauptunterschied zwischen Unit-Tests und UI-Tests?",
-                "choices": [
-                    "Unit-Tests laufen nur im Simulator, UI-Tests auf echten Geräten",
-                    "Unit-Tests prüfen Logik isoliert, UI-Tests simulieren Nutzerinteraktion",
-                    "Unit-Tests sind langsamer als UI-Tests",
-                    "Es gibt keinen Unterschied"
-                ],
-                "successMsg": "Richtig! Unit-Tests prüfen Logik, UI-Tests die Oberfläche 🧩",
-                "failMsg": "Leider falsch 😅 Unit-Tests prüfen Logik, UI-Tests das Interface!"
-            },
-            "en": {
-                "q": "What is the main difference between unit tests and UI tests?",
-                "choices": [
-                    "Unit tests only run on simulators, UI tests on real devices",
-                    "Unit tests verify logic in isolation, UI tests simulate user interaction",
-                    "Unit tests are slower than UI tests",
-                    "There is no difference"
-                ],
-                "successMsg": "Correct! Unit tests target logic, UI tests target the interface 🧩",
-                "failMsg": "Oops 😅 Unit tests verify logic, UI tests simulate users!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "What is snapshot testing in iOS?",
-        "choices": [
-            "Testing that captures UI images and compares them to references",
-            "Testing memory snapshots",
-            "Testing database backups",
-            "Testing network requests"
-        ],
-        "answer": 0,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Snapshot testing trong iOS là gì?",
-                "choices": [
-                    "Chụp ảnh UI và so sánh với ảnh tham chiếu",
-                    "Kiểm tra snapshot bộ nhớ",
-                    "Kiểm tra backup cơ sở dữ liệu",
-                    "Kiểm tra request mạng"
-                ],
-                "successMsg": "Đúng rồi! Snapshot test giúp phát hiện thay đổi giao diện 📸",
-                "failMsg": "Chưa đúng 😅 Snapshot test so sánh ảnh UI với ảnh tham chiếu!"
-            },
-            "de": {
-                "q": "Was ist Snapshot-Testing in iOS?",
-                "choices": [
-                    "Es nimmt UI-Bilder auf und vergleicht sie mit Referenzen",
-                    "Es testet Speicher-Snapshots",
-                    "Es testet Datenbank-Backups",
-                    "Es testet Netzwerkanfragen"
-                ],
-                "successMsg": "Richtig! Snapshot-Tests erkennen UI-Änderungen 📸",
-                "failMsg": "Leider falsch 😅 Snapshot-Tests vergleichen UI-Bilder!"
-            },
-            "en": {
-                "q": "What is snapshot testing in iOS?",
-                "choices": [
-                    "Testing that captures UI images and compares them to references",
-                    "Testing memory snapshots",
-                    "Testing database backups",
-                    "Testing network requests"
-                ],
-                "successMsg": "Correct! Snapshot tests detect visual UI changes 📸",
-                "failMsg": "Oops 😅 Snapshot tests compare UI images to references!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which command-line tool is used to run iOS tests from the terminal?",
-        "choices": [
-            "swift test",
-            "xcodebuild test",
-            "pod test",
-            "ios-test"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Công cụ dòng lệnh nào được dùng để chạy test iOS từ terminal?",
-                "choices": [
-                    "swift test",
-                    "xcodebuild test",
-                    "pod test",
-                    "ios-test"
-                ],
-                "successMsg": "Chính xác! xcodebuild test rất tiện cho CI/CD ⚙️",
-                "failMsg": "Chưa đúng 😅 Câu trả lời là xcodebuild test!"
-            },
-            "de": {
-                "q": "Welches Kommandozeilen-Tool wird verwendet, um iOS-Tests im Terminal auszuführen?",
-                "choices": [
-                    "swift test",
-                    "xcodebuild test",
-                    "pod test",
-                    "ios-test"
-                ],
-                "successMsg": "Richtig! xcodebuild test ist ideal für CI/CD ⚙️",
-                "failMsg": "Leider falsch 😅 Die Antwort ist xcodebuild test!"
-            },
-            "en": {
-                "q": "Which command-line tool is used to run iOS tests from the terminal?",
-                "choices": [
-                    "swift test",
-                    "xcodebuild test",
-                    "pod test",
-                    "ios-test"
-                ],
-                "successMsg": "Correct! xcodebuild test is great for CI/CD ⚙️",
-                "failMsg": "Oops 😅 The answer is xcodebuild test!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which assertion verifies that a value is nil?",
-        "choices": [
-            "XCTAssertNotNil",
-            "XCTAssertTrue",
-            "XCTAssertNil",
-            "XCTAssertEqual"
+            "Thi Thiên 103:8.",
+            "Giô-na 4:2.",
+            "Cả hai câu đều đúng.",
+            "Cả hai câu đều sai."
         ],
         "answer": 2,
         "ref": null,
         "translations": {
             "vi": {
-                "q": "Assertion nào dùng để kiểm tra giá trị là nil?",
+                "q": "Ở đâu chép: \"Đức Giê-hô-va hay làm ơn, chậm nóng giận và đầy dẫy lòng nhân từ…\"?",
                 "choices": [
-                    "XCTAssertNotNil",
-                    "XCTAssertTrue",
-                    "XCTAssertNil",
-                    "XCTAssertEqual"
+                    "Thi Thiên 103:8.",
+                    "Giô-na 4:2.",
+                    "Cả hai câu đều đúng.",
+                    "Cả hai câu đều sai."
                 ],
-                "successMsg": "Đúng rồi! XCTAssertNil kiểm tra giá trị nil 🎯",
-                "failMsg": "Chưa đúng 😅 XCTAssertNil mới là đáp án!"
+                "successMsg": "Đỉnh! Biết cả hai chỗ luôn à? Bạn đọc Kinh Thánh cẩn thận ghê! 💯",
+                "failMsg": "Chúa hay làm ơn với bạn lắm đó, chọn sai cũng không sao đâu 😉 Cả Thi Thiên 103:8 lẫn Giô-na 4:2 đều chép như vậy!"
             },
             "de": {
-                "q": "Welche Assertion prüft, ob ein Wert nil ist?",
+                "q": "Wo steht: \"Der HERR ist barmherzig und gnädig, geduldig und von großer Güte…\"?",
                 "choices": [
-                    "XCTAssertNotNil",
-                    "XCTAssertTrue",
-                    "XCTAssertNil",
-                    "XCTAssertEqual"
+                    "Psalm 103,8.",
+                    "Jona 4,2.",
+                    "Beide Verse sind richtig.",
+                    "Beide Verse sind falsch."
                 ],
-                "successMsg": "Richtig! XCTAssertNil prüft auf nil 🎯",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertNil!"
+                "successMsg": "Top! Du kennst beide Stellen - du liest wirklich gründlich 💯",
+                "failMsg": "Gott ist barmherzig mit dir, auch wenn du falsch geantwortet hast 😉 Psalm 103,8 UND Jona 4,2 sagen beide dasselbe!"
             },
             "en": {
-                "q": "Which assertion verifies that a value is nil?",
+                "q": "Where is it written: \"The LORD is gracious, slow to anger and abounding in mercy…\"?",
                 "choices": [
-                    "XCTAssertNotNil",
-                    "XCTAssertTrue",
-                    "XCTAssertNil",
-                    "XCTAssertEqual"
+                    "Psalm 103:8.",
+                    "Jonah 4:2.",
+                    "Both verses are correct.",
+                    "Both verses are wrong."
                 ],
-                "successMsg": "Correct! XCTAssertNil checks for nil values 🎯",
-                "failMsg": "Oops 😅 The answer is XCTAssertNil!"
+                "successMsg": "Top tier! You know BOTH passages? You actually read your Bible 💯",
+                "failMsg": "God is gracious even to wrong-answerers like you 😉 Both Psalm 103:8 AND Jonah 4:2 say this!"
             }
         },
         "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        "createdAt": "2026-04-20T10:00:00.000Z"
     },
     {
-        "q": "Which Xcode navigator displays the list of tests in a project?",
+        "q": "Công thức 2>1 được chép ở đâu?",
         "choices": [
-            "Project Navigator",
-            "Test Navigator",
-            "Debug Navigator",
-            "Issue Navigator"
+            "Truyền Đạo 3:9.",
+            "Truyền Đạo 4:9.",
+            "Truyền Đạo 5:9.",
+            "Truyền Đạo 6:9."
         ],
         "answer": 1,
         "ref": null,
         "translations": {
             "vi": {
-                "q": "Navigator nào trong Xcode hiển thị danh sách test của dự án?",
+                "q": "Công thức 2>1 được chép ở đâu?",
                 "choices": [
-                    "Project Navigator",
-                    "Test Navigator",
-                    "Debug Navigator",
-                    "Issue Navigator"
+                    "Truyền Đạo 3:9.",
+                    "Truyền Đạo 4:9.",
+                    "Truyền Đạo 5:9.",
+                    "Truyền Đạo 6:9."
                 ],
-                "successMsg": "Chính xác! Test Navigator liệt kê toàn bộ test 📂",
-                "failMsg": "Chưa đúng 😅 Test Navigator mới là câu trả lời!"
+                "successMsg": "Hai người hơn một! Và bạn hơn hẳn những người đoán mò! 👯",
+                "failMsg": "Toán lớp 1 mà trật nha! 🧮 Truyền Đạo 4:9 - \"Hai người hơn một, vì họ sẽ được công giá tốt về công việc mình\"!"
             },
             "de": {
-                "q": "Welcher Xcode-Navigator zeigt die Liste der Tests eines Projekts an?",
+                "q": "Wo steht die Formel 2>1 (zwei sind besser als einer)?",
                 "choices": [
-                    "Project Navigator",
-                    "Test Navigator",
-                    "Debug Navigator",
-                    "Issue Navigator"
+                    "Prediger 3,9.",
+                    "Prediger 4,9.",
+                    "Prediger 5,9.",
+                    "Prediger 6,9."
                 ],
-                "successMsg": "Richtig! Der Test Navigator listet alle Tests auf 📂",
-                "failMsg": "Leider falsch 😅 Die Antwort ist Test Navigator!"
+                "successMsg": "Zwei sind besser als einer! Und du bist besser als die Rater! 👯",
+                "failMsg": "Grundschulmathematik und trotzdem falsch! 🧮 Prediger 4,9 - \"Zwei sind besser dran als einer\"!"
             },
             "en": {
-                "q": "Which Xcode navigator displays the list of tests in a project?",
+                "q": "Where is the formula 2>1 (two are better than one) written?",
                 "choices": [
-                    "Project Navigator",
-                    "Test Navigator",
-                    "Debug Navigator",
-                    "Issue Navigator"
+                    "Ecclesiastes 3:9.",
+                    "Ecclesiastes 4:9.",
+                    "Ecclesiastes 5:9.",
+                    "Ecclesiastes 6:9."
                 ],
-                "successMsg": "Correct! The Test Navigator lists all tests 📂",
-                "failMsg": "Oops 😅 The answer is Test Navigator!"
+                "successMsg": "Two is better than one! And you're better than the guessers! 👯",
+                "failMsg": "First-grade math and you blew it! 🧮 Ecclesiastes 4:9 - \"Two are better than one, because they have a good reward for their labor\"!"
             }
         },
         "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Theo Sáng Thế ký 3:20, tên \"Ê-va\" có nghĩa là gì?",
+        "choices": [
+            "Mẹ của loài người.",
+            "Sự sống.",
+            "Người nữ.",
+            "Người vợ."
+        ],
+        "answer": 0,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Theo Sáng Thế ký 3:20, tên \"Ê-va\" có nghĩa là gì?",
+                "choices": [
+                    "Mẹ của loài người.",
+                    "Sự sống.",
+                    "Người nữ.",
+                    "Người vợ."
+                ],
+                "successMsg": "Đúng boong! Bạn biết cả ý nghĩa tên nữa! 👩‍👧‍👦",
+                "failMsg": "A-đam đặt tên vợ là Ê-va vì \"nàng là mẹ của cả loài người\" chứ không phải vì bất kỳ lý do nào khác! 📖"
+            },
+            "de": {
+                "q": "Laut 1. Mose 3,20 bedeutet der Name \"Eva\":",
+                "choices": [
+                    "Mutter aller Lebenden.",
+                    "Das Leben.",
+                    "Die Frau.",
+                    "Die Ehefrau."
+                ],
+                "successMsg": "Genau richtig! Du kennst sogar die Namensbedeutung! 👩‍👧‍👦",
+                "failMsg": "Adam nannte seine Frau Eva, weil sie \"die Mutter aller Lebenden\" wurde! 📖"
+            },
+            "en": {
+                "q": "According to Genesis 3:20, the name \"Eve\" means:",
+                "choices": [
+                    "Mother of all living.",
+                    "Life.",
+                    "Woman.",
+                    "Wife."
+                ],
+                "successMsg": "Spot on! You even know the meaning of the name! 👩‍👧‍👦",
+                "failMsg": "Adam named his wife Eve because \"she was the mother of all living\" - not for any other reason! 📖"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Ở đâu chép Chúa cấm coi bói và cầu đồng bóng?",
+        "choices": [
+            "Xuất Ê-díp-tô ký 18:19.",
+            "Lê-vi ký 19:31.",
+            "Dân số ký 31:19.",
+            "Phục truyền 19:31."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Ở đâu chép Chúa cấm coi bói và cầu đồng bóng?",
+                "choices": [
+                    "Xuất Ê-díp-tô ký 18:19.",
+                    "Lê-vi ký 19:31.",
+                    "Dân số ký 31:19.",
+                    "Phục truyền 19:31."
+                ],
+                "successMsg": "Tuyệt! Không cần coi bói cũng biết đáp án rồi! 🔮❌",
+                "failMsg": "Đừng coi bói, đừng cầu cơ, đừng xem tarot nha! 🚫 Lê-vi ký 19:31 cấm rõ ràng việc đó!"
+            },
+            "de": {
+                "q": "Wo verbietet Gott Wahrsagerei und Geisterbeschwörung?",
+                "choices": [
+                    "2. Mose 18,19.",
+                    "3. Mose 19,31.",
+                    "4. Mose 31,19.",
+                    "5. Mose 19,31."
+                ],
+                "successMsg": "Super! Du brauchst kein Orakel, um die Antwort zu finden! 🔮❌",
+                "failMsg": "Keine Wahrsagerei, keine Geisterbeschwörung, kein Tarot! 🚫 3. Mose 19,31 verbietet das ausdrücklich!"
+            },
+            "en": {
+                "q": "Where does God forbid divination and consulting mediums?",
+                "choices": [
+                    "Exodus 18:19.",
+                    "Leviticus 19:31.",
+                    "Numbers 31:19.",
+                    "Deuteronomy 19:31."
+                ],
+                "successMsg": "Nice! You didn't need a fortune teller to find the answer! 🔮❌",
+                "failMsg": "No fortune telling, no seances, no tarot! 🚫 Leviticus 19:31 forbids it clearly!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Tiên tri nào được gọi là \"tiên tri than khóc\"?",
+        "choices": [
+            "Ê-sai.",
+            "Ê-xê-chi-ên.",
+            "Đa-ni-ên.",
+            "Giê-rê-mi."
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Tiên tri nào được gọi là \"tiên tri than khóc\"?",
+                "choices": [
+                    "Ê-sai.",
+                    "Ê-xê-chi-ên.",
+                    "Đa-ni-ên.",
+                    "Giê-rê-mi."
+                ],
+                "successMsg": "Chuẩn! Cả một sách Ca Thương đã nói lên điều đó 😢",
+                "failMsg": "Người viết cả sách Ca Thương mà bạn không nhận ra à? 😭 Giê-rê-mi chính là \"tiên tri than khóc\"!"
+            },
+            "de": {
+                "q": "Welcher Prophet wird \"der weinende Prophet\" genannt?",
+                "choices": [
+                    "Jesaja.",
+                    "Hesekiel.",
+                    "Daniel.",
+                    "Jeremia."
+                ],
+                "successMsg": "Genau! Das Buch der Klagelieder spricht für sich 😢",
+                "failMsg": "Er hat ein ganzes Buch der Klagelieder geschrieben, und du erkennst ihn nicht? 😭 Jeremia ist der \"weinende Prophet\"!"
+            },
+            "en": {
+                "q": "Which prophet is called the \"weeping prophet\"?",
+                "choices": [
+                    "Isaiah.",
+                    "Ezekiel.",
+                    "Daniel.",
+                    "Jeremiah."
+                ],
+                "successMsg": "Correct! The whole book of Lamentations says it all 😢",
+                "failMsg": "He literally wrote the book of Lamentations and you didn't recognize him? 😭 Jeremiah is the \"weeping prophet\"!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Dân Y-sơ-ra-ên được gọi theo tên của ai?",
+        "choices": [
+            "Áp-ra-ham.",
+            "Y-sác.",
+            "Gia-cốp.",
+            "Đa-vít."
+        ],
+        "answer": 2,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Dân Y-sơ-ra-ên được gọi theo tên của ai?",
+                "choices": [
+                    "Áp-ra-ham.",
+                    "Y-sác.",
+                    "Gia-cốp.",
+                    "Đa-vít."
+                ],
+                "successMsg": "Chính xác! Gia-cốp được Chúa đổi tên thành Y-sơ-ra-ên 🇮🇱",
+                "failMsg": "Áp-ra-ham là cha của nhiều dân tộc, còn Y-sơ-ra-ên là tên mới của Gia-cốp sau khi vật lộn với Chúa! 💪 (Sáng 32:28)"
+            },
+            "de": {
+                "q": "Nach wem ist das Volk Israel benannt?",
+                "choices": [
+                    "Abraham.",
+                    "Isaak.",
+                    "Jakob.",
+                    "David."
+                ],
+                "successMsg": "Genau! Jakob wurde von Gott in Israel umbenannt 🇮🇱",
+                "failMsg": "Abraham ist der Vater vieler Völker, aber Israel ist der neue Name Jakobs nach seinem Kampf mit Gott! 💪 (1. Mose 32,28)"
+            },
+            "en": {
+                "q": "Whom are the people of Israel named after?",
+                "choices": [
+                    "Abraham.",
+                    "Isaac.",
+                    "Jacob.",
+                    "David."
+                ],
+                "successMsg": "Exactly! God renamed Jacob to Israel 🇮🇱",
+                "failMsg": "Abraham is the father of many nations, but Israel is Jacob's new name after wrestling with God! 💪 (Gen 32:28)"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "\"Tôi đã bị đóng đinh vào thập tự giá với Đấng Christ, mà tôi sống, không phải là tôi sống nữa, nhưng Đấng Christ sống trong tôi…\" - câu này được chép ở đâu?",
+        "choices": [
+            "Giăng 3:16.",
+            "Ga-la-ti 2:20.",
+            "Lu-ca 2:14.",
+            "Công vụ 4:12."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "\"Tôi đã bị đóng đinh vào thập tự giá với Đấng Christ, mà tôi sống, không phải là tôi sống nữa, nhưng Đấng Christ sống trong tôi…\" - câu này được chép ở đâu?",
+                "choices": [
+                    "Giăng 3:16.",
+                    "Ga-la-ti 2:20.",
+                    "Lu-ca 2:14.",
+                    "Công vụ 4:12."
+                ],
+                "successMsg": "Tuyệt vời! Câu Kinh Thánh kinh điển của Phao-lô ✝️",
+                "failMsg": "Giăng 3:16 là câu quá nổi nhưng không phải câu này đâu! 🙅 Ga-la-ti 2:20 - lời tuyên bố bất hủ của Phao-lô!"
+            },
+            "de": {
+                "q": "\"Ich bin mit Christus gekreuzigt, und nun lebe nicht mehr ich, sondern Christus lebt in mir…\" - wo steht das?",
+                "choices": [
+                    "Johannes 3,16.",
+                    "Galater 2,20.",
+                    "Lukas 2,14.",
+                    "Apostelgeschichte 4,12."
+                ],
+                "successMsg": "Super! Ein klassischer Paulus-Vers ✝️",
+                "failMsg": "Johannes 3,16 ist der berühmteste Vers - aber nicht dieser! 🙅 Galater 2,20 - die unsterbliche Aussage des Paulus!"
+            },
+            "en": {
+                "q": "\"I have been crucified with Christ; it is no longer I who live, but Christ lives in me…\" - where is this written?",
+                "choices": [
+                    "John 3:16.",
+                    "Galatians 2:20.",
+                    "Luke 2:14.",
+                    "Acts 4:12."
+                ],
+                "successMsg": "Excellent! A classic Paul verse ✝️",
+                "failMsg": "John 3:16 is the famous one, but not this one! 🙅 Galatians 2:20 - Paul's immortal declaration!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Theo I Cô-rinh-tô 13:13, Phao-lô đã đúc kết lại 3 điều quan trọng nào?",
+        "choices": [
+            "Yêu thương, bình an, hy vọng.",
+            "Đức tin, hy vọng, bình an.",
+            "Đức tin, sự trông cậy, vui mừng.",
+            "Đức tin, sự trông cậy, tình yêu thương."
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Theo I Cô-rinh-tô 13:13, Phao-lô đã đúc kết lại 3 điều quan trọng nào?",
+                "choices": [
+                    "Yêu thương, bình an, hy vọng.",
+                    "Đức tin, hy vọng, bình an.",
+                    "Đức tin, sự trông cậy, vui mừng.",
+                    "Đức tin, sự trông cậy, tình yêu thương."
+                ],
+                "successMsg": "Và lớn hơn hết là tình yêu thương! Bạn nhớ đúng rồi ❤️",
+                "failMsg": "Ba điều kinh điển của Cơ-đốc giáo đó bạn ơi! 😫 Đức tin, sự trông cậy, tình yêu thương - nhưng lớn hơn hết là tình yêu thương!"
+            },
+            "de": {
+                "q": "Welche drei Dinge fasst Paulus in 1. Korinther 13,13 zusammen?",
+                "choices": [
+                    "Liebe, Frieden, Hoffnung.",
+                    "Glaube, Hoffnung, Frieden.",
+                    "Glaube, Hoffnung, Freude.",
+                    "Glaube, Hoffnung, Liebe."
+                ],
+                "successMsg": "Und die Größte ist die Liebe! Du hast es behalten ❤️",
+                "failMsg": "Die drei christlichen Grundtugenden! 😫 Glaube, Hoffnung, Liebe - aber die Liebe ist die größte!"
+            },
+            "en": {
+                "q": "According to 1 Corinthians 13:13, what three things does Paul summarize?",
+                "choices": [
+                    "Love, peace, hope.",
+                    "Faith, hope, peace.",
+                    "Faith, hope, joy.",
+                    "Faith, hope, love."
+                ],
+                "successMsg": "And the greatest of these is love! You got it ❤️",
+                "failMsg": "The three cardinal Christian virtues! 😫 Faith, hope, love - and the greatest is love!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Trong bài giảng \"Các Phước Lành\" có bao nhiêu chữ phước?",
+        "choices": [
+            "6.",
+            "7.",
+            "8.",
+            "9."
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Trong bài giảng \"Các Phước Lành\" có bao nhiêu chữ phước?",
+                "choices": [
+                    "6.",
+                    "7.",
+                    "8.",
+                    "9."
+                ],
+                "successMsg": "Đúng rồi! 9 chữ phước trong Ma-thi-ơ 5 🙌",
+                "failMsg": "Đếm lại đi bạn! 🔢 Có 9 chữ \"phước\" trong bài giảng trên núi (Ma-thi-ơ 5:3-11)!"
+            },
+            "de": {
+                "q": "Wie viele Seligpreisungen enthält die Bergpredigt?",
+                "choices": [
+                    "6.",
+                    "7.",
+                    "8.",
+                    "9."
+                ],
+                "successMsg": "Richtig! 9 Seligpreisungen in Matthäus 5 🙌",
+                "failMsg": "Zähl nochmal nach! 🔢 Es sind 9 \"Selig\"-Aussprüche in der Bergpredigt (Matthäus 5,3-11)!"
+            },
+            "en": {
+                "q": "How many \"blessed are\" statements are in the Beatitudes?",
+                "choices": [
+                    "6.",
+                    "7.",
+                    "8.",
+                    "9."
+                ],
+                "successMsg": "Right! 9 beatitudes in Matthew 5 🙌",
+                "failMsg": "Count again! 🔢 There are 9 \"blessed are\" statements in the Sermon on the Mount (Matthew 5:3-11)!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Đại Mạng Lệnh được chép ở đâu?",
+        "choices": [
+            "Ma-thi-ơ 28:18-20.",
+            "Giăng 20:21.",
+            "Mác 16:15.",
+            "Cả a và c đều đúng."
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Đại Mạng Lệnh được chép ở đâu?",
+                "choices": [
+                    "Ma-thi-ơ 28:18-20.",
+                    "Giăng 20:21.",
+                    "Mác 16:15.",
+                    "Cả a và c đều đúng."
+                ],
+                "successMsg": "Đúng! Đại Mạng Lệnh được chép cả trong Ma-thi-ơ 28 và Mác 16 🌍",
+                "failMsg": "Đọc Kinh Thánh kỹ hơn nha! 📚 Đại Mạng Lệnh chép cả ở Ma-thi-ơ 28:18-20 VÀ Mác 16:15!"
+            },
+            "de": {
+                "q": "Wo steht der Missionsbefehl (die Große Sendung)?",
+                "choices": [
+                    "Matthäus 28,18-20.",
+                    "Johannes 20,21.",
+                    "Markus 16,15.",
+                    "Sowohl a als auch c."
+                ],
+                "successMsg": "Richtig! Der Missionsbefehl steht in Matthäus 28 UND Markus 16 🌍",
+                "failMsg": "Lies die Bibel genauer! 📚 Der Missionsbefehl steht in Matthäus 28,18-20 UND Markus 16,15!"
+            },
+            "en": {
+                "q": "Where is the Great Commission recorded?",
+                "choices": [
+                    "Matthew 28:18-20.",
+                    "John 20:21.",
+                    "Mark 16:15.",
+                    "Both a and c are correct."
+                ],
+                "successMsg": "Right! The Great Commission is in both Matthew 28 AND Mark 16 🌍",
+                "failMsg": "Read more carefully! 📚 The Great Commission is recorded in BOTH Matthew 28:18-20 AND Mark 16:15!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "\"Hãy kính sợ Đấng Christ mà vâng phục nhau\" được chép ở đâu?",
+        "choices": [
+            "Ê-phê-sô 5:22.",
+            "Ê-phê-sô 5:21.",
+            "Ê-phê-sô 5:24.",
+            "Ê-phê-sô 5:28."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "\"Hãy kính sợ Đấng Christ mà vâng phục nhau\" được chép ở đâu?",
+                "choices": [
+                    "Ê-phê-sô 5:22.",
+                    "Ê-phê-sô 5:21.",
+                    "Ê-phê-sô 5:24.",
+                    "Ê-phê-sô 5:28."
+                ],
+                "successMsg": "Đúng! Câu 21 chính là nền tảng cho mọi mối quan hệ trong hội thánh 🤝",
+                "failMsg": "Sai số câu rồi! 📖 Ê-phê-sô 5:21 - nguyên tắc \"vâng phục nhau\" đứng trước mọi chỉ dạy về vợ chồng!"
+            },
+            "de": {
+                "q": "Wo steht: \"Ordnet euch einander unter in der Furcht Christi\"?",
+                "choices": [
+                    "Epheser 5,22.",
+                    "Epheser 5,21.",
+                    "Epheser 5,24.",
+                    "Epheser 5,28."
+                ],
+                "successMsg": "Richtig! Vers 21 ist die Grundlage für alle Beziehungen in der Gemeinde 🤝",
+                "failMsg": "Falsche Versnummer! 📖 Epheser 5,21 - das Prinzip der gegenseitigen Unterordnung steht vor allen Ehe-Anweisungen!"
+            },
+            "en": {
+                "q": "Where is \"Submit to one another out of reverence for Christ\" written?",
+                "choices": [
+                    "Ephesians 5:22.",
+                    "Ephesians 5:21.",
+                    "Ephesians 5:24.",
+                    "Ephesians 5:28."
+                ],
+                "successMsg": "Right! Verse 21 is the foundation for all church relationships 🤝",
+                "failMsg": "Wrong verse number! 📖 Ephesians 5:21 - mutual submission is the principle BEFORE any marriage instructions!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Câu Kinh Thánh nào có ý tương tự với bài toán 1+1=1?",
+        "choices": [
+            "Ma-thi-ơ 10:30.",
+            "Giăng 10:30.",
+            "Mác 10:30.",
+            "Lu-ca 10:30."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Câu Kinh Thánh nào có ý tương tự với bài toán 1+1=1?",
+                "choices": [
+                    "Ma-thi-ơ 10:30.",
+                    "Giăng 10:30.",
+                    "Mác 10:30.",
+                    "Lu-ca 10:30."
+                ],
+                "successMsg": "Chuẩn! \"Ta với Cha là một\" - Cha và Con hiệp một 🕊️",
+                "failMsg": "Bài toán thần học đây! 🧮 Giăng 10:30 - \"Ta với Cha là một\", thể hiện sự hiệp nhất của Ba Ngôi Đức Chúa Trời!"
+            },
+            "de": {
+                "q": "Welcher Bibelvers entspricht der Gleichung 1+1=1?",
+                "choices": [
+                    "Matthäus 10,30.",
+                    "Johannes 10,30.",
+                    "Markus 10,30.",
+                    "Lukas 10,30."
+                ],
+                "successMsg": "Genau! \"Ich und der Vater sind eins\" - die Einheit von Vater und Sohn 🕊️",
+                "failMsg": "Theologische Mathematik! 🧮 Johannes 10,30 - \"Ich und der Vater sind eins\" zeigt die Einheit der Dreieinigkeit!"
+            },
+            "en": {
+                "q": "Which Bible verse corresponds to the equation 1+1=1?",
+                "choices": [
+                    "Matthew 10:30.",
+                    "John 10:30.",
+                    "Mark 10:30.",
+                    "Luke 10:30."
+                ],
+                "successMsg": "Right! \"I and the Father are one\" - the unity of Father and Son 🕊️",
+                "failMsg": "Theological math! 🧮 John 10:30 - \"I and the Father are one\" shows the unity of the Trinity!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "II Cô-rinh-tô 6:14 chép về ai hay điều gì?",
+        "choices": [
+            "Chớ mang ách chung với kẻ chẳng tin.",
+            "Đấng Christ và Bê-li-an.",
+            "Bàn thờ Chúa và bàn thờ tà thần.",
+            "Tín hữu và thân hữu."
+        ],
+        "answer": 0,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "II Cô-rinh-tô 6:14 chép về ai hay điều gì?",
+                "choices": [
+                    "Chớ mang ách chung với kẻ chẳng tin.",
+                    "Đấng Christ và Bê-li-an.",
+                    "Bàn thờ Chúa và bàn thờ tà thần.",
+                    "Tín hữu và thân hữu."
+                ],
+                "successMsg": "Chuẩn! Câu quan trọng cho việc chọn bạn và chọn chồng/vợ 💍",
+                "failMsg": "Những ý khác xuất hiện ở các câu sau (15-16) nhé! 📖 II Cô-rinh-tô 6:14 chép: \"Chớ mang ách chung với kẻ chẳng tin\"!"
+            },
+            "de": {
+                "q": "Wovon handelt 2. Korinther 6,14?",
+                "choices": [
+                    "Zieht nicht am gleichen Joch mit den Ungläubigen.",
+                    "Christus und Beliar.",
+                    "Der Altar Gottes und der Götzenaltar.",
+                    "Gläubige und Freunde."
+                ],
+                "successMsg": "Richtig! Wichtig für Freundschaftswahl und Partnerwahl 💍",
+                "failMsg": "Die anderen Ideen kommen in den folgenden Versen (15-16)! 📖 2. Korinther 6,14: \"Zieht nicht am fremden Joch mit den Ungläubigen\"!"
+            },
+            "en": {
+                "q": "What does 2 Corinthians 6:14 address?",
+                "choices": [
+                    "Do not be unequally yoked with unbelievers.",
+                    "Christ and Belial.",
+                    "The altar of God and the altar of idols.",
+                    "Believers and friends."
+                ],
+                "successMsg": "Correct! Key verse for choosing friends and spouses 💍",
+                "failMsg": "The other ideas appear in the following verses (15-16)! 📖 2 Corinthians 6:14 says: \"Do not be unequally yoked with unbelievers\"!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Phép lạ đầu tiên ma quỉ muốn Chúa Giê-su làm là gì?",
+        "choices": [
+            "Hóa nước thành rượu.",
+            "Hóa đá thành bánh.",
+            "Hóa bánh thành cá.",
+            "Hóa đá thành cá."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Phép lạ đầu tiên ma quỉ muốn Chúa Giê-su làm là gì?",
+                "choices": [
+                    "Hóa nước thành rượu.",
+                    "Hóa đá thành bánh.",
+                    "Hóa bánh thành cá.",
+                    "Hóa đá thành cá."
+                ],
+                "successMsg": "Chính xác! Sự cám dỗ đầu tiên trong đồng vắng 🍞",
+                "failMsg": "Ma quỉ cám dỗ Chúa hóa ĐÁ thành BÁNH sau 40 ngày nhịn ăn! 🪨➡️🍞 (Ma-thi-ơ 4:3)"
+            },
+            "de": {
+                "q": "Welches Wunder verlangte der Teufel zuerst von Jesus?",
+                "choices": [
+                    "Wasser in Wein verwandeln.",
+                    "Steine in Brot verwandeln.",
+                    "Brot in Fisch verwandeln.",
+                    "Steine in Fisch verwandeln."
+                ],
+                "successMsg": "Korrekt! Die erste Versuchung in der Wüste 🍞",
+                "failMsg": "Der Teufel forderte Jesus nach 40 Tagen Fasten auf, STEINE in BROT zu verwandeln! 🪨➡️🍞 (Matthäus 4,3)"
+            },
+            "en": {
+                "q": "What was the first miracle the devil wanted Jesus to perform?",
+                "choices": [
+                    "Turn water into wine.",
+                    "Turn stones into bread.",
+                    "Turn bread into fish.",
+                    "Turn stones into fish."
+                ],
+                "successMsg": "Exactly! The first temptation in the wilderness 🍞",
+                "failMsg": "The devil tempted Jesus to turn STONES into BREAD after a 40-day fast! 🪨➡️🍞 (Matthew 4:3)"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Theo I Giăng 3:8, mục đích Con Đức Chúa Trời đến thế gian là gì?",
+        "choices": [
+            "Chết trên cây thập tự.",
+            "Cất tội lỗi đi.",
+            "Hủy phá công việc của ma quỉ.",
+            "Hầu việc người ta."
+        ],
+        "answer": 2,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Theo I Giăng 3:8, mục đích Con Đức Chúa Trời đến thế gian là gì?",
+                "choices": [
+                    "Chết trên cây thập tự.",
+                    "Cất tội lỗi đi.",
+                    "Hủy phá công việc của ma quỉ.",
+                    "Hầu việc người ta."
+                ],
+                "successMsg": "Đúng chính xác I Giăng 3:8 nha! Các câu khác cũng đúng nhưng không phải của câu này 💪",
+                "failMsg": "Đọc kỹ câu hỏi \"theo I Giăng 3:8\" nhé! 📖 Ngài đến để hủy phá công việc của ma quỉ - chiến thắng trên hắn!"
+            },
+            "de": {
+                "q": "Laut 1. Johannes 3,8 - warum kam der Sohn Gottes in die Welt?",
+                "choices": [
+                    "Um am Kreuz zu sterben.",
+                    "Um die Sünde wegzunehmen.",
+                    "Um die Werke des Teufels zu zerstören.",
+                    "Um den Menschen zu dienen."
+                ],
+                "successMsg": "Genau nach 1. Johannes 3,8! Die anderen sind auch biblisch, aber nicht aus diesem Vers 💪",
+                "failMsg": "Die Frage bezieht sich speziell auf 1. Johannes 3,8! 📖 Er kam, um die Werke des Teufels zu zerstören!"
+            },
+            "en": {
+                "q": "According to 1 John 3:8, why did the Son of God come into the world?",
+                "choices": [
+                    "To die on the cross.",
+                    "To take away sin.",
+                    "To destroy the works of the devil.",
+                    "To serve people."
+                ],
+                "successMsg": "Exactly per 1 John 3:8! The other answers are true but not from this verse 💪",
+                "failMsg": "The question specifically asks about 1 John 3:8! 📖 He came to destroy the works of the devil!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Phép lạ tại Ca-na Chúa Giê-xu làm là gì?",
+        "choices": [
+            "Hóa đá thành rượu.",
+            "Hóa đá thành bánh.",
+            "Hóa bánh thành cá.",
+            "Hóa nước thành rượu."
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Phép lạ tại Ca-na Chúa Giê-xu làm là gì?",
+                "choices": [
+                    "Hóa đá thành rượu.",
+                    "Hóa đá thành bánh.",
+                    "Hóa bánh thành cá.",
+                    "Hóa nước thành rượu."
+                ],
+                "successMsg": "Tuyệt! Phép lạ đầu tiên của Chúa tại tiệc cưới Ca-na 🍷",
+                "failMsg": "Tiệc cưới hết rượu, Chúa hóa nước thành rượu chứ đâu có đá! 🙄 Phép lạ đầu tiên của Ngài (Giăng 2)!"
+            },
+            "de": {
+                "q": "Welches Wunder vollbrachte Jesus in Kana?",
+                "choices": [
+                    "Er verwandelte Steine in Wein.",
+                    "Er verwandelte Steine in Brot.",
+                    "Er verwandelte Brot in Fisch.",
+                    "Er verwandelte Wasser in Wein."
+                ],
+                "successMsg": "Super! Das erste Wunder Jesu bei der Hochzeit zu Kana 🍷",
+                "failMsg": "Auf der Hochzeit ging der Wein aus, also verwandelte Jesus Wasser in Wein - keine Steine! 🙄 Sein erstes Wunder (Johannes 2)!"
+            },
+            "en": {
+                "q": "What miracle did Jesus perform at Cana?",
+                "choices": [
+                    "Turned stones into wine.",
+                    "Turned stones into bread.",
+                    "Turned bread into fish.",
+                    "Turned water into wine."
+                ],
+                "successMsg": "Great! Jesus' first miracle at the wedding in Cana 🍷",
+                "failMsg": "The wedding ran out of wine, so Jesus turned water into wine - not stones! 🙄 His first miracle (John 2)!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Người Pha-ri-si phê bình Chúa Giê-su ăn chung với những người nào?",
+        "choices": [
+            "Người thâu thuế và kẻ có tội.",
+            "Người tầm thường.",
+            "Người cùng khổ.",
+            "Người nghèo."
+        ],
+        "answer": 0,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Người Pha-ri-si phê bình Chúa Giê-su ăn chung với những người nào?",
+                "choices": [
+                    "Người thâu thuế và kẻ có tội.",
+                    "Người tầm thường.",
+                    "Người cùng khổ.",
+                    "Người nghèo."
+                ],
+                "successMsg": "Đúng! Và Chúa đến để cứu chính những người đó 💝",
+                "failMsg": "Người Pha-ri-si khó chịu vì Chúa ngồi ăn với người THÂU THUẾ và KẺ CÓ TỘI! 🍽️ Nhưng Ngài đến vì họ (Ma-thi-ơ 9:10-13)!"
+            },
+            "de": {
+                "q": "Mit welchen Menschen kritisierten die Pharisäer Jesus wegen des gemeinsamen Essens?",
+                "choices": [
+                    "Zöllner und Sünder.",
+                    "Gewöhnliche Menschen.",
+                    "Notleidende.",
+                    "Arme."
+                ],
+                "successMsg": "Richtig! Und für genau diese Menschen kam Jesus 💝",
+                "failMsg": "Die Pharisäer ärgerten sich, dass Jesus mit ZÖLLNERN und SÜNDERN aß! 🍽️ Aber für sie kam er (Matthäus 9,10-13)!"
+            },
+            "en": {
+                "q": "Whom did the Pharisees criticize Jesus for eating with?",
+                "choices": [
+                    "Tax collectors and sinners.",
+                    "Ordinary people.",
+                    "The suffering.",
+                    "The poor."
+                ],
+                "successMsg": "Right! And Jesus came for exactly those people 💝",
+                "failMsg": "The Pharisees were upset that Jesus ate with TAX COLLECTORS and SINNERS! 🍽️ But they're exactly who He came for (Matthew 9:10-13)!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Theo I Cô-rinh-tô 10:20, Phao-lô khuyên chúng ta không nên ăn đồ cúng vì đồ người ngoại cúng tế là cúng tế ai?",
+        "choices": [
+            "Sa-tan.",
+            "Ma quỉ.",
+            "Các quỉ.",
+            "Tất cả đều đúng."
+        ],
+        "answer": 3,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Theo I Cô-rinh-tô 10:20, Phao-lô khuyên chúng ta không nên ăn đồ cúng vì đồ người ngoại cúng tế là cúng tế ai?",
+                "choices": [
+                    "Sa-tan.",
+                    "Ma quỉ.",
+                    "Các quỉ.",
+                    "Tất cả đều đúng."
+                ],
+                "successMsg": "Đúng! Đồ cúng là cúng cho các quỉ - tức thuộc về Sa-tan/ma quỉ 🚫",
+                "failMsg": "Sa-tan, ma quỉ, các quỉ đều chung một phe cả! 👿 Đồ người ngoại cúng tế là cúng cho tất cả những thế lực tối tăm đó!"
+            },
+            "de": {
+                "q": "Laut 1. Korinther 10,20 - warum sollen wir kein Götzenopferfleisch essen? Wem wird es geopfert?",
+                "choices": [
+                    "Satan.",
+                    "Dem Teufel.",
+                    "Den Dämonen.",
+                    "Alle sind richtig."
+                ],
+                "successMsg": "Richtig! Götzenopfer gehen an Dämonen - alle zur dunklen Seite 🚫",
+                "failMsg": "Satan, Teufel, Dämonen - alle dieselbe dunkle Seite! 👿 Götzenopfer gehen an all diese dunklen Mächte!"
+            },
+            "en": {
+                "q": "According to 1 Corinthians 10:20, why should we not eat food sacrificed to idols - to whom is it offered?",
+                "choices": [
+                    "Satan.",
+                    "The devil.",
+                    "Demons.",
+                    "All of the above."
+                ],
+                "successMsg": "Right! Idol food goes to demons - all the dark side 🚫",
+                "failMsg": "Satan, devil, demons - all the same dark team! 👿 Pagan offerings go to all these dark powers!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Điền vào khoảng trống: \"Nếu không có … thì chẳng hề có thế nào ở cho đẹp ý Ngài\" (Hê-bơ-rơ 11:6).",
+        "choices": [
+            "Hy vọng.",
+            "Đức tin.",
+            "Bình an.",
+            "Ân tứ."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Điền vào khoảng trống: \"Nếu không có … thì chẳng hề có thế nào ở cho đẹp ý Ngài\" (Hê-bơ-rơ 11:6).",
+                "choices": [
+                    "Hy vọng.",
+                    "Đức tin.",
+                    "Bình an.",
+                    "Ân tứ."
+                ],
+                "successMsg": "Chính xác! Không có đức tin thì không làm vui lòng Chúa được 🙏",
+                "failMsg": "Sách Hê-bơ-rơ 11 là chương đức tin mà! 💫 Hê-bơ-rơ 11:6 - không có ĐỨC TIN thì không thể đẹp lòng Chúa!"
+            },
+            "de": {
+                "q": "Fülle die Lücke: \"Ohne … ist's unmöglich, Gott zu gefallen\" (Hebräer 11,6).",
+                "choices": [
+                    "Hoffnung.",
+                    "Glauben.",
+                    "Frieden.",
+                    "Gaben."
+                ],
+                "successMsg": "Genau! Ohne Glauben können wir Gott nicht gefallen 🙏",
+                "failMsg": "Hebräer 11 ist doch das Glaubenskapitel! 💫 Hebräer 11,6 - ohne GLAUBEN kann man Gott nicht gefallen!"
+            },
+            "en": {
+                "q": "Fill in the blank: \"Without … it is impossible to please Him\" (Hebrews 11:6).",
+                "choices": [
+                    "Hope.",
+                    "Faith.",
+                    "Peace.",
+                    "Gifts."
+                ],
+                "successMsg": "Exactly! Without faith we cannot please God 🙏",
+                "failMsg": "Hebrews 11 is literally the faith chapter! 💫 Hebrews 11:6 - without FAITH it is impossible to please God!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Điền vào khoảng trống: \"Không đổ … thì không có sự tha thứ\" (Hê-bơ-rơ 9:22).",
+        "choices": [
+            "Nước.",
+            "Huyết.",
+            "Nước mắt.",
+            "Nước mũi."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Điền vào khoảng trống: \"Không đổ … thì không có sự tha thứ\" (Hê-bơ-rơ 9:22).",
+                "choices": [
+                    "Nước.",
+                    "Huyết.",
+                    "Nước mắt.",
+                    "Nước mũi."
+                ],
+                "successMsg": "Đúng! Chính huyết của Chúa Giê-su đã đổ ra vì chúng ta ✝️",
+                "failMsg": "Nước mũi? Thiệt hả bạn?! 😂 Hê-bơ-rơ 9:22 nói rõ: không đổ HUYẾT thì không có sự tha thứ!"
+            },
+            "de": {
+                "q": "Fülle die Lücke: \"Ohne … gibt es keine Vergebung\" (Hebräer 9,22).",
+                "choices": [
+                    "Wasser.",
+                    "Blut.",
+                    "Tränen.",
+                    "Schnupfen."
+                ],
+                "successMsg": "Richtig! Das Blut Jesu wurde für uns vergossen ✝️",
+                "failMsg": "Schnupfen? Wirklich?! 😂 Hebräer 9,22 sagt klar: ohne BLUTvergießen gibt es keine Vergebung!"
+            },
+            "en": {
+                "q": "Fill in the blank: \"Without the shedding of … there is no forgiveness\" (Hebrews 9:22).",
+                "choices": [
+                    "Water.",
+                    "Blood.",
+                    "Tears.",
+                    "Snot."
+                ],
+                "successMsg": "Right! Jesus' blood was shed for us ✝️",
+                "failMsg": "Snot? Seriously?! 😂 Hebrews 9:22 is crystal clear: without the shedding of BLOOD there is no forgiveness!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Điền vào khoảng trống: \"Ta là đường đi, lẽ thật và sự sống, chẳng bởi ta thì không ai được đến cùng …\" (Giăng 14:6).",
+        "choices": [
+            "Cha.",
+            "Đức Chúa Trời.",
+            "Thượng Đế.",
+            "Tất cả đều đúng."
+        ],
+        "answer": 0,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Điền vào khoảng trống: \"Ta là đường đi, lẽ thật và sự sống, chẳng bởi ta thì không ai được đến cùng …\" (Giăng 14:6).",
+                "choices": [
+                    "Cha.",
+                    "Đức Chúa Trời.",
+                    "Thượng Đế.",
+                    "Tất cả đều đúng."
+                ],
+                "successMsg": "Đúng! Chúa Giê-su dùng chữ \"Cha\" để nhấn mạnh mối quan hệ gia đình 👨‍👦",
+                "failMsg": "Đọc Kinh Thánh theo nguyên văn nha! 📖 Giăng 14:6 dùng từ \"CHA\" - thể hiện mối thông công thân mật với Đức Chúa Trời!"
+            },
+            "de": {
+                "q": "Fülle die Lücke: \"Ich bin der Weg, die Wahrheit und das Leben; niemand kommt zum … denn durch mich\" (Johannes 14,6).",
+                "choices": [
+                    "Vater.",
+                    "Gott.",
+                    "Schöpfer.",
+                    "Alle sind richtig."
+                ],
+                "successMsg": "Richtig! Jesus benutzt \"Vater\", um die familiäre Beziehung zu betonen 👨‍👦",
+                "failMsg": "Halte dich an den genauen Wortlaut! 📖 Johannes 14,6 verwendet \"VATER\" - es geht um die innige Gemeinschaft mit Gott!"
+            },
+            "en": {
+                "q": "Fill in the blank: \"I am the way, the truth, and the life. No one comes to the … except through Me\" (John 14:6).",
+                "choices": [
+                    "Father.",
+                    "God.",
+                    "Almighty.",
+                    "All are correct."
+                ],
+                "successMsg": "Right! Jesus used \"Father\" to emphasize the family relationship 👨‍👦",
+                "failMsg": "Read the exact wording! 📖 John 14:6 uses \"FATHER\" - highlighting intimate fellowship with God!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
+    },
+    {
+        "q": "Điền vào khoảng trống: \"Bởi … đã đến tìm và cứu kẻ bị mất\" (Lu-ca 19:10).",
+        "choices": [
+            "Chúa Giê-su.",
+            "Con Người.",
+            "Đấng Christ.",
+            "Tất cả đều đúng."
+        ],
+        "answer": 1,
+        "ref": null,
+        "translations": {
+            "vi": {
+                "q": "Điền vào khoảng trống: \"Bởi … đã đến tìm và cứu kẻ bị mất\" (Lu-ca 19:10).",
+                "choices": [
+                    "Chúa Giê-su.",
+                    "Con Người.",
+                    "Đấng Christ.",
+                    "Tất cả đều đúng."
+                ],
+                "successMsg": "Chính xác! Chúa Giê-su tự xưng mình là \"Con Người\" - danh xưng yêu thích của Ngài 👑",
+                "failMsg": "Các danh xưng khác đều đúng nhưng nguyên văn chép là \"CON NGƯỜI\"! 📖 Đây là danh xưng Chúa Giê-su hay dùng để chỉ chính Ngài!"
+            },
+            "de": {
+                "q": "Fülle die Lücke: \"Denn der … ist gekommen, zu suchen und selig zu machen, was verloren ist\" (Lukas 19,10).",
+                "choices": [
+                    "Jesus.",
+                    "Menschensohn.",
+                    "Christus.",
+                    "Alle sind richtig."
+                ],
+                "successMsg": "Genau! Jesus nennt sich selbst oft \"Menschensohn\" 👑",
+                "failMsg": "Die anderen Titel stimmen auch, aber der Text sagt \"MENSCHENSOHN\"! 📖 Das ist Jesu bevorzugter Selbstbezug!"
+            },
+            "en": {
+                "q": "Fill in the blank: \"For the … came to seek and to save the lost\" (Luke 19:10).",
+                "choices": [
+                    "Jesus.",
+                    "Son of Man.",
+                    "Christ.",
+                    "All are correct."
+                ],
+                "successMsg": "Exactly! Jesus often called Himself the \"Son of Man\" 👑",
+                "failMsg": "The other titles are true, but the text says \"SON OF MAN\"! 📖 Jesus' favorite self-designation!"
+            }
+        },
+        "createdByName": "FaithHub",
+        "createdAt": "2026-04-20T10:00:00.000Z"
     }
 ]

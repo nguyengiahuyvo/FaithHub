@@ -16,6 +16,7 @@ import {
   type Question,
 } from "@/lib/quest-questions";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   collection,
@@ -523,7 +524,12 @@ export default function GameScreen() {
         return ns;
       });
       setCorrectCount((c) => c + 1);
-      snack.show(`+${POINTS_PER_CORRECT} ✡`);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        () => {},
+      );
+      snack.show(
+        `${t("quest_correct_title", lang)} +${POINTS_PER_CORRECT} ✡`,
+      );
     } else {
       setStreak(0);
       setHearts((h) => {
@@ -754,7 +760,7 @@ export default function GameScreen() {
         </Modal>
       )}
 
-      <Snackbar message={snackMsg} opacity={snack.opacity} />
+      <Snackbar message={snackMsg} opacity={snack.opacity} position="top" />
     </View>
   );
 }
@@ -1650,12 +1656,16 @@ function HintModal({
           )}
 
           {showHint ? (
-            <Pressable
-              onPress={onDismiss}
-              style={[confirmStyles.confirmBtn, { backgroundColor: C.primary }]}
-            >
-              <Text style={confirmStyles.confirmText}>{t("close", lang)}</Text>
-            </Pressable>
+            <View style={confirmStyles.actions}>
+              <Pressable
+                onPress={onDismiss}
+                style={[confirmStyles.confirmBtn, { backgroundColor: C.primary }]}
+              >
+                <Text style={confirmStyles.confirmText}>
+                  {t("close", lang)}
+                </Text>
+              </Pressable>
+            </View>
           ) : (
             <View style={confirmStyles.actions}>
               <Pressable onPress={onDismiss} style={confirmStyles.cancelBtn}>

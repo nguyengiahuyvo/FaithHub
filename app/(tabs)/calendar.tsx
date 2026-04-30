@@ -9,6 +9,7 @@ import { t, tArray } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   addDoc,
   collection,
@@ -376,13 +377,22 @@ function CalendarEventsView() {
                     }}
                     style={styles.upcomingCard}
                   >
-                    <View style={styles.upcomingIconWrap}>
+                    <LinearGradient
+                      colors={
+                        ev.isBirthday
+                          ? ["#D4A77B", "#A87A4F"]
+                          : ["#6B8961", "#3F5C45"]
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.upcomingIconWrap}
+                    >
                       <Ionicons
                         name={ev.isBirthday ? "gift" : "calendar"}
                         size={20}
                         color="#FFFFFF"
                       />
-                    </View>
+                    </LinearGradient>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.upcomingTitle} numberOfLines={1}>{ev.title}</Text>
                       <Text style={styles.upcomingMeta}>
@@ -393,7 +403,7 @@ function CalendarEventsView() {
                           : ""}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color="#5B7553" />
+                    <Ionicons name="chevron-forward" size={18} color="#C4C9BE" />
                   </Pressable>
                   );
                 })}
@@ -1767,37 +1777,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "rgba(91,117,83,0.08)",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(91,117,83,0.15)",
+    borderColor: "rgba(91,117,83,0.18)",
     padding: 14,
+    shadowColor: "#1F3B2E",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   upcomingIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#5B7553",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#1F3B2E",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
   },
   upcomingLabel: {
     color: "#5B7553",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: 2,
   },
   upcomingTitle: {
-    color: "#2C3E2C",
+    color: "#1F3B2E",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     marginTop: 1,
+    letterSpacing: -0.2,
   },
   upcomingMeta: {
     color: "#8A8F84",
     fontSize: 12,
+    fontWeight: "500",
     marginTop: 2,
   },
 });

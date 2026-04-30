@@ -1,722 +1,802 @@
 [
     {
-        "q": "What is the default testing framework provided by Apple for iOS applications?",
-        "choices": [
-            "JUnit",
-            "XCTest",
-            "Mocha",
-            "Jasmine"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Framework kiểm thử mặc định mà Apple cung cấp cho ứng dụng iOS là gì?",
-                "choices": [
-                    "JUnit",
-                    "XCTest",
-                    "Mocha",
-                    "Jasmine"
-                ],
-                "successMsg": "Chính xác! XCTest là framework chuẩn cho iOS 🎯",
-                "failMsg": "Sai rồi 😅 XCTest mới là câu trả lời đúng!"
-            },
-            "de": {
-                "q": "Welches ist das Standard-Test-Framework von Apple für iOS-Anwendungen?",
-                "choices": [
-                    "JUnit",
-                    "XCTest",
-                    "Mocha",
-                    "Jasmine"
-                ],
-                "successMsg": "Richtig! XCTest ist das Standard-Framework für iOS 🎯",
-                "failMsg": "Leider falsch 😅 Die richtige Antwort ist XCTest!"
-            },
-            "en": {
-                "q": "What is the default testing framework provided by Apple for iOS applications?",
-                "choices": [
-                    "JUnit",
-                    "XCTest",
-                    "Mocha",
-                    "Jasmine"
-                ],
-                "successMsg": "Correct! XCTest is the standard framework for iOS 🎯",
-                "failMsg": "Oops 😅 The correct answer is XCTest!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which Xcode keyboard shortcut runs all tests in a project?",
-        "choices": [
-            "Cmd + R",
-            "Cmd + B",
-            "Cmd + U",
-            "Cmd + T"
-        ],
         "answer": 2,
-        "ref": null,
+        "reference": {
+            "vi": "Sáng Thế Ký 1:1",
+            "de": "1. Mose 1,1",
+            "en": "Genesis 1:1"
+        },
         "translations": {
             "vi": {
-                "q": "Phím tắt nào trong Xcode dùng để chạy toàn bộ test của dự án?",
+                "q": "Câu đầu tiên trong Kinh Thánh nói về điều gì?",
                 "choices": [
-                    "Cmd + R",
-                    "Cmd + B",
-                    "Cmd + U",
-                    "Cmd + T"
+                    "Sự sa ngã của loài người.",
+                    "Sự ra đời của A-đam.",
+                    "Đức Chúa Trời dựng nên trời và đất.",
+                    "Cơn nước lụt thời Nô-ê."
                 ],
-                "successMsg": "Đúng rồi! Cmd + U là phím tắt chạy test 🚀",
-                "failMsg": "Chưa đúng 😅 Phím tắt chính xác là Cmd + U!"
+                "hint": "Câu này bắt đầu bằng cụm từ 'Ban đầu...' và mô tả công việc sáng tạo của Đức Chúa Trời."
             },
             "de": {
-                "q": "Mit welchem Xcode-Tastaturkürzel werden alle Tests eines Projekts ausgeführt?",
+                "q": "Wovon spricht der erste Vers der Bibel?",
                 "choices": [
-                    "Cmd + R",
-                    "Cmd + B",
-                    "Cmd + U",
-                    "Cmd + T"
+                    "Vom Sündenfall des Menschen.",
+                    "Von der Geburt Adams.",
+                    "Davon, dass Gott Himmel und Erde schuf.",
+                    "Von der Sintflut zur Zeit Noahs."
                 ],
-                "successMsg": "Richtig! Cmd + U startet alle Tests 🚀",
-                "failMsg": "Leider falsch 😅 Das richtige Kürzel ist Cmd + U!"
+                "hint": "Dieser Vers beginnt mit den Worten 'Am Anfang...' und beschreibt das Schöpfungswerk Gottes."
             },
             "en": {
-                "q": "Which Xcode keyboard shortcut runs all tests in a project?",
+                "q": "What does the first verse of the Bible speak about?",
                 "choices": [
-                    "Cmd + R",
-                    "Cmd + B",
-                    "Cmd + U",
-                    "Cmd + T"
+                    "The fall of mankind.",
+                    "The birth of Adam.",
+                    "God creating the heavens and the earth.",
+                    "The flood in Noah's time."
                 ],
-                "successMsg": "Correct! Cmd + U runs all tests 🚀",
-                "failMsg": "Oops 😅 The right shortcut is Cmd + U!"
+                "hint": "This verse begins with the words 'In the beginning...' and describes God's work of creation."
             }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        }
     },
     {
-        "q": "What is the purpose of the setUp() method in XCTestCase?",
-        "choices": [
-            "To run after all tests finish",
-            "To initialize state before each test",
-            "To delete the test target",
-            "To generate a code coverage report"
-        ],
+        "answer": 0,
+        "reference": {
+            "vi": "Sáng Thế Ký 1:3",
+            "de": "1. Mose 1,3",
+            "en": "Genesis 1:3"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã dựng nên gì vào ngày thứ nhất?",
+                "choices": [
+                    "Sự sáng.",
+                    "Bầu trời.",
+                    "Cây cỏ.",
+                    "Loài cá."
+                ],
+                "hint": "Ngài phán: 'Phải có ___', thì có ngay điều đó. Ngài phân biệt nó với sự tối tăm."
+            },
+            "de": {
+                "q": "Was hat Gott am ersten Tag erschaffen?",
+                "choices": [
+                    "Das Licht.",
+                    "Den Himmel.",
+                    "Die Pflanzen.",
+                    "Die Fische."
+                ],
+                "hint": "Er sprach: 'Es werde ___', und es geschah. Er trennte es von der Finsternis."
+            },
+            "en": {
+                "q": "What did God create on the first day?",
+                "choices": [
+                    "Light.",
+                    "The sky.",
+                    "Plants.",
+                    "Fish."
+                ],
+                "hint": "He said: 'Let there be ___', and it was so. He separated it from the darkness."
+            }
+        }
+    },
+    {
+        "answer": 3,
+        "reference": {
+            "vi": "Sáng Thế Ký 2:2-3",
+            "de": "1. Mose 2,2-3",
+            "en": "Genesis 2:2-3"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã nghỉ ngơi vào ngày thứ mấy sau khi hoàn tất công việc sáng tạo?",
+                "choices": [
+                    "Ngày thứ tư.",
+                    "Ngày thứ năm.",
+                    "Ngày thứ sáu.",
+                    "Ngày thứ bảy."
+                ],
+                "hint": "Ngày này được Đức Chúa Trời ban phước và biệt riêng ra thánh, là gốc tích của ngày Sa-bát."
+            },
+            "de": {
+                "q": "An welchem Tag hat Gott geruht, nachdem er die Schöpfung vollendet hatte?",
+                "choices": [
+                    "Am vierten Tag.",
+                    "Am fünften Tag.",
+                    "Am sechsten Tag.",
+                    "Am siebten Tag."
+                ],
+                "hint": "Diesen Tag hat Gott gesegnet und geheiligt, und er ist der Ursprung des Sabbats."
+            },
+            "en": {
+                "q": "On which day did God rest after finishing the work of creation?",
+                "choices": [
+                    "The fourth day.",
+                    "The fifth day.",
+                    "The sixth day.",
+                    "The seventh day."
+                ],
+                "hint": "God blessed and sanctified this day, which is the origin of the Sabbath."
+            }
+        }
+    },
+    {
         "answer": 1,
-        "ref": null,
+        "reference": {
+            "vi": "Sáng Thế Ký 2:10-14",
+            "de": "1. Mose 2,10-14",
+            "en": "Genesis 2:10-14"
+        },
         "translations": {
             "vi": {
-                "q": "Phương thức setUp() trong XCTestCase dùng để làm gì?",
+                "q": "Có bao nhiêu con sông chảy ra từ vườn Ê-đen?",
                 "choices": [
-                    "Chạy sau khi tất cả test kết thúc",
-                    "Khởi tạo trạng thái trước mỗi test",
-                    "Xóa test target",
-                    "Tạo báo cáo code coverage"
+                    "Hai.",
+                    "Bốn.",
+                    "Sáu.",
+                    "Bảy."
                 ],
-                "successMsg": "Chuẩn luôn! setUp() giúp chuẩn bị dữ liệu cho mỗi test ✅",
-                "failMsg": "Chưa đúng 😅 setUp() được gọi trước mỗi test để khởi tạo trạng thái!"
+                "hint": "Trong số đó có sông Ơ-phơ-rát và sông Hi-đê-ke (Tigris)."
             },
             "de": {
-                "q": "Wozu dient die Methode setUp() in XCTestCase?",
+                "q": "Wie viele Flüsse flossen aus dem Garten Eden?",
                 "choices": [
-                    "Sie läuft nach allen Tests",
-                    "Sie initialisiert den Zustand vor jedem Test",
-                    "Sie löscht das Test-Target",
-                    "Sie erstellt einen Coverage-Bericht"
+                    "Zwei.",
+                    "Vier.",
+                    "Sechs.",
+                    "Sieben."
                 ],
-                "successMsg": "Richtig! setUp() bereitet jeden Test vor ✅",
-                "failMsg": "Leider falsch 😅 setUp() wird vor jedem Test aufgerufen!"
+                "hint": "Darunter waren der Euphrat und der Tigris (Hiddekel)."
             },
             "en": {
-                "q": "What is the purpose of the setUp() method in XCTestCase?",
+                "q": "How many rivers flowed out of the Garden of Eden?",
                 "choices": [
-                    "To run after all tests finish",
-                    "To initialize state before each test",
-                    "To delete the test target",
-                    "To generate a code coverage report"
+                    "Two.",
+                    "Four.",
+                    "Six.",
+                    "Seven."
                 ],
-                "successMsg": "Correct! setUp() prepares state before each test ✅",
-                "failMsg": "Oops 😅 setUp() runs before each test to initialize state!"
+                "hint": "Among them were the Euphrates and the Tigris (Hiddekel)."
             }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        }
     },
     {
-        "q": "What is the purpose of tearDown() in XCTestCase?",
-        "choices": [
-            "To prepare data before each test",
-            "To launch the simulator",
-            "To clean up after each test",
-            "To compile the test target"
-        ],
         "answer": 2,
-        "ref": null,
+        "reference": {
+            "vi": "Sáng Thế Ký 3:24",
+            "de": "1. Mose 3,24",
+            "en": "Genesis 3:24"
+        },
         "translations": {
             "vi": {
-                "q": "Phương thức tearDown() trong XCTestCase dùng để làm gì?",
+                "q": "Sau khi A-đam và Ê-va bị đuổi khỏi vườn Ê-đen, Đức Chúa Trời đặt ai canh giữ con đường đến cây sự sống?",
                 "choices": [
-                    "Chuẩn bị dữ liệu trước mỗi test",
-                    "Khởi chạy simulator",
-                    "Dọn dẹp sau mỗi test",
-                    "Biên dịch test target"
+                    "Các tiên tri.",
+                    "Loài rắn.",
+                    "Các chê-ru-bim với gươm lưỡi chói lòa.",
+                    "Loài sư tử."
                 ],
-                "successMsg": "Đúng rồi! tearDown() dọn dẹp tài nguyên sau mỗi test 🧹",
-                "failMsg": "Chưa đúng 😅 tearDown() được gọi sau mỗi test để dọn dẹp!"
+                "hint": "Đó là một loại thiên sứ, cầm gươm xoay khắp tứ phía."
             },
             "de": {
-                "q": "Wofür wird tearDown() in XCTestCase verwendet?",
+                "q": "Wen setzte Gott nach der Vertreibung Adams und Evas aus dem Garten Eden, um den Weg zum Baum des Lebens zu bewachen?",
                 "choices": [
-                    "Daten vor jedem Test vorbereiten",
-                    "Den Simulator starten",
-                    "Nach jedem Test aufräumen",
-                    "Das Test-Target kompilieren"
+                    "Die Propheten.",
+                    "Die Schlangen.",
+                    "Die Cherubim mit dem flammenden Schwert.",
+                    "Die Löwen."
                 ],
-                "successMsg": "Richtig! tearDown() räumt nach jedem Test auf 🧹",
-                "failMsg": "Leider falsch 😅 tearDown() wird nach jedem Test aufgerufen!"
+                "hint": "Es ist eine Art von Engeln, mit einem Schwert, das nach allen Seiten hin blitzte."
             },
             "en": {
-                "q": "What is the purpose of tearDown() in XCTestCase?",
+                "q": "After Adam and Eve were driven out of the Garden of Eden, whom did God place to guard the way to the tree of life?",
                 "choices": [
-                    "To prepare data before each test",
-                    "To launch the simulator",
-                    "To clean up after each test",
-                    "To compile the test target"
+                    "The prophets.",
+                    "The serpents.",
+                    "The cherubim with a flaming sword.",
+                    "The lions."
                 ],
-                "successMsg": "Correct! tearDown() cleans up after each test 🧹",
-                "failMsg": "Oops 😅 tearDown() runs after each test to clean up!"
+                "hint": "These are a type of angel, with a sword flashing back and forth."
             }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        }
     },
     {
-        "q": "Which XCTest assertion verifies that two values are equal?",
-        "choices": [
-            "XCTAssertTrue",
-            "XCTAssertEqual",
-            "XCTAssertNil",
-            "XCTFail"
-        ],
         "answer": 1,
-        "ref": null,
+        "reference": {
+            "vi": "Sáng Thế Ký 4:25-26",
+            "de": "1. Mose 4,25-26",
+            "en": "Genesis 4:25-26"
+        },
         "translations": {
             "vi": {
-                "q": "Assertion nào trong XCTest dùng để kiểm tra hai giá trị bằng nhau?",
+                "q": "Sau khi A-bên bị giết, Đức Chúa Trời đã ban cho A-đam và Ê-va một con trai khác tên là gì?",
                 "choices": [
-                    "XCTAssertTrue",
-                    "XCTAssertEqual",
-                    "XCTAssertNil",
-                    "XCTFail"
+                    "Hê-nóc.",
+                    "Sết.",
+                    "Ê-nót.",
+                    "Mê-tu-sê-la."
                 ],
-                "successMsg": "Chính xác! XCTAssertEqual kiểm tra bằng nhau ✨",
-                "failMsg": "Chưa đúng 😅 Đáp án là XCTAssertEqual!"
+                "hint": "Tên người này có nghĩa là 'được ban cho thay thế', và là tổ phụ của Nô-ê."
             },
             "de": {
-                "q": "Welche XCTest-Assertion prüft, ob zwei Werte gleich sind?",
+                "q": "Welchen anderen Sohn schenkte Gott Adam und Eva nach dem Tod Abels?",
                 "choices": [
-                    "XCTAssertTrue",
-                    "XCTAssertEqual",
-                    "XCTAssertNil",
-                    "XCTFail"
+                    "Henoch.",
+                    "Set.",
+                    "Enosch.",
+                    "Methusalah."
                 ],
-                "successMsg": "Richtig! XCTAssertEqual prüft auf Gleichheit ✨",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertEqual!"
+                "hint": "Der Name bedeutet 'als Ersatz gegeben', und er ist ein Vorfahre Noahs."
             },
             "en": {
-                "q": "Which XCTest assertion verifies that two values are equal?",
+                "q": "What was the name of the other son God gave Adam and Eve after Abel was killed?",
                 "choices": [
-                    "XCTAssertTrue",
-                    "XCTAssertEqual",
-                    "XCTAssertNil",
-                    "XCTFail"
+                    "Enoch.",
+                    "Seth.",
+                    "Enosh.",
+                    "Methuselah."
                 ],
-                "successMsg": "Correct! XCTAssertEqual checks equality ✨",
-                "failMsg": "Oops 😅 The answer is XCTAssertEqual!"
+                "hint": "The name means 'granted as a replacement', and he was an ancestor of Noah."
             }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        }
     },
     {
-        "q": "Which framework does Apple provide for writing UI tests on iOS?",
-        "choices": [
-            "XCUITest",
-            "Appium",
-            "Espresso",
-            "Selenium"
-        ],
-        "answer": 0,
-        "ref": null,
+        "answer": 3,
+        "reference": {
+            "vi": "Sáng Thế Ký 5:27",
+            "de": "1. Mose 5,27",
+            "en": "Genesis 5:27"
+        },
         "translations": {
             "vi": {
-                "q": "Framework nào của Apple được dùng để viết UI test trên iOS?",
+                "q": "Ai là người sống lâu nhất trong Kinh Thánh, đến 969 tuổi?",
                 "choices": [
-                    "XCUITest",
-                    "Appium",
-                    "Espresso",
-                    "Selenium"
+                    "A-đam.",
+                    "Nô-ê.",
+                    "Hê-nóc.",
+                    "Mê-tu-sê-la."
                 ],
-                "successMsg": "Đúng rồi! XCUITest là framework chính thức cho UI test 📱",
-                "failMsg": "Chưa đúng 😅 Apple cung cấp XCUITest cho UI test!"
+                "hint": "Ông là ông nội của Nô-ê. Tên ông cũng được dùng để gọi loại cây thông sống thọ."
             },
             "de": {
-                "q": "Welches Framework bietet Apple für UI-Tests unter iOS an?",
+                "q": "Wer lebte am längsten in der Bibel, nämlich 969 Jahre?",
                 "choices": [
-                    "XCUITest",
-                    "Appium",
-                    "Espresso",
-                    "Selenium"
+                    "Adam.",
+                    "Noah.",
+                    "Henoch.",
+                    "Methusalah."
                 ],
-                "successMsg": "Richtig! XCUITest ist das offizielle UI-Test-Framework 📱",
-                "failMsg": "Leider falsch 😅 Apple bietet XCUITest für UI-Tests!"
+                "hint": "Er war der Großvater Noahs. Sein Name wird auch für eine sehr langlebige Kiefernart verwendet."
             },
             "en": {
-                "q": "Which framework does Apple provide for writing UI tests on iOS?",
+                "q": "Who lived the longest in the Bible, reaching 969 years?",
                 "choices": [
-                    "XCUITest",
-                    "Appium",
-                    "Espresso",
-                    "Selenium"
+                    "Adam.",
+                    "Noah.",
+                    "Enoch.",
+                    "Methuselah."
                 ],
-                "successMsg": "Correct! XCUITest is Apple's official UI test framework 📱",
-                "failMsg": "Oops 😅 Apple provides XCUITest for UI testing!"
+                "hint": "He was Noah's grandfather. His name is also used for a long-living species of pine tree."
             }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        }
     },
     {
-        "q": "How must a test method be named in XCTest so it is discovered?",
-        "choices": [
-            "It must end with 'Test'",
-            "It must begin with the word 'test'",
-            "It must be marked @objc",
-            "It must be declared private"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Phương thức test trong XCTest phải được đặt tên thế nào để được nhận diện?",
-                "choices": [
-                    "Kết thúc bằng 'Test'",
-                    "Bắt đầu bằng từ 'test'",
-                    "Được đánh dấu @objc",
-                    "Được khai báo private"
-                ],
-                "successMsg": "Chuẩn! Tên phương thức phải bắt đầu bằng 'test' 🧪",
-                "failMsg": "Chưa đúng 😅 Phương thức phải bắt đầu bằng 'test'!"
-            },
-            "de": {
-                "q": "Wie muss eine Testmethode in XCTest benannt sein, damit sie erkannt wird?",
-                "choices": [
-                    "Sie muss mit 'Test' enden",
-                    "Sie muss mit dem Wort 'test' beginnen",
-                    "Sie muss mit @objc markiert sein",
-                    "Sie muss privat deklariert sein"
-                ],
-                "successMsg": "Richtig! Der Methodenname muss mit 'test' beginnen 🧪",
-                "failMsg": "Leider falsch 😅 Der Name muss mit 'test' beginnen!"
-            },
-            "en": {
-                "q": "How must a test method be named in XCTest so it is discovered?",
-                "choices": [
-                    "It must end with 'Test'",
-                    "It must begin with the word 'test'",
-                    "It must be marked @objc",
-                    "It must be declared private"
-                ],
-                "successMsg": "Correct! The method name must start with 'test' 🧪",
-                "failMsg": "Oops 😅 The method must start with 'test'!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which XCTest class is used to test asynchronous code?",
-        "choices": [
-            "XCTestExpectation",
-            "XCTAssertAsync",
-            "XCWaiter",
-            "XCAsyncTest"
-        ],
-        "answer": 0,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Lớp nào trong XCTest được dùng để kiểm thử code bất đồng bộ?",
-                "choices": [
-                    "XCTestExpectation",
-                    "XCTAssertAsync",
-                    "XCWaiter",
-                    "XCAsyncTest"
-                ],
-                "successMsg": "Đúng rồi! XCTestExpectation kết hợp với wait(for:timeout:) ⏱️",
-                "failMsg": "Chưa đúng 😅 XCTestExpectation mới là câu trả lời!"
-            },
-            "de": {
-                "q": "Welche XCTest-Klasse wird zum Testen asynchronen Codes verwendet?",
-                "choices": [
-                    "XCTestExpectation",
-                    "XCTAssertAsync",
-                    "XCWaiter",
-                    "XCAsyncTest"
-                ],
-                "successMsg": "Richtig! XCTestExpectation mit wait(for:timeout:) ⏱️",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTestExpectation!"
-            },
-            "en": {
-                "q": "Which XCTest class is used to test asynchronous code?",
-                "choices": [
-                    "XCTestExpectation",
-                    "XCTAssertAsync",
-                    "XCWaiter",
-                    "XCAsyncTest"
-                ],
-                "successMsg": "Correct! XCTestExpectation with wait(for:timeout:) ⏱️",
-                "failMsg": "Oops 😅 The answer is XCTestExpectation!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which assertion checks that a condition evaluates to true?",
-        "choices": [
-            "XCTAssertEqual",
-            "XCTAssertTrue",
-            "XCTAssertNotNil",
-            "XCTAssertThrows"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Assertion nào kiểm tra một điều kiện có giá trị true?",
-                "choices": [
-                    "XCTAssertEqual",
-                    "XCTAssertTrue",
-                    "XCTAssertNotNil",
-                    "XCTAssertThrows"
-                ],
-                "successMsg": "Chính xác! XCTAssertTrue là đáp án ✔️",
-                "failMsg": "Chưa đúng 😅 Đáp án là XCTAssertTrue!"
-            },
-            "de": {
-                "q": "Welche Assertion prüft, ob eine Bedingung wahr ist?",
-                "choices": [
-                    "XCTAssertEqual",
-                    "XCTAssertTrue",
-                    "XCTAssertNotNil",
-                    "XCTAssertThrows"
-                ],
-                "successMsg": "Richtig! XCTAssertTrue ist die Antwort ✔️",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertTrue!"
-            },
-            "en": {
-                "q": "Which assertion checks that a condition evaluates to true?",
-                "choices": [
-                    "XCTAssertEqual",
-                    "XCTAssertTrue",
-                    "XCTAssertNotNil",
-                    "XCTAssertThrows"
-                ],
-                "successMsg": "Correct! XCTAssertTrue is the answer ✔️",
-                "failMsg": "Oops 😅 The answer is XCTAssertTrue!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "What does code coverage measure in iOS testing?",
-        "choices": [
-            "The number of test files",
-            "The percentage of code executed by tests",
-            "The execution time of tests",
-            "The memory used by tests"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Code coverage đo lường điều gì trong kiểm thử iOS?",
-                "choices": [
-                    "Số lượng file test",
-                    "Phần trăm code được chạy bởi test",
-                    "Thời gian chạy test",
-                    "Bộ nhớ mà test sử dụng"
-                ],
-                "successMsg": "Đúng rồi! Code coverage là tỷ lệ code được test thực thi 📊",
-                "failMsg": "Chưa đúng 😅 Code coverage đo tỷ lệ code được test chạy qua!"
-            },
-            "de": {
-                "q": "Was misst Code Coverage beim iOS-Testen?",
-                "choices": [
-                    "Die Anzahl der Testdateien",
-                    "Den Prozentsatz des vom Test ausgeführten Codes",
-                    "Die Ausführungszeit der Tests",
-                    "Den Speicherverbrauch der Tests"
-                ],
-                "successMsg": "Richtig! Code Coverage misst den getesteten Code-Anteil 📊",
-                "failMsg": "Leider falsch 😅 Es ist der Prozentsatz des ausgeführten Codes!"
-            },
-            "en": {
-                "q": "What does code coverage measure in iOS testing?",
-                "choices": [
-                    "The number of test files",
-                    "The percentage of code executed by tests",
-                    "The execution time of tests",
-                    "The memory used by tests"
-                ],
-                "successMsg": "Correct! Code coverage measures the code exercised by tests 📊",
-                "failMsg": "Oops 😅 It's the percentage of code executed by tests!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "What is the main difference between unit tests and UI tests?",
-        "choices": [
-            "Unit tests only run on simulators, UI tests on real devices",
-            "Unit tests verify logic in isolation, UI tests simulate user interaction",
-            "Unit tests are slower than UI tests",
-            "There is no difference"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Khác biệt chính giữa unit test và UI test là gì?",
-                "choices": [
-                    "Unit test chỉ chạy trên simulator, UI test trên thiết bị thật",
-                    "Unit test kiểm tra logic riêng lẻ, UI test mô phỏng thao tác người dùng",
-                    "Unit test chậm hơn UI test",
-                    "Không có khác biệt nào"
-                ],
-                "successMsg": "Chính xác! Unit test tập trung logic, UI test kiểm tra giao diện 🧩",
-                "failMsg": "Chưa đúng 😅 Unit test kiểm tra logic, UI test mô phỏng người dùng!"
-            },
-            "de": {
-                "q": "Was ist der Hauptunterschied zwischen Unit-Tests und UI-Tests?",
-                "choices": [
-                    "Unit-Tests laufen nur im Simulator, UI-Tests auf echten Geräten",
-                    "Unit-Tests prüfen Logik isoliert, UI-Tests simulieren Nutzerinteraktion",
-                    "Unit-Tests sind langsamer als UI-Tests",
-                    "Es gibt keinen Unterschied"
-                ],
-                "successMsg": "Richtig! Unit-Tests prüfen Logik, UI-Tests die Oberfläche 🧩",
-                "failMsg": "Leider falsch 😅 Unit-Tests prüfen Logik, UI-Tests das Interface!"
-            },
-            "en": {
-                "q": "What is the main difference between unit tests and UI tests?",
-                "choices": [
-                    "Unit tests only run on simulators, UI tests on real devices",
-                    "Unit tests verify logic in isolation, UI tests simulate user interaction",
-                    "Unit tests are slower than UI tests",
-                    "There is no difference"
-                ],
-                "successMsg": "Correct! Unit tests target logic, UI tests target the interface 🧩",
-                "failMsg": "Oops 😅 Unit tests verify logic, UI tests simulate users!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "What is snapshot testing in iOS?",
-        "choices": [
-            "Testing that captures UI images and compares them to references",
-            "Testing memory snapshots",
-            "Testing database backups",
-            "Testing network requests"
-        ],
-        "answer": 0,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Snapshot testing trong iOS là gì?",
-                "choices": [
-                    "Chụp ảnh UI và so sánh với ảnh tham chiếu",
-                    "Kiểm tra snapshot bộ nhớ",
-                    "Kiểm tra backup cơ sở dữ liệu",
-                    "Kiểm tra request mạng"
-                ],
-                "successMsg": "Đúng rồi! Snapshot test giúp phát hiện thay đổi giao diện 📸",
-                "failMsg": "Chưa đúng 😅 Snapshot test so sánh ảnh UI với ảnh tham chiếu!"
-            },
-            "de": {
-                "q": "Was ist Snapshot-Testing in iOS?",
-                "choices": [
-                    "Es nimmt UI-Bilder auf und vergleicht sie mit Referenzen",
-                    "Es testet Speicher-Snapshots",
-                    "Es testet Datenbank-Backups",
-                    "Es testet Netzwerkanfragen"
-                ],
-                "successMsg": "Richtig! Snapshot-Tests erkennen UI-Änderungen 📸",
-                "failMsg": "Leider falsch 😅 Snapshot-Tests vergleichen UI-Bilder!"
-            },
-            "en": {
-                "q": "What is snapshot testing in iOS?",
-                "choices": [
-                    "Testing that captures UI images and compares them to references",
-                    "Testing memory snapshots",
-                    "Testing database backups",
-                    "Testing network requests"
-                ],
-                "successMsg": "Correct! Snapshot tests detect visual UI changes 📸",
-                "failMsg": "Oops 😅 Snapshot tests compare UI images to references!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which command-line tool is used to run iOS tests from the terminal?",
-        "choices": [
-            "swift test",
-            "xcodebuild test",
-            "pod test",
-            "ios-test"
-        ],
-        "answer": 1,
-        "ref": null,
-        "translations": {
-            "vi": {
-                "q": "Công cụ dòng lệnh nào được dùng để chạy test iOS từ terminal?",
-                "choices": [
-                    "swift test",
-                    "xcodebuild test",
-                    "pod test",
-                    "ios-test"
-                ],
-                "successMsg": "Chính xác! xcodebuild test rất tiện cho CI/CD ⚙️",
-                "failMsg": "Chưa đúng 😅 Câu trả lời là xcodebuild test!"
-            },
-            "de": {
-                "q": "Welches Kommandozeilen-Tool wird verwendet, um iOS-Tests im Terminal auszuführen?",
-                "choices": [
-                    "swift test",
-                    "xcodebuild test",
-                    "pod test",
-                    "ios-test"
-                ],
-                "successMsg": "Richtig! xcodebuild test ist ideal für CI/CD ⚙️",
-                "failMsg": "Leider falsch 😅 Die Antwort ist xcodebuild test!"
-            },
-            "en": {
-                "q": "Which command-line tool is used to run iOS tests from the terminal?",
-                "choices": [
-                    "swift test",
-                    "xcodebuild test",
-                    "pod test",
-                    "ios-test"
-                ],
-                "successMsg": "Correct! xcodebuild test is great for CI/CD ⚙️",
-                "failMsg": "Oops 😅 The answer is xcodebuild test!"
-            }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
-    },
-    {
-        "q": "Which assertion verifies that a value is nil?",
-        "choices": [
-            "XCTAssertNotNil",
-            "XCTAssertTrue",
-            "XCTAssertNil",
-            "XCTAssertEqual"
-        ],
         "answer": 2,
-        "ref": null,
+        "reference": {
+            "vi": "Sáng Thế Ký 5:24",
+            "de": "1. Mose 5,24",
+            "en": "Genesis 5:24"
+        },
         "translations": {
             "vi": {
-                "q": "Assertion nào dùng để kiểm tra giá trị là nil?",
+                "q": "Ai là người đồng đi cùng Đức Chúa Trời và được Ngài cất đi mà không trải qua sự chết?",
                 "choices": [
-                    "XCTAssertNotNil",
-                    "XCTAssertTrue",
-                    "XCTAssertNil",
-                    "XCTAssertEqual"
+                    "Nô-ê.",
+                    "A-đam.",
+                    "Hê-nóc.",
+                    "Áp-ra-ham."
                 ],
-                "successMsg": "Đúng rồi! XCTAssertNil kiểm tra giá trị nil 🎯",
-                "failMsg": "Chưa đúng 😅 XCTAssertNil mới là đáp án!"
+                "hint": "Ông là cha của Mê-tu-sê-la. Trong Kinh Thánh chỉ có ông và Ê-li là không nếm sự chết."
             },
             "de": {
-                "q": "Welche Assertion prüft, ob ein Wert nil ist?",
+                "q": "Wer wandelte mit Gott und wurde von ihm hinweggenommen, ohne den Tod zu erleben?",
                 "choices": [
-                    "XCTAssertNotNil",
-                    "XCTAssertTrue",
-                    "XCTAssertNil",
-                    "XCTAssertEqual"
+                    "Noah.",
+                    "Adam.",
+                    "Henoch.",
+                    "Abraham."
                 ],
-                "successMsg": "Richtig! XCTAssertNil prüft auf nil 🎯",
-                "failMsg": "Leider falsch 😅 Die Antwort ist XCTAssertNil!"
+                "hint": "Er war der Vater Methusalahs. In der Bibel sind nur er und Elia nicht gestorben."
             },
             "en": {
-                "q": "Which assertion verifies that a value is nil?",
+                "q": "Who walked with God and was taken by Him without experiencing death?",
                 "choices": [
-                    "XCTAssertNotNil",
-                    "XCTAssertTrue",
-                    "XCTAssertNil",
-                    "XCTAssertEqual"
+                    "Noah.",
+                    "Adam.",
+                    "Enoch.",
+                    "Abraham."
                 ],
-                "successMsg": "Correct! XCTAssertNil checks for nil values 🎯",
-                "failMsg": "Oops 😅 The answer is XCTAssertNil!"
+                "hint": "He was the father of Methuselah. In the Bible only he and Elijah did not taste death."
             }
-        },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        }
     },
     {
-        "q": "Which Xcode navigator displays the list of tests in a project?",
-        "choices": [
-            "Project Navigator",
-            "Test Navigator",
-            "Debug Navigator",
-            "Issue Navigator"
-        ],
-        "answer": 1,
-        "ref": null,
+        "answer": 0,
+        "reference": {
+            "vi": "Sáng Thế Ký 6:14",
+            "de": "1. Mose 6,14",
+            "en": "Genesis 6:14"
+        },
         "translations": {
             "vi": {
-                "q": "Navigator nào trong Xcode hiển thị danh sách test của dự án?",
+                "q": "Đức Chúa Trời truyền cho Nô-ê đóng tàu bằng vật liệu gì?",
                 "choices": [
-                    "Project Navigator",
-                    "Test Navigator",
-                    "Debug Navigator",
-                    "Issue Navigator"
+                    "Gỗ gô-phe.",
+                    "Đá quý.",
+                    "Sắt.",
+                    "Cây bá hương."
                 ],
-                "successMsg": "Chính xác! Test Navigator liệt kê toàn bộ test 📂",
-                "failMsg": "Chưa đúng 😅 Test Navigator mới là câu trả lời!"
+                "hint": "Đây là một loại gỗ đặc biệt, và Nô-ê được dặn phải trét nhựa chai bên trong và ngoài."
             },
             "de": {
-                "q": "Welcher Xcode-Navigator zeigt die Liste der Tests eines Projekts an?",
+                "q": "Aus welchem Material sollte Noah die Arche bauen?",
                 "choices": [
-                    "Project Navigator",
-                    "Test Navigator",
-                    "Debug Navigator",
-                    "Issue Navigator"
+                    "Aus Gopherholz.",
+                    "Aus Edelsteinen.",
+                    "Aus Eisen.",
+                    "Aus Zedernholz."
                 ],
-                "successMsg": "Richtig! Der Test Navigator listet alle Tests auf 📂",
-                "failMsg": "Leider falsch 😅 Die Antwort ist Test Navigator!"
+                "hint": "Es ist eine besondere Art von Holz, und Noah sollte sie innen und außen mit Pech verstreichen."
             },
             "en": {
-                "q": "Which Xcode navigator displays the list of tests in a project?",
+                "q": "What material did God command Noah to build the ark with?",
                 "choices": [
-                    "Project Navigator",
-                    "Test Navigator",
-                    "Debug Navigator",
-                    "Issue Navigator"
+                    "Gopher wood.",
+                    "Precious stones.",
+                    "Iron.",
+                    "Cedar wood."
                 ],
-                "successMsg": "Correct! The Test Navigator lists all tests 📂",
-                "failMsg": "Oops 😅 The answer is Test Navigator!"
+                "hint": "It is a special kind of wood, and Noah was told to coat it with pitch inside and out."
             }
+        }
+    },
+    {
+        "answer": 1,
+        "reference": {
+            "vi": "Sáng Thế Ký 7:13",
+            "de": "1. Mose 7,13",
+            "en": "Genesis 7:13"
         },
-        "createdByName": "FaithHub",
-        "createdAt": "2026-04-17T00:00:00.000Z"
+        "translations": {
+            "vi": {
+                "q": "Có bao nhiêu người được cứu trong tàu của Nô-ê?",
+                "choices": [
+                    "6 người.",
+                    "8 người.",
+                    "10 người.",
+                    "12 người."
+                ],
+                "hint": "Đó là Nô-ê, vợ ông, ba con trai (Sem, Cham, Gia-phết) và ba người vợ của họ."
+            },
+            "de": {
+                "q": "Wie viele Menschen wurden in der Arche Noahs gerettet?",
+                "choices": [
+                    "6 Personen.",
+                    "8 Personen.",
+                    "10 Personen.",
+                    "12 Personen."
+                ],
+                "hint": "Es waren Noah, seine Frau, seine drei Söhne (Sem, Ham, Jafet) und ihre drei Frauen."
+            },
+            "en": {
+                "q": "How many people were saved in Noah's ark?",
+                "choices": [
+                    "6 people.",
+                    "8 people.",
+                    "10 people.",
+                    "12 people."
+                ],
+                "hint": "They were Noah, his wife, his three sons (Shem, Ham, Japheth), and their three wives."
+            }
+        }
+    },
+    {
+        "answer": 2,
+        "reference": {
+            "vi": "Sáng Thế Ký 8:11",
+            "de": "1. Mose 8,11",
+            "en": "Genesis 8:11"
+        },
+        "translations": {
+            "vi": {
+                "q": "Con bồ câu mà Nô-ê thả ra đã trở về với vật gì trong mỏ, cho thấy nước đã rút?",
+                "choices": [
+                    "Một hạt lúa mì.",
+                    "Một cành cây vả.",
+                    "Một lá ô-li-ve tươi.",
+                    "Một bông hoa."
+                ],
+                "hint": "Đến nay vật này vẫn là biểu tượng của hòa bình trên khắp thế giới."
+            },
+            "de": {
+                "q": "Womit kehrte die Taube zurück, die Noah aussandte, als Zeichen, dass das Wasser zurückgegangen war?",
+                "choices": [
+                    "Mit einem Weizenkorn.",
+                    "Mit einem Feigenzweig.",
+                    "Mit einem frischen Olivenblatt.",
+                    "Mit einer Blume."
+                ],
+                "hint": "Bis heute ist dies weltweit ein Symbol des Friedens."
+            },
+            "en": {
+                "q": "What did the dove that Noah sent out return with in its beak, showing the waters had receded?",
+                "choices": [
+                    "A grain of wheat.",
+                    "A fig branch.",
+                    "A fresh olive leaf.",
+                    "A flower."
+                ],
+                "hint": "To this day, this remains a worldwide symbol of peace."
+            }
+        }
+    },
+    {
+        "answer": 0,
+        "reference": {
+            "vi": "Sáng Thế Ký 8:4",
+            "de": "1. Mose 8,4",
+            "en": "Genesis 8:4"
+        },
+        "translations": {
+            "vi": {
+                "q": "Tàu của Nô-ê đậu lại trên núi nào sau khi nước rút?",
+                "choices": [
+                    "Núi A-ra-rát.",
+                    "Núi Si-na-i.",
+                    "Núi Si-ôn.",
+                    "Núi Ô-li-ve."
+                ],
+                "hint": "Ngọn núi này ngày nay nằm ở miền đông của Thổ Nhĩ Kỳ."
+            },
+            "de": {
+                "q": "Auf welchem Berg blieb die Arche Noahs liegen, nachdem das Wasser zurückgegangen war?",
+                "choices": [
+                    "Auf dem Berg Ararat.",
+                    "Auf dem Berg Sinai.",
+                    "Auf dem Berg Zion.",
+                    "Auf dem Ölberg."
+                ],
+                "hint": "Dieser Berg liegt heute im östlichen Teil der Türkei."
+            },
+            "en": {
+                "q": "On which mountain did Noah's ark come to rest after the waters receded?",
+                "choices": [
+                    "Mount Ararat.",
+                    "Mount Sinai.",
+                    "Mount Zion.",
+                    "The Mount of Olives."
+                ],
+                "hint": "This mountain is located in present-day eastern Turkey."
+            }
+        }
+    },
+    {
+        "answer": 3,
+        "reference": {
+            "vi": "Sáng Thế Ký 11:9",
+            "de": "1. Mose 11,9",
+            "en": "Genesis 11:9"
+        },
+        "translations": {
+            "vi": {
+                "q": "Tại tháp nào Đức Chúa Trời đã làm lộn xộn tiếng nói của loài người?",
+                "choices": [
+                    "Tháp Si-lô.",
+                    "Tháp Đa-vít.",
+                    "Tháp Si-ôn.",
+                    "Tháp Ba-bên."
+                ],
+                "hint": "Đây là lý do tại sao loài người trên đất nói nhiều thứ tiếng khác nhau. Tên tháp gần với từ 'lộn xộn' trong tiếng Hê-bơ-rơ."
+            },
+            "de": {
+                "q": "Bei welchem Turm hat Gott die Sprache der Menschen verwirrt?",
+                "choices": [
+                    "Beim Turm von Silo.",
+                    "Beim Turm Davids.",
+                    "Beim Turm Zion.",
+                    "Beim Turm zu Babel."
+                ],
+                "hint": "Das ist der Grund, warum die Menschen auf der Erde so viele verschiedene Sprachen sprechen. Der Name des Turms klingt ähnlich wie das hebräische Wort für 'Verwirrung'."
+            },
+            "en": {
+                "q": "At which tower did God confuse the language of mankind?",
+                "choices": [
+                    "The tower of Shiloh.",
+                    "The tower of David.",
+                    "The tower of Zion.",
+                    "The tower of Babel."
+                ],
+                "hint": "This is why people on earth speak many different languages. The name of the tower sounds similar to the Hebrew word for 'confusion'."
+            }
+        }
+    },
+    {
+        "answer": 1,
+        "reference": {
+            "vi": "Sáng Thế Ký 17:5",
+            "de": "1. Mose 17,5",
+            "en": "Genesis 17:5"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã đổi tên Áp-ram thành tên gì?",
+                "choices": [
+                    "Y-sơ-ra-ên.",
+                    "Áp-ra-ham.",
+                    "Gia-cốp.",
+                    "Y-sác."
+                ],
+                "hint": "Tên mới có nghĩa là 'cha của nhiều dân tộc'."
+            },
+            "de": {
+                "q": "Wie änderte Gott den Namen Abrams?",
+                "choices": [
+                    "Israel.",
+                    "Abraham.",
+                    "Jakob.",
+                    "Isaak."
+                ],
+                "hint": "Der neue Name bedeutet 'Vater vieler Völker'."
+            },
+            "en": {
+                "q": "What did God change Abram's name to?",
+                "choices": [
+                    "Israel.",
+                    "Abraham.",
+                    "Jacob.",
+                    "Isaac."
+                ],
+                "hint": "The new name means 'father of many nations'."
+            }
+        }
+    },
+    {
+        "answer": 2,
+        "reference": {
+            "vi": "Sáng Thế Ký 19:24-26",
+            "de": "1. Mose 19,24-26",
+            "en": "Genesis 19:24-26"
+        },
+        "translations": {
+            "vi": {
+                "q": "Vợ của Lót đã trở thành gì khi quay lại nhìn thành Sô-đôm?",
+                "choices": [
+                    "Một cái cây.",
+                    "Một con chim.",
+                    "Một tượng muối.",
+                    "Một dòng sông."
+                ],
+                "hint": "Bà đã không vâng lời thiên sứ và bị biến thành một thứ có vị mặn."
+            },
+            "de": {
+                "q": "Wozu wurde Lots Frau, als sie sich nach Sodom umblickte?",
+                "choices": [
+                    "Zu einem Baum.",
+                    "Zu einem Vogel.",
+                    "Zu einer Salzsäule.",
+                    "Zu einem Fluss."
+                ],
+                "hint": "Sie gehorchte dem Engel nicht und wurde in etwas Salziges verwandelt."
+            },
+            "en": {
+                "q": "What did Lot's wife become when she looked back at Sodom?",
+                "choices": [
+                    "A tree.",
+                    "A bird.",
+                    "A pillar of salt.",
+                    "A river."
+                ],
+                "hint": "She disobeyed the angel and was turned into something salty."
+            }
+        }
+    },
+    {
+        "answer": 0,
+        "reference": {
+            "vi": "Sáng Thế Ký 25:33-34",
+            "de": "1. Mose 25,33-34",
+            "en": "Genesis 25:33-34"
+        },
+        "translations": {
+            "vi": {
+                "q": "Ê-sau đã bán quyền trưởng nam của mình cho Gia-cốp để đổi lấy gì?",
+                "choices": [
+                    "Một bát cháo đậu đỏ và bánh mì.",
+                    "Một con chiên.",
+                    "Một mảnh đất.",
+                    "Một thanh gươm."
+                ],
+                "hint": "Ê-sau lúc đó đi săn về và rất đói. Ông đã coi thường quyền trưởng nam vì đồ ăn."
+            },
+            "de": {
+                "q": "Wofür verkaufte Esau sein Erstgeburtsrecht an Jakob?",
+                "choices": [
+                    "Für ein Linsengericht und Brot.",
+                    "Für ein Schaf.",
+                    "Für ein Stück Land.",
+                    "Für ein Schwert."
+                ],
+                "hint": "Esau kam von der Jagd und war sehr hungrig. Er verachtete sein Erstgeburtsrecht wegen einer Mahlzeit."
+            },
+            "en": {
+                "q": "What did Esau sell his birthright to Jacob for?",
+                "choices": [
+                    "A bowl of lentil stew and bread.",
+                    "A sheep.",
+                    "A piece of land.",
+                    "A sword."
+                ],
+                "hint": "Esau came back from hunting very hungry. He despised his birthright for the sake of a meal."
+            }
+        }
+    },
+    {
+        "answer": 3,
+        "reference": {
+            "vi": "Sáng Thế Ký 28:12",
+            "de": "1. Mose 28,12",
+            "en": "Genesis 28:12"
+        },
+        "translations": {
+            "vi": {
+                "q": "Trong giấc mơ tại Bê-tên, Gia-cốp đã thấy gì?",
+                "choices": [
+                    "Một thanh gươm chói lòa.",
+                    "Một bụi gai cháy.",
+                    "Một con chim bồ câu.",
+                    "Một cái thang lên đến trời, có thiên sứ lên xuống."
+                ],
+                "hint": "Đức Chúa Trời đứng phía trên và phán hứa ban đất ấy cho ông và dòng dõi ông."
+            },
+            "de": {
+                "q": "Was sah Jakob in seinem Traum in Bethel?",
+                "choices": [
+                    "Ein leuchtendes Schwert.",
+                    "Einen brennenden Dornbusch.",
+                    "Eine Taube.",
+                    "Eine Leiter, die bis zum Himmel reichte, mit Engeln, die auf- und abstiegen."
+                ],
+                "hint": "Gott stand oben darauf und verhieß ihm und seinen Nachkommen das Land."
+            },
+            "en": {
+                "q": "What did Jacob see in his dream at Bethel?",
+                "choices": [
+                    "A shining sword.",
+                    "A burning bush.",
+                    "A dove.",
+                    "A ladder reaching up to heaven, with angels going up and down."
+                ],
+                "hint": "God stood above it and promised the land to him and his descendants."
+            }
+        }
+    },
+    {
+        "answer": 1,
+        "reference": {
+            "vi": "Sáng Thế Ký 32:28",
+            "de": "1. Mose 32,29",
+            "en": "Genesis 32:28"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã đổi tên Gia-cốp thành tên gì sau khi ông vật lộn với Ngài?",
+                "choices": [
+                    "Áp-ra-ham.",
+                    "Y-sơ-ra-ên.",
+                    "Giô-sép.",
+                    "Bên-gia-min."
+                ],
+                "hint": "Tên mới có nghĩa là 'người vật lộn với Đức Chúa Trời', và sau này trở thành tên của cả một dân tộc."
+            },
+            "de": {
+                "q": "Wie änderte Gott den Namen Jakobs, nachdem er mit ihm gerungen hatte?",
+                "choices": [
+                    "Abraham.",
+                    "Israel.",
+                    "Josef.",
+                    "Benjamin."
+                ],
+                "hint": "Der neue Name bedeutet 'der mit Gott kämpft', und wurde später der Name eines ganzen Volkes."
+            },
+            "en": {
+                "q": "What did God change Jacob's name to after he wrestled with Him?",
+                "choices": [
+                    "Abraham.",
+                    "Israel.",
+                    "Joseph.",
+                    "Benjamin."
+                ],
+                "hint": "The new name means 'one who struggles with God', and later became the name of an entire nation."
+            }
+        }
+    },
+    {
+        "answer": 2,
+        "reference": {
+            "vi": "Sáng Thế Ký 37:3",
+            "de": "1. Mose 37,3",
+            "en": "Genesis 37:3"
+        },
+        "translations": {
+            "vi": {
+                "q": "Gia-cốp đã làm gì cho Giô-sép, khiến các anh ghen ghét ông?",
+                "choices": [
+                    "Cho ông một thanh gươm quý.",
+                    "Cho ông một mảnh đất.",
+                    "May cho ông một chiếc áo dài có nhiều màu sắc.",
+                    "Cho ông một con chiên."
+                ],
+                "hint": "Đó là một món quà thể hiện sự yêu thương đặc biệt, vì Giô-sép là con của tuổi già."
+            },
+            "de": {
+                "q": "Was tat Jakob für Josef, weshalb seine Brüder ihn beneideten?",
+                "choices": [
+                    "Er gab ihm ein wertvolles Schwert.",
+                    "Er gab ihm ein Stück Land.",
+                    "Er machte ihm einen bunten Rock (Mantel).",
+                    "Er gab ihm ein Schaf."
+                ],
+                "hint": "Es war ein Geschenk besonderer Liebe, denn Josef war der Sohn seines Alters."
+            },
+            "en": {
+                "q": "What did Jacob do for Joseph that caused his brothers to be jealous?",
+                "choices": [
+                    "He gave him a precious sword.",
+                    "He gave him a piece of land.",
+                    "He made him a coat of many colors.",
+                    "He gave him a sheep."
+                ],
+                "hint": "It was a gift of special love, because Joseph was the son of his old age."
+            }
+        }
+    },
+    {
+        "answer": 0,
+        "reference": {
+            "vi": "Sáng Thế Ký 41:14-40",
+            "de": "1. Mose 41,14-40",
+            "en": "Genesis 41:14-40"
+        },
+        "translations": {
+            "vi": {
+                "q": "Tại sao Pha-ra-ôn đã đặt Giô-sép làm tể tướng của Ai Cập?",
+                "choices": [
+                    "Vì Giô-sép giải nghĩa được giấc mơ của vua.",
+                    "Vì Giô-sép là dũng sĩ chiến đấu giỏi.",
+                    "Vì Giô-sép có nhiều của cải.",
+                    "Vì Giô-sép biết nhiều ngôn ngữ."
+                ],
+                "hint": "Giấc mơ về bảy con bò mập và bảy con bò gầy báo trước về bảy năm được mùa và bảy năm đói kém."
+            },
+            "de": {
+                "q": "Warum setzte der Pharao Josef als Herrscher über Ägypten ein?",
+                "choices": [
+                    "Weil Josef die Träume des Königs deuten konnte.",
+                    "Weil Josef ein guter Krieger war.",
+                    "Weil Josef sehr reich war.",
+                    "Weil Josef viele Sprachen sprach."
+                ],
+                "hint": "Der Traum von sieben fetten und sieben mageren Kühen kündigte sieben Jahre Überfluss und sieben Jahre Hungersnot an."
+            },
+            "en": {
+                "q": "Why did Pharaoh make Joseph the ruler over Egypt?",
+                "choices": [
+                    "Because Joseph could interpret the king's dreams.",
+                    "Because Joseph was a great warrior.",
+                    "Because Joseph was very wealthy.",
+                    "Because Joseph spoke many languages."
+                ],
+                "hint": "The dream of seven fat cows and seven thin cows foretold seven years of abundance and seven years of famine."
+            }
+        }
     }
 ]

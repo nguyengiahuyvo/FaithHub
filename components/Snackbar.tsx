@@ -35,14 +35,22 @@ export function useSnackbar() {
 export default function Snackbar({
   message,
   opacity,
+  position = "bottom",
 }: {
   message: string | null;
   opacity: Animated.Value;
+  position?: "top" | "bottom";
 }) {
   if (!message) return null;
 
   return (
-    <Animated.View style={[styles.container, { opacity }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        position === "top" ? styles.top : styles.bottom,
+        { opacity },
+      ]}
+    >
       <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
       <Text style={styles.text}>{message}</Text>
     </Animated.View>
@@ -52,7 +60,6 @@ export default function Snackbar({
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 40,
     left: 24,
     right: 24,
     flexDirection: "row",
@@ -68,6 +75,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+  top: { top: 60 },
+  bottom: { bottom: 40 },
   text: {
     color: "#FFFFFF",
     fontSize: 14,

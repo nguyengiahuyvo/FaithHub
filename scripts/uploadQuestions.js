@@ -1,42 +1,28 @@
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
 const admin = require('firebase-admin');
 
 const serviceAccount = require('./adminkey.json');
 const DEFAULT_QUESTIONS_FILE = path.join('questions', 'questions.json');
-const DEFAULT_CREATED_BY = 'system-import';
 
-admin.initializeApp({
-	credential: admin.credential.cert(serviceAccount),
-});
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
 const db = admin.firestore();
 
 function parseArgs(argv) {
 	const args = {
-		orgId: null,
-		userId: null,
 		filePath: DEFAULT_QUESTIONS_FILE,
 		mergeById: false,
 	};
 
 	for (let i = 0; i < argv.length; i += 1) {
 		const token = argv[i];
-		if (token === '--orgId') args.orgId = argv[i + 1];
-		if (token === '--userId') args.userId = argv[i + 1];
 		if (token === '--file') args.filePath = argv[i + 1];
 		if (token === '--mergeById') args.mergeById = true;
 	}
 
 	return args;
-}
-
-function assertRequiredArgs(args) {
-	if (!args.orgId) {
-		throw new Error(
-			'Usage: node uploadQuestions.js --orgId <orgId> [--file <questions.json>] [--userId <uid>] [--mergeById]'
-		);
-	}
 }
 
 function loadQuestions(filePath) {
@@ -48,8 +34,19 @@ function loadQuestions(filePath) {
 		);
 	}
 
-	const raw = fs.readFileSync(absolutePath, 'utf8');
-	const parsed = parseJsonWithTrailingCommaSupport(raw);
+	let raw = fs.readFileSync(absolutePath, 'utf8');
+	// Allow `(randomUUID)` placeholder for `id`. Replace with `null` so the file
+	// is valid JSON; the script then generates a UUID for any null/missing id.
+	raw = raw.replace(/\(randomUUID\)/g, 'null');
+
+	let parsed;
+	try {
+		parsed = JSON.parse(raw);
+	} catch (err) {
+		// Forgive trailing commas.
+		const normalized = raw.replace(/,\s*([}\]])/g, '$1');
+		parsed = JSON.parse(normalized);
+	}
 
 	if (!Array.isArray(parsed)) {
 		throw new Error('Questions file must contain a JSON array.');
@@ -58,149 +55,90 @@ function loadQuestions(filePath) {
 	return parsed;
 }
 
-function parseJsonWithTrailingCommaSupport(raw) {
-	try {
-		return JSON.parse(raw);
-	} catch (err) {
-		const normalized = raw.replace(/,\s*([}\]])/g, '$1');
-		return JSON.parse(normalized);
-	}
+function isValidTranslation(t) {
+	if (!t || typeof t !== 'object') return false;
+	if (typeof t.q !== 'string' || !t.q.trim()) return false;
+	if (!Array.isArray(t.choices) || t.choices.length !== 4) return false;
+	return t.choices.every((c) => typeof c === 'string' && c.trim());
 }
 
-function validateQuestion(question, index) {
-	if (typeof question !== 'object' || question === null || Array.isArray(question)) {
-		throw new Error(`Question at index ${index} must be an object.`);
+function validateQuestion(q, idx) {
+	if (!q || typeof q !== 'object' || Array.isArray(q)) {
+		throw new Error(`Question at index ${idx} must be an object.`);
+	}
+	if (!q.translations || typeof q.translations !== 'object') {
+		throw new Error(`Question at index ${idx} is missing 'translations'.`);
 	}
 
-	const questionText =
-		typeof question.q === 'string' && question.q.trim()
-			? question.q
-			: question.questionText;
-	const options = Array.isArray(question.choices) ? question.choices : question.options;
-	const answerIndex =
-		typeof question.answer === 'number' ? question.answer : question.correctAnswerIndex;
-
-	if (!questionText || typeof questionText !== 'string') {
-		throw new Error(`Question at index ${index} is missing a valid q/questionText.`);
+	const langs = Object.keys(q.translations);
+	if (langs.length === 0) {
+		throw new Error(`Question at index ${idx} has empty 'translations'.`);
 	}
-
-	if (!Array.isArray(options) || options.length < 2) {
-		throw new Error(`Question at index ${index} must have at least 2 choices/options.`);
-	}
-
-	options.forEach((opt, optionIndex) => {
-		if (typeof opt !== 'string' || !opt.trim()) {
+	for (const l of langs) {
+		if (!isValidTranslation(q.translations[l])) {
 			throw new Error(
-				`Question at index ${index} has invalid choice at index ${optionIndex}.`
+				`Question at index ${idx} has invalid translation for '${l}' (need q + 4 non-empty choices).`
 			);
 		}
-	});
+	}
 
 	if (
-		typeof answerIndex !== 'number' ||
-		!Number.isInteger(answerIndex) ||
-		answerIndex < 0 ||
-		answerIndex >= options.length
+		!Number.isInteger(q.answer) ||
+		q.answer < 0 ||
+		q.answer >= q.translations[langs[0]].choices.length
 	) {
-		throw new Error(
-			`Question at index ${index} must have a valid integer answer/correctAnswerIndex within choices/options range.`
-		);
+		throw new Error(`Question at index ${idx} must have an integer 'answer' within choice range.`);
 	}
 }
 
-function normalizeAnsweredUsers(answeredUsers) {
-	if (!answeredUsers) return {};
-
-	if (Array.isArray(answeredUsers)) {
-		return answeredUsers.reduce((acc, uid) => {
-			if (typeof uid === 'string' && uid.trim()) {
-				acc[uid] = true;
-			}
-			return acc;
-		}, {});
+function buildTranslations(rawTranslations) {
+	const out = {};
+	for (const [l, t] of Object.entries(rawTranslations)) {
+		const entry = {
+			q: t.q.trim(),
+			choices: t.choices.map((c) => c.trim()),
+		};
+		if (typeof t.successMsg === 'string' && t.successMsg.trim()) {
+			entry.successMsg = t.successMsg.trim();
+		}
+		if (typeof t.failMsg === 'string' && t.failMsg.trim()) {
+			entry.failMsg = t.failMsg.trim();
+		}
+		if (typeof t.hint === 'string' && t.hint.trim()) {
+			entry.hint = t.hint.trim();
+		}
+		out[l] = entry;
 	}
-
-	if (typeof answeredUsers === 'object') {
-		return answeredUsers;
-	}
-
-	return {};
+	return out;
 }
 
-function toTimestampOrNow(value) {
-	if (typeof value === 'string' || value instanceof Date) {
-		const date = new Date(value);
-		if (!Number.isNaN(date.getTime())) {
-			return admin.firestore.Timestamp.fromDate(date);
+function buildReference(rawReference) {
+	if (!rawReference || typeof rawReference !== 'object') return null;
+	const out = {};
+	for (const [l, r] of Object.entries(rawReference)) {
+		if (typeof r === 'string' && r.trim()) {
+			out[l] = r.trim();
 		}
 	}
-
-	if (value && typeof value.toDate === 'function') {
-		return value;
-	}
-
-	return admin.firestore.FieldValue.serverTimestamp();
+	return Object.keys(out).length > 0 ? out : null;
 }
 
-function toFirestorePayload(question, userId) {
-	const q =
-		typeof question.q === 'string' && question.q.trim()
-			? question.q.trim()
-			: question.questionText.trim();
-	const choices = (Array.isArray(question.choices) ? question.choices : question.options).map((o) =>
-		o.trim()
-	);
-	const answer = typeof question.answer === 'number' ? question.answer : question.correctAnswerIndex;
-	const createdBy =
-		typeof question.createdBy === 'string' && question.createdBy.trim()
-			? question.createdBy.trim()
-			: userId || DEFAULT_CREATED_BY;
-
+function toFirestorePayload(question) {
 	const payload = {
-		q,
-		choices,
-		answer,
-		createdBy,
-		createdAt: toTimestampOrNow(question.createdAt),
-		updatedAt: toTimestampOrNow(question.updatedAt),
-		correctCount: typeof question.correctCount === 'number' ? question.correctCount : 0,
-		wrongCount: typeof question.wrongCount === 'number' ? question.wrongCount : 0,
-		answeredUsers: normalizeAnsweredUsers(question.answeredUsers),
+		answer: question.answer,
+		translations: buildTranslations(question.translations),
+		answeredUsers: {},
+		createdAt: admin.firestore.FieldValue.serverTimestamp(),
 	};
 
-	if (question.ref === null || typeof question.ref === 'string') {
-		payload.ref = question.ref;
-	}
-
-	const optionalStringFields = [
-		'category',
-		'difficulty',
-		'verseReference',
-		'explanation',
-		'language',
-		'successMsg',
-		'failMsg',
-		'createdByName',
-	];
-	optionalStringFields.forEach((field) => {
-		if (typeof question[field] === 'string' && question[field].trim()) {
-			payload[field] = question[field].trim();
-		}
-	});
-
-	if (question.verseReference && !payload.ref) {
-		payload.ref = question.verseReference;
-	}
-
-	if (question.translations && typeof question.translations === 'object') {
-		payload.translations = question.translations;
-	}
+	const reference = buildReference(question.reference);
+	if (reference) payload.reference = reference;
 
 	return payload;
 }
 
-async function uploadQuestions({ orgId, userId, questions, mergeById }) {
-	const baseRef = db.collection('organizations').doc(orgId).collection('questQuestions');
+async function uploadQuestions({ questions, mergeById }) {
+	const baseRef = db.collection('questions');
 
 	let batch = db.batch();
 	let operationsInBatch = 0;
@@ -209,11 +147,13 @@ async function uploadQuestions({ orgId, userId, questions, mergeById }) {
 	for (let i = 0; i < questions.length; i += 1) {
 		validateQuestion(questions[i], i);
 
-		const payload = toFirestorePayload(questions[i], userId);
-		const hasCustomId = typeof questions[i].id === 'string' && questions[i].id.trim();
-		const docRef = hasCustomId ? baseRef.doc(questions[i].id.trim()) : baseRef.doc();
+		const payload = toFirestorePayload(questions[i]);
+		const rawId = questions[i].id;
+		const customId = typeof rawId === 'string' && rawId.trim() ? rawId.trim() : null;
+		const docId = customId || randomUUID();
+		const docRef = baseRef.doc(docId);
 
-		if (mergeById && hasCustomId) {
+		if (mergeById && customId) {
 			batch.set(docRef, payload, { merge: true });
 		} else {
 			batch.set(docRef, payload);
@@ -239,17 +179,13 @@ async function uploadQuestions({ orgId, userId, questions, mergeById }) {
 async function main() {
 	try {
 		const args = parseArgs(process.argv.slice(2));
-		assertRequiredArgs(args);
-
 		const questions = loadQuestions(args.filePath);
 		const uploadedCount = await uploadQuestions({
-			orgId: args.orgId,
-			userId: args.userId,
 			questions,
 			mergeById: args.mergeById,
 		});
 
-		console.log(`Uploaded ${uploadedCount} questions to organizations/${args.orgId}/questQuestions`);
+		console.log(`Uploaded ${uploadedCount} questions to /questions`);
 		process.exit(0);
 	} catch (err) {
 		console.error('Upload failed:', err.message);

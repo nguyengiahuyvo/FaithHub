@@ -1,4 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
   Alert,
@@ -659,7 +660,16 @@ function OrgDashboard() {
 
   return (
     <View style={{ gap: 16 }}>
-      <View style={styles.heroCard}>
+      <LinearGradient
+        colors={["#5B7553", "#3F5C45", "#1F3B2E"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroCard}
+      >
+        {/* Decorative depth orbs */}
+        <View style={styles.heroOrb1} />
+        <View style={styles.heroOrb2} />
+
         <Text style={styles.eyebrow}>{org?.orgName}</Text>
         <Text style={styles.title}>
           {t("home_welcome", lang)}
@@ -672,7 +682,7 @@ function OrgDashboard() {
           onPress={() => setShowMembers(true)}
           style={styles.membersBtn}
         >
-          <Ionicons name="people" size={18} color="#5B7553" />
+          <Ionicons name="people" size={18} color="#FFFFFF" />
           <Text style={styles.membersBtnText}>
             {t("home_members", lang)}
           </Text>
@@ -681,7 +691,7 @@ function OrgDashboard() {
               <Text style={styles.membersBadgeText}>{members.length}</Text>
             </View>
           )}
-          <Ionicons name="chevron-forward" size={16} color="#8A8F84" />
+          <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
         </Pressable>
 
         {/* My Prayer Requests button */}
@@ -689,7 +699,7 @@ function OrgDashboard() {
           onPress={() => setShowMyPrayers(true)}
           style={styles.membersBtn}
         >
-          <Ionicons name="heart" size={18} color="#C0956C" />
+          <Ionicons name="heart" size={18} color="#F5C58A" />
           <Text style={styles.membersBtnText}>
             {t("prayer_my_requests", lang)}
           </Text>
@@ -700,9 +710,9 @@ function OrgDashboard() {
               </Text>
             </View>
           )}
-          <Ionicons name="chevron-forward" size={16} color="#8A8F84" />
+          <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
         </Pressable>
-      </View>
+      </LinearGradient>
 
       <MembersModal
         visible={showMembers}
@@ -757,15 +767,22 @@ function OrgDashboard() {
               onPress={handlePostPrayer}
               disabled={sendingPrayer || !prayerText.trim()}
               style={[
-                styles.prayerSendBtn,
+                styles.prayerSendBtnWrap,
                 (!prayerText.trim() || sendingPrayer) && { opacity: 0.4 },
               ]}
             >
-              {sendingPrayer ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Ionicons name="send" size={16} color="#FFFFFF" />
-              )}
+              <LinearGradient
+                colors={["#6B8961", "#3F5C45"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.prayerSendBtn}
+              >
+                {sendingPrayer ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Ionicons name="send" size={16} color="#FFFFFF" />
+                )}
+              </LinearGradient>
             </Pressable>
           </View>
         </View>
@@ -796,6 +813,36 @@ function OrgDashboard() {
                       </Text>
                       <Text style={styles.prayerTime}>{timeAgo(p.createdAt)}</Text>
                     </View>
+                    {isPraying ? (
+                      <Pressable
+                        onPress={() => togglePraying(p)}
+                        style={styles.prayingBtnActiveWrap}
+                      >
+                        <LinearGradient
+                          colors={["#D4A77B", "#A87A4F"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.prayingBtn}
+                        >
+                          <FontAwesome6 name="hands-praying" size={13} color="#FFFFFF" />
+                          <Text style={styles.prayingBtnTextActive}>
+                            {p.prayingFor.length > 0 ? p.prayingFor.length : ""}
+                          </Text>
+                        </LinearGradient>
+                      </Pressable>
+                    ) : (
+                      <Pressable
+                        onPress={() => togglePraying(p)}
+                        style={styles.prayingBtn}
+                      >
+                        <FontAwesome6 name="hands-praying" size={13} color="#C0956C" />
+                        {p.prayingFor.length > 0 && (
+                          <Text style={styles.prayingBtnText}>
+                            {p.prayingFor.length}
+                          </Text>
+                        )}
+                      </Pressable>
+                    )}
                     {p.createdBy === user?.uid && (
                       <Pressable onPress={() => setDeleteTarget(p.id)} style={{ padding: 4 }}>
                         <Ionicons name="trash-outline" size={16} color="#DC2626" />
@@ -803,30 +850,6 @@ function OrgDashboard() {
                     )}
                   </View>
                   <Text style={styles.prayerText}>{p.text}</Text>
-                  <View style={styles.prayerFooter}>
-                    <Pressable
-                      onPress={() => togglePraying(p)}
-                      style={[
-                        styles.prayingBtn,
-                        isPraying && styles.prayingBtnActive,
-                      ]}
-                    >
-                      <Ionicons
-                        name={isPraying ? "heart" : "heart-outline"}
-                        size={14}
-                        color={isPraying ? "#FFFFFF" : "#C0956C"}
-                      />
-                      <Text
-                        style={[
-                          styles.prayingBtnText,
-                          isPraying && styles.prayingBtnTextActive,
-                        ]}
-                      >
-                        {t("prayer_praying", lang)}
-                        {p.prayingFor.length > 0 ? ` (${p.prayingFor.length})` : ""}
-                      </Text>
-                    </Pressable>
-                  </View>
                 </View>
               );
             })}
@@ -1028,26 +1051,50 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: "rgba(255,255,255,0.7)",
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     gap: 12,
+    overflow: "hidden",
+    shadowColor: "#1F3B2E",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  heroOrb1: {
+    position: "absolute",
+    top: -60,
+    right: -40,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(192,149,108,0.18)",
+  },
+  heroOrb2: {
+    position: "absolute",
+    bottom: -80,
+    left: -60,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "rgba(163,201,154,0.12)",
   },
   eyebrow: {
-    color: "#8D5B2D",
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: 1.4,
+    color: "#F5C58A",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
   title: {
-    color: "#2C3E2C",
+    color: "#FFFFFF",
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 36,
+    letterSpacing: -0.5,
   },
   body: {
-    color: "#6B7264",
+    color: "rgba(255,255,255,0.78)",
     fontSize: 15,
     lineHeight: 23,
   },
@@ -1092,20 +1139,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: "rgba(91,117,83,0.08)",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginTop: 4,
   },
   membersBtnText: {
-    color: "#2C3E2C",
+    color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
     flex: 1,
   },
   membersBadge: {
-    backgroundColor: "#5B7553",
+    backgroundColor: "rgba(255,255,255,0.22)",
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -1115,7 +1164,7 @@ const styles = StyleSheet.create({
   membersBadgeText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   prayerSection: {
     gap: 12,
@@ -1126,12 +1175,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   prayerInputCard: {
-    backgroundColor: "rgba(255,255,255,0.7)",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.06)",
+    borderColor: "rgba(91,117,83,0.18)",
     padding: 14,
     gap: 10,
+    shadowColor: "#1F3B2E",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   prayerInput: {
     color: "#111827",
@@ -1154,11 +1208,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
   },
+  prayerSendBtnWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#5B7553",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   prayerSendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#5B7553",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1174,12 +1238,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   prayerCard: {
-    backgroundColor: "rgba(255,255,255,0.7)",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.06)",
+    borderColor: "rgba(192,149,108,0.18)",
     padding: 16,
     gap: 10,
+    shadowColor: "#1F3B2E",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   prayerHeader: {
     flexDirection: "row",
@@ -1208,17 +1277,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  prayerFooter: {
-    flexDirection: "row",
-  },
   prayingBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: "rgba(192,149,108,0.1)",
+    borderRadius: 999,
+    backgroundColor: "rgba(192,149,108,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(192,149,108,0.25)",
+  },
+  prayingBtnActiveWrap: {
+    borderRadius: 999,
+    overflow: "hidden",
+    shadowColor: "#A87A4F",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   prayingBtnActive: {
     backgroundColor: "#C0956C",
@@ -1226,9 +1303,11 @@ const styles = StyleSheet.create({
   prayingBtnText: {
     color: "#C0956C",
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   prayingBtnTextActive: {
     color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

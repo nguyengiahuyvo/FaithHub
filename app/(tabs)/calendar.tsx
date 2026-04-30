@@ -9,10 +9,9 @@ import { t, tArray } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useOrg } from "@/lib/org-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   addDoc,
-  arrayRemove,
-  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -50,6 +49,12 @@ type Comment = {
 
 type RepeatRule = "none" | "daily" | "weekly" | "yearly";
 
+// Per-occurrence attendance, keyed by occurrence date (YYYY-MM-DD).
+// Recurring events store one entry per occurrence the user has interacted
+// with, so tapping "attend" on this week's instance doesn't enroll you in
+// every future instance.
+type Attendance = Record<string, { attendees?: Attendee[]; maybe?: Attendee[] }>;
+
 type CalEvent = {
   id: string;
   title: string;
@@ -58,12 +63,30 @@ type CalEvent = {
   time: string; // HH:MM
   createdBy: string;
   createdByName: string | null;
-  attendees: Attendee[];
-  maybe: Attendee[];
+  attendees: Attendee[]; // legacy top-level — used as fallback for non-recurring events
+  maybe: Attendee[]; // legacy top-level
+  attendance: Attendance;
   repeat: RepeatRule;
   repeatUntil: string | null; // YYYY-MM-DD — null = no end (yearly/birthday)
   isBirthday: boolean;
 };
+
+// Resolve attendees for a specific occurrence. New per-occurrence data
+// always wins; for non-recurring events that pre-date the migration, fall
+// back to the legacy top-level array.
+function getOccurrenceAttendees(ev: CalEvent, dateStr: string): Attendee[] {
+  const slot = ev.attendance?.[dateStr];
+  if (slot) return slot.attendees ?? [];
+  if (ev.repeat === "none") return ev.attendees ?? [];
+  return [];
+}
+
+function getOccurrenceMaybe(ev: CalEvent, dateStr: string): Attendee[] {
+  const slot = ev.attendance?.[dateStr];
+  if (slot) return slot.maybe ?? [];
+  if (ev.repeat === "none") return ev.maybe ?? [];
+  return [];
+}
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -187,6 +210,7 @@ function CalendarEventsView() {
             createdByName: d.data().createdByName || null,
             attendees: d.data().attendees || [],
             maybe: d.data().maybe || [],
+            attendance: (d.data().attendance as Attendance) || {},
             repeat: (d.data().repeat as RepeatRule) || "none",
             repeatUntil: d.data().repeatUntil || null,
             isBirthday: !!d.data().isBirthday,
@@ -252,38 +276,46 @@ function CalendarEventsView() {
     return events.filter((e) => eventOccursOn(e, ds)).length;
   }
 
-  async function toggleAttend(eventId: string, ev: CalEvent) {
+  async function toggleAttend(eventId: string, ev: CalEvent, occurrenceDate: string) {
     if (!org || !user) return;
     const ref = doc(db, "organizations", org.orgId, "events", eventId);
-    const already = ev.attendees.some((a) => a.uid === user.uid);
     const me: Attendee = { uid: user.uid, displayName: user.displayName };
-    if (already) {
-      const existing = ev.attendees.find((a) => a.uid === user.uid)!;
-      await updateDoc(ref, { attendees: arrayRemove(existing) });
-    } else {
-      // Remove from maybe if switching to attend
-      const inMaybe = ev.maybe.find((a) => a.uid === user.uid);
-      const updates: Record<string, unknown> = { attendees: arrayUnion(me) };
-      if (inMaybe) updates.maybe = arrayRemove(inMaybe);
-      await updateDoc(ref, updates);
-    }
+    const currentAttendees = getOccurrenceAttendees(ev, occurrenceDate);
+    const currentMaybe = getOccurrenceMaybe(ev, occurrenceDate);
+    const already = currentAttendees.some((a) => a.uid === user.uid);
+
+    const nextAttendees = already
+      ? currentAttendees.filter((a) => a.uid !== user.uid)
+      : [...currentAttendees.filter((a) => a.uid !== user.uid), me];
+    const nextMaybe = already
+      ? currentMaybe
+      : currentMaybe.filter((a) => a.uid !== user.uid);
+
+    await updateDoc(ref, {
+      [`attendance.${occurrenceDate}.attendees`]: nextAttendees,
+      [`attendance.${occurrenceDate}.maybe`]: nextMaybe,
+    });
   }
 
-  async function toggleMaybe(eventId: string, ev: CalEvent) {
+  async function toggleMaybe(eventId: string, ev: CalEvent, occurrenceDate: string) {
     if (!org || !user) return;
     const ref = doc(db, "organizations", org.orgId, "events", eventId);
-    const already = ev.maybe.some((a) => a.uid === user.uid);
     const me: Attendee = { uid: user.uid, displayName: user.displayName };
-    if (already) {
-      const existing = ev.maybe.find((a) => a.uid === user.uid)!;
-      await updateDoc(ref, { maybe: arrayRemove(existing) });
-    } else {
-      // Remove from attendees if switching to maybe
-      const inAttend = ev.attendees.find((a) => a.uid === user.uid);
-      const updates: Record<string, unknown> = { maybe: arrayUnion(me) };
-      if (inAttend) updates.attendees = arrayRemove(inAttend);
-      await updateDoc(ref, updates);
-    }
+    const currentAttendees = getOccurrenceAttendees(ev, occurrenceDate);
+    const currentMaybe = getOccurrenceMaybe(ev, occurrenceDate);
+    const already = currentMaybe.some((a) => a.uid === user.uid);
+
+    const nextMaybe = already
+      ? currentMaybe.filter((a) => a.uid !== user.uid)
+      : [...currentMaybe.filter((a) => a.uid !== user.uid), me];
+    const nextAttendees = already
+      ? currentAttendees
+      : currentAttendees.filter((a) => a.uid !== user.uid);
+
+    await updateDoc(ref, {
+      [`attendance.${occurrenceDate}.attendees`]: nextAttendees,
+      [`attendance.${occurrenceDate}.maybe`]: nextMaybe,
+    });
   }
 
   function showSnack(msg: string) {
@@ -332,7 +364,9 @@ function CalendarEventsView() {
             {upcomingEvents.length > 0 && (
               <View style={{ gap: 8 }}>
                 <Text style={styles.upcomingLabel}>{t("cal_upcoming", lang)}</Text>
-                {upcomingEvents.map(({ ev, date: nextDate }) => (
+                {upcomingEvents.map(({ ev, date: nextDate }) => {
+                  const upcomingCount = getOccurrenceAttendees(ev, nextDate).length;
+                  return (
                   <Pressable
                     key={ev.id}
                     onPress={() => {
@@ -343,26 +377,36 @@ function CalendarEventsView() {
                     }}
                     style={styles.upcomingCard}
                   >
-                    <View style={styles.upcomingIconWrap}>
+                    <LinearGradient
+                      colors={
+                        ev.isBirthday
+                          ? ["#D4A77B", "#A87A4F"]
+                          : ["#6B8961", "#3F5C45"]
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.upcomingIconWrap}
+                    >
                       <Ionicons
                         name={ev.isBirthday ? "gift" : "calendar"}
                         size={20}
                         color="#FFFFFF"
                       />
-                    </View>
+                    </LinearGradient>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.upcomingTitle} numberOfLines={1}>{ev.title}</Text>
                       <Text style={styles.upcomingMeta}>
                         {nextDate}
                         {ev.time ? ` · ${ev.time}` : ""}
-                        {ev.attendees.length > 0
-                          ? ` · ${ev.attendees.length} ${ev.attendees.length === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}`
+                        {upcomingCount > 0
+                          ? ` · ${upcomingCount} ${upcomingCount === 1 ? t("cal_attendee", lang) : t("cal_attendees", lang)}`
                           : ""}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color="#5B7553" />
+                    <Ionicons name="chevron-forward" size={18} color="#C4C9BE" />
                   </Pressable>
-                ))}
+                  );
+                })}
               </View>
             )}
 
@@ -453,6 +497,7 @@ function CalendarEventsView() {
                   <EventCard
                     key={ev.id}
                     event={ev}
+                    occurrenceDate={selectedDate}
                     orgId={org.orgId}
                     user={user}
                     lang={lang}
@@ -506,6 +551,7 @@ function timeAgo(date: Date | null, lang: "en" | "de" | "vi"): string {
 
 function EventCard({
   event: ev,
+  occurrenceDate,
   orgId,
   user,
   lang,
@@ -514,11 +560,12 @@ function EventCard({
   onDelete,
 }: {
   event: CalEvent;
+  occurrenceDate: string;
   orgId: string;
   user: { uid: string; displayName: string | null } | null;
   lang: "en" | "de" | "vi";
-  onToggleAttend: (eventId: string, ev: CalEvent) => void;
-  onToggleMaybe: (eventId: string, ev: CalEvent) => void;
+  onToggleAttend: (eventId: string, ev: CalEvent, occurrenceDate: string) => void;
+  onToggleMaybe: (eventId: string, ev: CalEvent, occurrenceDate: string) => void;
   onDelete: (eventId: string) => void;
 }) {
   const [showComments, setShowComments] = useState(false);
@@ -618,9 +665,11 @@ function EventCard({
     }
   }
 
-  const isAttending = ev.attendees.some((a) => a.uid === user?.uid);
-  const isMaybe = ev.maybe.some((a) => a.uid === user?.uid);
-  const count = ev.attendees.length;
+  const occurrenceAttendees = getOccurrenceAttendees(ev, occurrenceDate);
+  const occurrenceMaybe = getOccurrenceMaybe(ev, occurrenceDate);
+  const isAttending = occurrenceAttendees.some((a) => a.uid === user?.uid);
+  const isMaybe = occurrenceMaybe.some((a) => a.uid === user?.uid);
+  const count = occurrenceAttendees.length;
 
   return (
     <View style={styles.eventCard}>
@@ -666,7 +715,7 @@ function EventCard({
       {/* Attendees — full width */}
       {count > 0 && (
         <Pressable onPress={() => setShowAttendees(true)} style={styles.attendeeRow}>
-          {ev.attendees.slice(0, 5).map((a) => (
+          {occurrenceAttendees.slice(0, 5).map((a) => (
             <View key={a.uid} style={styles.attendeeBubbleWrap}>
               <UserAvatar uid={a.uid} name={a.displayName} size={26} />
             </View>
@@ -684,7 +733,7 @@ function EventCard({
       {/* Attendees list modal */}
       <AttendeesModal
         visible={showAttendees}
-        attendees={ev.attendees}
+        attendees={occurrenceAttendees}
         lang={lang}
         onDismiss={() => setShowAttendees(false)}
       />
@@ -692,7 +741,7 @@ function EventCard({
       {/* Attend + Maybe + Comments — full width */}
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         <Pressable
-          onPress={() => onToggleAttend(ev.id, ev)}
+          onPress={() => onToggleAttend(ev.id, ev, occurrenceDate)}
           style={[
             styles.attendBtn,
             isAttending && styles.attendBtnActive,
@@ -715,7 +764,7 @@ function EventCard({
         </Pressable>
 
         <Pressable
-          onPress={() => onToggleMaybe(ev.id, ev)}
+          onPress={() => onToggleMaybe(ev.id, ev, occurrenceDate)}
           style={[
             styles.attendBtn,
             isMaybe && styles.maybeBtnActive,
@@ -1728,37 +1777,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "rgba(91,117,83,0.08)",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(91,117,83,0.15)",
+    borderColor: "rgba(91,117,83,0.18)",
     padding: 14,
+    shadowColor: "#1F3B2E",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   upcomingIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#5B7553",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#1F3B2E",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
   },
   upcomingLabel: {
     color: "#5B7553",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: 2,
   },
   upcomingTitle: {
-    color: "#2C3E2C",
+    color: "#1F3B2E",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     marginTop: 1,
+    letterSpacing: -0.2,
   },
   upcomingMeta: {
     color: "#8A8F84",
     fontSize: 12,
+    fontWeight: "500",
     marginTop: 2,
   },
 });

@@ -5,7 +5,6 @@ const admin = require('firebase-admin');
 
 const serviceAccount = require('./adminkey.json');
 const DEFAULT_QUESTIONS_FILE = path.join('questions', 'questions.json');
-const DEFAULT_PRIMARY_LANG = 'en';
 
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
@@ -14,14 +13,12 @@ const db = admin.firestore();
 function parseArgs(argv) {
 	const args = {
 		filePath: DEFAULT_QUESTIONS_FILE,
-		primaryLang: DEFAULT_PRIMARY_LANG,
 		mergeById: false,
 	};
 
 	for (let i = 0; i < argv.length; i += 1) {
 		const token = argv[i];
 		if (token === '--file') args.filePath = argv[i + 1];
-		if (token === '--primaryLang') args.primaryLang = argv[i + 1];
 		if (token === '--mergeById') args.mergeById = true;
 	}
 
@@ -94,11 +91,6 @@ function validateQuestion(q, idx) {
 	}
 }
 
-function pickPrimaryLang(translations, preferred) {
-	if (translations[preferred]) return preferred;
-	return Object.keys(translations)[0];
-}
-
 function buildTranslations(rawTranslations) {
 	const out = {};
 	for (const [l, t] of Object.entries(rawTranslations)) {
@@ -117,17 +109,10 @@ function buildTranslations(rawTranslations) {
 	return out;
 }
 
-function toFirestorePayload(question, primaryLangPref) {
-	const language = pickPrimaryLang(question.translations, primaryLangPref);
-	const primary = question.translations[language];
-	const translations = buildTranslations(question.translations);
-
+function toFirestorePayload(question) {
 	const payload = {
-		q: primary.q.trim(),
-		choices: primary.choices.map((c) => c.trim()),
 		answer: question.answer,
-		language,
-		translations,
+		translations: buildTranslations(question.translations),
 		answeredUsers: {},
 		createdAt: admin.firestore.FieldValue.serverTimestamp(),
 	};
@@ -136,19 +121,10 @@ function toFirestorePayload(question, primaryLangPref) {
 		payload.ref = question.ref.trim();
 	}
 
-	const successMsg = primary.successMsg || question.successMsg;
-	if (typeof successMsg === 'string' && successMsg.trim()) {
-		payload.successMsg = successMsg.trim();
-	}
-	const failMsg = primary.failMsg || question.failMsg;
-	if (typeof failMsg === 'string' && failMsg.trim()) {
-		payload.failMsg = failMsg.trim();
-	}
-
 	return payload;
 }
 
-async function uploadQuestions({ questions, primaryLang, mergeById }) {
+async function uploadQuestions({ questions, mergeById }) {
 	const baseRef = db.collection('questions');
 
 	let batch = db.batch();
@@ -158,7 +134,7 @@ async function uploadQuestions({ questions, primaryLang, mergeById }) {
 	for (let i = 0; i < questions.length; i += 1) {
 		validateQuestion(questions[i], i);
 
-		const payload = toFirestorePayload(questions[i], primaryLang);
+		const payload = toFirestorePayload(questions[i]);
 		const rawId = questions[i].id;
 		const customId = typeof rawId === 'string' && rawId.trim() ? rawId.trim() : null;
 		const docId = customId || randomUUID();
@@ -193,7 +169,6 @@ async function main() {
 		const questions = loadQuestions(args.filePath);
 		const uploadedCount = await uploadQuestions({
 			questions,
-			primaryLang: args.primaryLang,
 			mergeById: args.mergeById,
 		});
 

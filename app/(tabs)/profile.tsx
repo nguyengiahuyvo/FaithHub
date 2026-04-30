@@ -15,12 +15,13 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { addDoc, deleteDoc, doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {ActivityIndicator,
   Animated,
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -600,6 +601,154 @@ const editNameStyles = StyleSheet.create({
   },
 });
 
+const FEEDBACK_MAX_LEN = 1000;
+
+function FeedbackModal({
+  visible,
+  onDismiss,
+  onSend,
+  loading,
+  error,
+  lang,
+}: {
+  visible: boolean;
+  onDismiss: () => void;
+  onSend: (text: string) => void;
+  loading: boolean;
+  error: boolean;
+  lang: Language;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (visible) {
+      setText("");
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 20,
+          stiffness: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity, scale]);
+
+  function handleDismiss() {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      scale.setValue(0.9);
+      onDismiss();
+    });
+  }
+
+  if (!visible) return null;
+
+  const trimmed = text.trim();
+  const canSend = trimmed.length > 0 && !loading;
+
+  return (
+    <Modal transparent visible animationType="none">
+      <Animated.View style={[modalStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[modalStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={[modalStyles.iconCircle, { backgroundColor: "#F0FDF4" }]}>
+            <Ionicons name="chatbox-ellipses-outline" size={32} color="#5B7553" />
+          </View>
+
+          <Text style={modalStyles.title}>{t("feedback_modal_title", lang)}</Text>
+          <Text style={modalStyles.message}>{t("feedback_modal_msg", lang)}</Text>
+
+          <TextInput
+            style={feedbackStyles.input}
+            value={text}
+            onChangeText={setText}
+            placeholder={t("feedback_placeholder", lang)}
+            placeholderTextColor="#D1D5DB"
+            multiline
+            maxLength={FEEDBACK_MAX_LEN}
+            autoFocus
+          />
+          <Text style={feedbackStyles.counter}>
+            {text.length} / {FEEDBACK_MAX_LEN}
+          </Text>
+
+          {error && (
+            <Text style={feedbackStyles.error}>
+              {t("feedback_error", lang)}
+            </Text>
+          )}
+
+          <View style={modalStyles.buttonRow}>
+            <Pressable
+              onPress={handleDismiss}
+              disabled={loading}
+              style={modalStyles.cancelButton}
+            >
+              <Text style={modalStyles.cancelButtonText}>
+                {t("cancel", lang)}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onSend(trimmed)}
+              disabled={!canSend}
+              style={[
+                modalStyles.confirmButton,
+                { backgroundColor: "#5B7553" },
+                !canSend && { opacity: 0.5 },
+              ]}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={modalStyles.confirmButtonText}>
+                  {t("feedback_send", lang)}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const feedbackStyles = StyleSheet.create({
+  input: {
+    width: "100%",
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#1F2A1F",
+    textAlignVertical: "top",
+  },
+  counter: {
+    alignSelf: "flex-end",
+    fontSize: 11,
+    color: "#9CA3AF",
+  },
+  error: {
+    color: "#DC2626",
+    fontSize: 13,
+    textAlign: "center",
+  },
+});
+
 export default function ProfileScreen() {
   const { user, refreshUser } = useAuth();
   const { org, leaveOrg } = useOrg();
@@ -625,6 +774,9 @@ export default function ProfileScreen() {
   const defaultNotifPrefs: NotifPrefs = { events: true, eventsBefore: "1h", tasks: true, quest: true, bible: false, bibleReminders: [{ hour: 9, minute: 0 }] };
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(defaultNotifPrefs);
   const [notifExpanded, setNotifExpanded] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [feedbackError, setFeedbackError] = useState(false);
 
   useEffect(() => {
     setPendingLang(lang);
@@ -747,6 +899,45 @@ export default function ProfileScreen() {
       // ignore
     } finally {
       setResetSending(false);
+    }
+  }
+
+  async function submitFeedback(text: string) {
+    if (!user || !text.trim() || sendingFeedback) return;
+    setSendingFeedback(true);
+    setFeedbackError(false);
+    try {
+      await addDoc(collection(db, "feedbacks"), {
+        text: text.trim(),
+        uid: user.uid,
+        displayName: user.displayName ?? null,
+        email: user.email ?? null,
+        appVersion: Constants.expoConfig?.version ?? null,
+        platform: Platform.OS,
+        language: lang,
+        createdAt: serverTimestamp(),
+      });
+      setShowFeedback(false);
+      setSnackbar(t("feedback_sent_msg", lang));
+      snackOpacity.setValue(0);
+      Animated.timing(snackOpacity, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
+        setTimeout(() => {
+          Animated.timing(snackOpacity, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }).start(() => setSnackbar(null));
+        }, 3000);
+      });
+    } catch (e) {
+      console.error("Feedback send failed:", e);
+      setFeedbackError(true);
+    } finally {
+      setSendingFeedback(false);
     }
   }
 
@@ -1086,6 +1277,33 @@ export default function ProfileScreen() {
           </Pressable>
         )}
       </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>{t("profile_support", lang)}</Text>
+
+        <Pressable
+          onPress={() => {
+            setFeedbackError(false);
+            setShowFeedback(true);
+          }}
+          style={styles.row}
+        >
+          <Ionicons name="chatbox-ellipses-outline" size={20} color="#5B7553" />
+          <Text style={styles.rowLabel}>
+            {t("profile_send_feedback", lang)}
+          </Text>
+          <Ionicons name="chevron-forward" size={16} color="#C4C9BE" />
+        </Pressable>
+      </View>
+
+      <FeedbackModal
+        visible={showFeedback}
+        onDismiss={() => setShowFeedback(false)}
+        onSend={submitFeedback}
+        loading={sendingFeedback}
+        error={feedbackError}
+        lang={lang}
+      />
 
       <Pressable
         onPress={() => setModalType("confirm")}

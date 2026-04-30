@@ -706,6 +706,38 @@ const translations = {
     de: "Einstellungen",
     vi: "Cài đặt",
   },
+  profile_support: { en: "Support", de: "Support", vi: "Hỗ trợ" },
+  profile_send_feedback: {
+    en: "Send feedback",
+    de: "Feedback senden",
+    vi: "Gửi phản hồi",
+  },
+  feedback_modal_title: {
+    en: "Send feedback",
+    de: "Feedback senden",
+    vi: "Gửi phản hồi",
+  },
+  feedback_modal_msg: {
+    en: "Tell us what's working, what's broken, or what you'd like to see.",
+    de: "Erzähl uns, was gut läuft, was kaputt ist oder was du dir wünschst.",
+    vi: "Hãy cho chúng tôi biết điều gì hoạt động tốt, điều gì bị lỗi hoặc bạn muốn thấy gì.",
+  },
+  feedback_placeholder: {
+    en: "Your feedback…",
+    de: "Dein Feedback…",
+    vi: "Phản hồi của bạn…",
+  },
+  feedback_send: { en: "Send", de: "Senden", vi: "Gửi" },
+  feedback_sent_msg: {
+    en: "Thanks! Your feedback has been sent.",
+    de: "Danke! Dein Feedback wurde gesendet.",
+    vi: "Cảm ơn! Phản hồi của bạn đã được gửi.",
+  },
+  feedback_error: {
+    en: "Failed to send feedback. Please try again.",
+    de: "Feedback konnte nicht gesendet werden. Bitte erneut versuchen.",
+    vi: "Không thể gửi phản hồi. Vui lòng thử lại.",
+  },
   profile_notifications: {
     en: "Notifications",
     de: "Benachrichtigungen",

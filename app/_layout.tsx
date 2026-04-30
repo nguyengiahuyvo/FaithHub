@@ -283,7 +283,6 @@ function RootNavigator() {
     // without being bounced back to the tabs group by the auth guard below.
     const authedModalRoutes = new Set<string>([
       "modal",
-      "quest-questions",
     ]);
     const inAuthedModal = authedModalRoutes.has(segments[0] ?? "");
 
@@ -315,10 +314,6 @@ function RootNavigator() {
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
-        />
-        <Stack.Screen
-          name="quest-questions"
-          options={{ presentation: "modal", headerShown: false }}
         />
       </Stack>
       <UpdateModal

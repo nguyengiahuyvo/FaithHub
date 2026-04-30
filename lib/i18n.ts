@@ -1016,16 +1016,6 @@ const translations = {
     de: "Du hast 10 Gratis-Runden pro Tag. Weiterspielen? Zahle 10 Schekel für eine Extrarunde. Die besten Spieler werden auf der Bestenliste geehrt.",
     vi: "Bạn có 10 lượt miễn phí mỗi ngày. Muốn chơi tiếp? Trả 10 Shekel để mua thêm một lượt. Người chơi điểm cao nhất được vinh danh trên bảng xếp hạng.",
   },
-  onboard_4_title: {
-    en: "Challenge Back",
-    de: "Fordere zurück heraus",
-    vi: "Thách thức ngược lại",
-  },
-  onboard_4_desc: {
-    en: "Create your own questions to challenge other members. You earn 2 Shekel per question — and your own questions won't appear in your rounds.",
-    de: "Erstelle eigene Fragen, um andere herauszufordern. Du bekommst 2 Schekel pro Frage — und deine eigenen Fragen erscheinen nicht in deinen Runden.",
-    vi: "Tạo câu hỏi của riêng bạn để thách thức người khác. Bạn nhận 2 Shekel mỗi câu — và câu hỏi của bạn sẽ không xuất hiện trong vòng chơi của bạn.",
-  },
   onboard_5_title: {
     en: "Send Shekel Gifts",
     de: "Schekel verschenken",
@@ -1042,9 +1032,9 @@ const translations = {
     vi: "Câu hỏi đa ngôn ngữ",
   },
   onboard_6_desc: {
-    en: "Add translations when creating questions so everyone can play in their language. During gameplay, tap the flag icons to switch languages on any question.",
-    de: "Füge beim Erstellen von Fragen Übersetzungen hinzu, damit alle in ihrer Sprache spielen können. Während des Spiels kannst du mit den Flaggen die Sprache wechseln.",
-    vi: "Thêm bản dịch khi tạo câu hỏi để mọi người chơi bằng ngôn ngữ của mình. Trong lúc chơi, chạm vào cờ để chuyển ngôn ngữ.",
+    en: "Questions are available in multiple languages. During gameplay, tap the flag icons to switch languages on any question.",
+    de: "Fragen sind in mehreren Sprachen verfügbar. Während des Spiels kannst du mit den Flaggen die Sprache wechseln.",
+    vi: "Câu hỏi có sẵn bằng nhiều ngôn ngữ. Trong lúc chơi, chạm vào cờ để chuyển ngôn ngữ.",
   },
 
   // Verse Quest — community-authored questions (Challenge Mode)

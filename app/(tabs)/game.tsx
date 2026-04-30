@@ -1,12 +1,11 @@
 import { Pressable } from "@/components/HapticPressable";
-import MentionInput from "@/components/MentionInput";
 import Snackbar, { useSnackbar } from "@/components/Snackbar";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/lib/auth-context";
 import { db } from "@/lib/firebase";
 import { t, type Language } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
-import { notifyMentionedUsers, notifyUser } from "@/lib/notifications";
+import { notifyUser } from "@/lib/notifications";
 import { useOrg } from "@/lib/org-context";
 import {
   addToLeaderboard,
@@ -17,17 +16,10 @@ import {
 } from "@/lib/quest-questions";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
-  increment,
   onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -176,7 +168,6 @@ export default function GameScreen() {
   const { lang } = useLanguage();
   const { user } = useAuth();
   const { org } = useOrg();
-  const router = useRouter();
 
   const [mode, setMode] = useState<Mode>("idle");
   const [revisionMode, setRevisionMode] = useState(false);
@@ -320,18 +311,11 @@ export default function GameScreen() {
     } catch {}
   }
 
-  // Live-subscribe to community questions created by members of the org.
+  // Live-subscribe to the global question pool.
   useEffect(() => {
-    if (!org) {
-      setCommunity([]);
-      return;
-    }
-    const q = query(
-      collection(db, "organizations", org.orgId, "questQuestions"),
-      orderBy("createdAt", "desc"),
-    );
+    const qRef = collection(db, "questions");
     const unsub = onSnapshot(
-      q,
+      qRef,
       (snap) => {
         setCommunity(
           snap.docs
@@ -369,14 +353,13 @@ export default function GameScreen() {
       () => {},
     );
     return unsub;
-  }, [org]);
+  }, []);
 
   // Playing is normally free. `override=true` means the player chose to
   // pay the Shekel fee to bypass a cooldown or daily-limit block and start
   // an extra round right now.
   function startRevision() {
     const revisable = community.filter((c) => {
-      if (user && c.createdBy === user.uid) return false;
       // Only questions the user answered correctly
       if (!user || !c.answeredUsers?.[user.uid]) return false;
       return true;
@@ -399,9 +382,8 @@ export default function GameScreen() {
 
   async function startGame(override: boolean = false) {
     // Pool check always applies — there has to be something to play.
-    // Exclude own questions and questions already answered correctly.
+    // Exclude questions already answered correctly.
     const eligible = community.filter((c) => {
-      if (user && c.createdBy === user.uid) return false;
       if (user && c.answeredUsers?.[user.uid] === true) return false;
       return true;
     });
@@ -506,36 +488,11 @@ export default function GameScreen() {
   }
 
   function recordAnswerStat(questionId: string | undefined, correct: boolean) {
-    if (!questionId || !org || !user) return;
-    const field = correct ? "correctCount" : "wrongCount";
-    const ref = doc(
-      db,
-      "organizations",
-      org.orgId,
-      "questQuestions",
-      questionId,
-    );
+    if (!questionId || !user) return;
+    const ref = doc(db, "questions", questionId);
     updateDoc(ref, {
-      [field]: increment(1),
       [`answeredUsers.${user.uid}`]: correct,
     }).catch((e) => console.error("Answer stat update failed:", e));
-    // Store individual answer record
-    addDoc(
-      collection(
-        db,
-        "organizations",
-        org.orgId,
-        "questQuestions",
-        questionId,
-        "answers",
-      ),
-      {
-        uid: user.uid,
-        displayName: user.displayName ?? null,
-        correct,
-        answeredAt: serverTimestamp(),
-      },
-    ).catch((e) => console.error("Answer record failed:", e));
   }
 
   function handleAnswer(choiceIdx: number, _remainingMs: number) {
@@ -609,53 +566,23 @@ export default function GameScreen() {
           onStart={() => startGame(false)}
           onPayToPlayNow={() => setShowPayConfirm(true)}
           onShowHelp={() => setShowOnboarding(true)}
-          onManageQuestions={() => router.push("/quest-questions")}
           hasOrg={!!org}
-          communityCount={community.length}
           eligibleCount={
             community.filter((c) => {
-              if (user && c.createdBy === user.uid) return false;
               if (user && c.answeredUsers?.[user.uid] === true) return false;
               return true;
             }).length
           }
           revisionCount={
             community.filter((c) => {
-              if (!user || c.createdBy === user.uid) return false;
+              if (!user) return false;
               return c.answeredUsers?.[user.uid] === true;
             }).length
           }
           onRevision={startRevision}
           playCost={PLAY_COST_SHEKEL}
-          myCount={
-            user ? community.filter((c) => c.createdBy === user.uid).length : 0
-          }
           leaderboard={leaderboard}
-          contributors={(() => {
-            const map = new Map<
-              string,
-              { uid: string; displayName: string | null; count: number }
-            >();
-            for (const c of community) {
-              if (c.createdByName === "FaithHub") continue;
-              const e = map.get(c.createdBy);
-              if (e) {
-                e.count++;
-              } else {
-                map.set(c.createdBy, {
-                  uid: c.createdBy,
-                  displayName: c.createdByName,
-                  count: 1,
-                });
-              }
-            }
-            return [...map.values()]
-              .sort((a, b) => b.count - a.count)
-              .slice(0, 10);
-          })()}
           currentUid={user?.uid}
-          currentUserName={user?.displayName ?? null}
-          orgId={org?.orgId}
           onGift={(uid, name) => {
             setGiftTarget({ uid, name });
             setGiftAmount("");
@@ -680,9 +607,6 @@ export default function GameScreen() {
           onQuit={() => setShowQuitConfirm(true)}
           onNext={advance}
           isLast={qIndex + 1 >= round.length}
-          orgId={org?.orgId}
-          userId={user?.uid}
-          userName={user?.displayName ?? null}
           lang={lang}
         />
       )}
@@ -829,18 +753,12 @@ function StartView({
   onStart,
   onPayToPlayNow,
   onShowHelp,
-  onManageQuestions,
   revisionCount,
   onRevision,
   hasOrg,
-  communityCount,
   eligibleCount,
-  myCount,
   leaderboard,
-  contributors,
   currentUid,
-  currentUserName,
-  orgId,
   onGift,
   playCost,
   lang,
@@ -852,18 +770,12 @@ function StartView({
   onStart: () => void;
   onPayToPlayNow: () => void;
   onShowHelp: () => void;
-  onManageQuestions: () => void;
   revisionCount: number;
   onRevision: () => void;
   hasOrg: boolean;
-  communityCount: number;
   eligibleCount: number;
-  myCount: number;
   leaderboard: LeaderboardEntry[];
-  contributors: { uid: string; displayName: string | null; count: number }[];
   currentUid: string | undefined;
-  currentUserName: string | null;
-  orgId: string | undefined;
   onGift: (uid: string, name: string | null) => void;
   playCost: number;
   lang: Language;
@@ -925,16 +837,6 @@ function StartView({
         <Text style={styles.startTitle}>{t("game_title", lang)}</Text>
         <Text style={styles.startSubtitle}>{t("game_subtitle", lang)}</Text>
 
-        {/* Community chat */}
-        {hasOrg && orgId && currentUid && (
-          <QuestChat
-            orgId={orgId}
-            userId={currentUid}
-            userName={currentUserName}
-            lang={lang}
-          />
-        )}
-
         {/* Cooldown / daily-limit / no-questions notice */}
         {cooldownActive && (
           <View style={styles.noticeCard}>
@@ -974,14 +876,10 @@ function StartView({
           >
             <Ionicons name="bulb" size={18} color={C.accent} />
             <Text style={[styles.noticeText, { color: C.accent }]}>
-              {communityCount > 0 && myCount === communityCount
-                ? t("game_only_own_msg", lang)
-                : t("game_no_questions_msg", lang)}
+              {t("game_no_questions_msg", lang)}
             </Text>
           </View>
         )}
-        {/* When blocked by cooldown/limit AND you can't pay to override,
-            nudge the player to earn Shekel by creating questions. */}
         {blockedByTime &&
           hasOrg &&
           !noEligibleQuestions &&
@@ -1031,52 +929,6 @@ function StartView({
             value={String(eligibleCount)}
           />
         </View>
-
-        {/* Top Contributors — most questions created */}
-        {hasOrg && contributors.length > 0 && (
-          <View style={styles.boardCard}>
-            <View style={styles.boardHeader}>
-              <Ionicons name="create" size={18} color={C.primary} />
-              <Text style={styles.boardTitle}>
-                {t("game_contributors_title", lang)}
-              </Text>
-            </View>
-            <View style={{ gap: 6 }}>
-              {contributors.map((e, i) => {
-                const isMe = e.uid === currentUid;
-                const medal =
-                  i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
-                return (
-                  <View
-                    key={e.uid}
-                    style={[
-                      styles.boardRow,
-                      isMe && styles.boardRowMe,
-                      i === 0 && styles.boardRowFirst,
-                    ]}
-                  >
-                    <View style={styles.boardRank}>
-                      {medal ? (
-                        <Text style={styles.boardMedal}>{medal}</Text>
-                      ) : (
-                        <Text style={styles.boardRankText}>{i + 1}</Text>
-                      )}
-                    </View>
-                    <UserAvatar uid={e.uid} name={e.displayName} size={28} />
-                    <Text
-                      style={[styles.boardName, isMe && styles.boardNameMe]}
-                      numberOfLines={1}
-                    >
-                      {e.displayName || "—"}
-                      {isMe ? "  · " + t("game_leaderboard_you", lang) : ""}
-                    </Text>
-                    <Text style={styles.boardScore}>{e.count}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        )}
 
         {/* Leaderboard — inline on the start page */}
         <View style={styles.boardCard}>
@@ -1138,7 +990,7 @@ function StartView({
         </View>
       </ScrollView>
 
-      {/* Bottom-docked action group: Play + Create question + Help */}
+      {/* Bottom-docked action group: Play + Help */}
       <View style={styles.bottomBar}>
         <Pressable
           onPress={canPayToOverride ? onPayToPlayNow : onStart}
@@ -1163,15 +1015,6 @@ function StartView({
                   ? t("game_daily_limit_short", lang)
                   : t("game_play", lang)}
           </Text>
-        </Pressable>
-        <Pressable
-          onPress={onManageQuestions}
-          disabled={!hasOrg}
-          style={[styles.helpBtn, !hasOrg && { opacity: 0.5 }]}
-          accessibilityLabel={t("game_manage_questions", lang)}
-          hitSlop={6}
-        >
-          <Ionicons name="add" size={22} color={C.primary} />
         </Pressable>
         {revisionCount > 0 && (
           <Pressable
@@ -1247,9 +1090,6 @@ function PlayView({
   onQuit,
   onNext,
   isLast,
-  orgId,
-  userId,
-  userName,
   lang,
 }: {
   question: Question;
@@ -1265,9 +1105,6 @@ function PlayView({
   onQuit: () => void;
   onNext: () => void;
   isLast: boolean;
-  orgId: string | undefined;
-  userId: string | undefined;
-  userName: string | null;
   lang: Language;
 }) {
   const timerAnim = useRef(new Animated.Value(1)).current;
@@ -1634,16 +1471,6 @@ function PlayView({
           })}
         </View>
 
-        {/* Per-question comments — visible after the answer is revealed. */}
-        {locked && (
-          <QuestionComments
-            orgId={orgId}
-            questionId={question.id}
-            userId={userId}
-            userName={userName}
-            lang={lang}
-          />
-        )}
       </ScrollView>
 
       {/* Bottom-docked Next button — hidden when keyboard is open */}
@@ -1955,339 +1782,6 @@ const confirmStyles = StyleSheet.create({
   },
 });
 
-// ===== Per-question comment thread (shown after the answer is revealed) =====
-type QuestionComment = {
-  id: string;
-  text: string;
-  createdBy: string;
-  createdByName: string | null;
-  createdAt: Date | null;
-};
-
-function QuestionComments({
-  orgId,
-  questionId,
-  userId,
-  userName,
-  lang,
-}: {
-  orgId: string | undefined;
-  questionId: string | undefined;
-  userId: string | undefined;
-  userName: string | null;
-  lang: Language;
-}) {
-  const [comments, setComments] = useState<QuestionComment[]>([]);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    if (!orgId || !questionId) return;
-    const q = query(
-      collection(
-        db,
-        "organizations",
-        orgId,
-        "questQuestions",
-        questionId,
-        "comments",
-      ),
-      orderBy("createdAt", "asc"),
-    );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setComments(
-          snap.docs.map((d) => ({
-            id: d.id,
-            text: d.data().text || "",
-            createdBy: d.data().createdBy || "",
-            createdByName: d.data().createdByName || null,
-            createdAt: d.data().createdAt?.toDate?.() || null,
-          })),
-        );
-      },
-      () => {},
-    );
-    return unsub;
-  }, [orgId, questionId]);
-
-  async function handleSend() {
-    if (!orgId || !questionId || !userId || !text.trim() || sending) return;
-    const body = text.trim();
-    setSending(true);
-    setText("");
-    try {
-      await addDoc(
-        collection(
-          db,
-          "organizations",
-          orgId,
-          "questQuestions",
-          questionId,
-          "comments",
-        ),
-        {
-          text: body,
-          createdBy: userId,
-          createdByName: userName,
-          createdAt: serverTimestamp(),
-        },
-      );
-      notifyMentionedUsers({
-        orgId,
-        senderUid: userId,
-        senderName: userName,
-        text: body,
-        screen: "game",
-      });
-    } catch (e) {
-      console.error("Question comment failed:", e);
-      setText(body);
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function handleDelete(cid: string) {
-    if (!orgId || !questionId) return;
-    try {
-      await deleteDoc(
-        doc(
-          db,
-          "organizations",
-          orgId,
-          "questQuestions",
-          questionId,
-          "comments",
-          cid,
-        ),
-      );
-    } catch (e) {
-      console.error("Question comment delete failed:", e);
-    }
-  }
-
-  return (
-    <View style={commentStyles.card}>
-      <View style={commentStyles.header}>
-        <Ionicons name="chatbubble-ellipses" size={16} color={C.primary} />
-        <Text style={commentStyles.headerTitle}>
-          {t("quest_comments_title", lang)} ({comments.length})
-        </Text>
-      </View>
-
-      {comments.length === 0 ? (
-        <Text style={commentStyles.empty}>
-          {t("quest_comments_empty", lang)}
-        </Text>
-      ) : (
-        <View style={{ gap: 8 }}>
-          {comments.map((c) => (
-            <View key={c.id} style={commentStyles.row}>
-              <UserAvatar uid={c.createdBy} name={c.createdByName} size={26} />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={commentStyles.name} numberOfLines={1}>
-                  {c.createdByName || t("notif_someone", lang)}
-                </Text>
-                <Text style={commentStyles.text}>{c.text}</Text>
-              </View>
-              {c.createdBy === userId && (
-                <Pressable
-                  onPress={() => handleDelete(c.id)}
-                  hitSlop={6}
-                  style={{ padding: 4 }}
-                >
-                  <Ionicons name="trash-outline" size={14} color={C.wrong} />
-                </Pressable>
-              )}
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Input */}
-      <View style={commentStyles.inputRow}>
-        <MentionInput
-          orgId={orgId}
-          value={text}
-          onChangeText={setText}
-          placeholder={t("quest_comments_placeholder", lang)}
-          placeholderTextColor="#A3A89E"
-          style={commentStyles.input}
-          multiline
-          maxLength={280}
-        />
-        <Pressable
-          onPress={handleSend}
-          disabled={!text.trim() || sending}
-          style={[
-            commentStyles.sendBtn,
-            (!text.trim() || sending) && { opacity: 0.5 },
-          ]}
-        >
-          {sending ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Ionicons name="send" size={16} color="#FFFFFF" />
-          )}
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-// ===== Community chat on the Quest start page =====
-type ChatMsg = {
-  id: string;
-  text: string;
-  createdBy: string;
-  createdByName: string | null;
-  createdAt: Date | null;
-};
-
-function QuestChat({
-  orgId,
-  userId,
-  userName,
-  lang,
-}: {
-  orgId: string;
-  userId: string;
-  userName: string | null;
-  lang: Language;
-}) {
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    const q = query(
-      collection(db, "organizations", orgId, "questChat"),
-      orderBy("createdAt", "desc"),
-    );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setMessages(
-          snap.docs.slice(0, 30).map((d) => ({
-            id: d.id,
-            text: d.data().text || "",
-            createdBy: d.data().createdBy || "",
-            createdByName: d.data().createdByName || null,
-            createdAt: d.data().createdAt?.toDate?.() || null,
-          })),
-        );
-      },
-      () => {},
-    );
-    return unsub;
-  }, [orgId]);
-
-  async function handleSend() {
-    if (!text.trim() || sending) return;
-    const body = text.trim();
-    setSending(true);
-    setText("");
-    try {
-      await addDoc(collection(db, "organizations", orgId, "questChat"), {
-        text: body,
-        createdBy: userId,
-        createdByName: userName,
-        createdAt: serverTimestamp(),
-      });
-      notifyMentionedUsers({
-        orgId,
-        senderUid: userId,
-        senderName: userName,
-        text: body,
-        screen: "game",
-      });
-    } catch (e) {
-      console.error("Quest chat send failed:", e);
-      setText(body);
-      Alert.alert("Error", "Failed to send message.");
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    try {
-      await deleteDoc(doc(db, "organizations", orgId, "questChat", id));
-    } catch (e) {
-      console.error("Quest chat delete failed:", e);
-    }
-  }
-
-  return (
-    <View style={commentStyles.card}>
-      <View style={commentStyles.header}>
-        <Ionicons name="chatbubbles" size={16} color={C.primary} />
-        <Text style={commentStyles.headerTitle}>
-          {t("game_chat_title", lang)}
-        </Text>
-      </View>
-
-      {messages.length === 0 ? (
-        <Text style={commentStyles.empty}>
-          {t("quest_comments_empty", lang)}
-        </Text>
-      ) : (
-        <View style={{ gap: 8 }}>
-          {messages.map((m) => (
-            <View key={m.id} style={commentStyles.row}>
-              <UserAvatar uid={m.createdBy} name={m.createdByName} size={26} />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={commentStyles.name} numberOfLines={1}>
-                  {m.createdByName || t("notif_someone", lang)}
-                </Text>
-                <Text style={commentStyles.text}>{m.text}</Text>
-              </View>
-              {m.createdBy === userId && (
-                <Pressable
-                  onPress={() => handleDelete(m.id)}
-                  hitSlop={6}
-                  style={{ padding: 4 }}
-                >
-                  <Ionicons name="trash-outline" size={14} color={C.wrong} />
-                </Pressable>
-              )}
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={commentStyles.inputRow}>
-        <MentionInput
-          orgId={orgId}
-          value={text}
-          onChangeText={setText}
-          placeholder={t("quest_comments_placeholder", lang)}
-          placeholderTextColor="#A3A89E"
-          style={commentStyles.input}
-          multiline
-          maxLength={280}
-        />
-        <Pressable
-          onPress={handleSend}
-          disabled={!text.trim() || sending}
-          style={[
-            commentStyles.sendBtn,
-            (!text.trim() || sending) && { opacity: 0.5 },
-          ]}
-        >
-          {sending ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Ionicons name="send" size={16} color="#FFFFFF" />
-          )}
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
 const giftStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
@@ -2365,79 +1859,6 @@ const giftStyles = StyleSheet.create({
   },
 });
 
-const commentStyles = StyleSheet.create({
-  card: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-    gap: 10,
-    marginTop: 4,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "800",
-    color: C.primaryDark,
-  },
-  empty: {
-    fontSize: 12,
-    fontStyle: "italic",
-    color: C.textMuted,
-    paddingVertical: 4,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "flex-start",
-    backgroundColor: "#F9F7F4",
-    borderRadius: 10,
-    padding: 8,
-  },
-  name: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: C.textMuted,
-  },
-  text: {
-    fontSize: 13,
-    color: C.text,
-    lineHeight: 18,
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-    marginTop: 2,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: "#F9F7F4",
-    borderColor: "rgba(0,0,0,0.08)",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: C.text,
-    maxHeight: 80,
-  },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: C.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
-
 // ===== Onboarding =====
 type OnboardStep = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -2447,21 +1868,18 @@ type OnboardStep = {
     | "onboard_1_title"
     | "onboard_2_title"
     | "onboard_3_title"
-    | "onboard_4_title"
     | "onboard_5_title"
     | "onboard_6_title";
   descKey:
     | "onboard_1_desc"
     | "onboard_2_desc"
     | "onboard_3_desc"
-    | "onboard_4_desc"
     | "onboard_5_desc"
     | "onboard_6_desc";
 };
 
 const ONBOARD_STEPS: OnboardStep[] = [
   {
-    // Step 1 — community-authored questions, +5 per correct answer
     icon: "people",
     color: C.primary,
     bgColor: "#E8F0E5",
@@ -2469,7 +1887,6 @@ const ONBOARD_STEPS: OnboardStep[] = [
     descKey: "onboard_1_desc",
   },
   {
-    // Step 2 — 3 lives, 30-min cooldown if you fail
     icon: "heart",
     color: C.heart,
     bgColor: "#FEE2E2",
@@ -2477,7 +1894,6 @@ const ONBOARD_STEPS: OnboardStep[] = [
     descKey: "onboard_2_desc",
   },
   {
-    // Step 3 — 5 rounds/day, leaderboard honors top players
     icon: "trophy",
     color: C.gold,
     bgColor: "#FEF3C7",
@@ -2485,15 +1901,6 @@ const ONBOARD_STEPS: OnboardStep[] = [
     descKey: "onboard_3_desc",
   },
   {
-    // Step 4 — challenge back: create your own questions for +2 each
-    icon: "add-circle",
-    color: C.accent,
-    bgColor: "#F7EDE0",
-    titleKey: "onboard_4_title",
-    descKey: "onboard_4_desc",
-  },
-  {
-    // Step 5 — gift Shekel to other players
     icon: "gift",
     color: "#E879A0",
     bgColor: "#FDF2F8",
@@ -2501,7 +1908,6 @@ const ONBOARD_STEPS: OnboardStep[] = [
     descKey: "onboard_5_desc",
   },
   {
-    // Step 6 — multilingual questions
     icon: "language",
     color: "#6366F1",
     bgColor: "#EEF2FF",

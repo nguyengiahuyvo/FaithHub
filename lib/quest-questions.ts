@@ -10,11 +10,6 @@ import {
 import { db } from "./firebase";
 import type { Language } from "./i18n";
 
-// Per the rules:
-//   +5 points per correct answer
-//   +2 points per question authored
-export const POINTS_PER_QUESTION_CREATED = 2;
-
 export type QuestionTranslation = {
   q: string;
   choices: string[];

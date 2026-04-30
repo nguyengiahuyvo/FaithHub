@@ -32,13 +32,13 @@ import { Pressable } from "@/components/HapticPressable";
 
 type ModalType = "confirm" | "error" | null;
 type DeleteModalStep = "confirm" | "type-to-delete" | "error" | null;
-type EventRemindBefore = "30m" | "1h" | "1d";
+type EventRemindBefore = "1d" | "2d" | "1w" | "1mo";
+const EVENT_REMIND_BEFORE_OPTIONS: EventRemindBefore[] = ["1d", "2d", "1w", "1mo"];
 type BibleReminder = { hour: number; minute: number };
 type NotifPrefs = {
   events: boolean;
   eventsBefore: EventRemindBefore;
   tasks: boolean;
-  quest: boolean;
   bible: boolean;
   bibleReminders: BibleReminder[];
 };
@@ -771,7 +771,7 @@ export default function ProfileScreen() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [snackbar, setSnackbar] = useState<string | null>(null);
   const snackOpacity = useRef(new Animated.Value(0)).current;
-  const defaultNotifPrefs: NotifPrefs = { events: true, eventsBefore: "1h", tasks: true, quest: true, bible: false, bibleReminders: [{ hour: 9, minute: 0 }] };
+  const defaultNotifPrefs: NotifPrefs = { events: true, eventsBefore: "1d", tasks: true, bible: false, bibleReminders: [{ hour: 9, minute: 0 }] };
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(defaultNotifPrefs);
   const [notifExpanded, setNotifExpanded] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -795,6 +795,10 @@ export default function ProfileScreen() {
           const h = (data.notifPrefs as Record<string, unknown>).bibleHour;
           const m = (data.notifPrefs as Record<string, unknown>).bibleMinute;
           saved.bibleReminders = [{ hour: typeof h === "number" ? h : 9, minute: typeof m === "number" ? m : 0 }];
+        }
+        // Discard retired event-reminder values ("30m", "1h").
+        if (!EVENT_REMIND_BEFORE_OPTIONS.includes(saved.eventsBefore)) {
+          saved.eventsBefore = "1d";
         }
         setNotifPrefs(saved);
       }
@@ -1172,7 +1176,7 @@ export default function ProfileScreen() {
                 {t("profile_notif_events_before", lang)}
               </Text>
               <View style={styles.notifChipRow}>
-                {(["30m", "1h", "1d"] as EventRemindBefore[]).map((v) => (
+                {EVENT_REMIND_BEFORE_OPTIONS.map((v) => (
                   <Pressable
                     key={v}
                     onPress={() => saveNotifPref({ eventsBefore: v })}
@@ -1208,22 +1212,6 @@ export default function ProfileScreen() {
               onValueChange={(v) => saveNotifPref({ tasks: v })}
               trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
               thumbColor={notifPrefs.tasks ? "#5B7553" : "#F4F4F5"}
-            />
-          </View>
-        </View>
-
-        {/* New quest questions */}
-        <View style={styles.notifItem}>
-          <View style={styles.notifRow}>
-            <View style={styles.notifIconCircle}>
-              <Ionicons name="help-circle-outline" size={18} color="#5B7553" />
-            </View>
-            <Text style={styles.rowLabel}>{t("profile_notif_quest", lang)}</Text>
-            <Switch
-              value={notifPrefs.quest}
-              onValueChange={(v) => saveNotifPref({ quest: v })}
-              trackColor={{ false: "#D1D5DB", true: "#A3C99A" }}
-              thumbColor={notifPrefs.quest ? "#5B7553" : "#F4F4F5"}
             />
           </View>
         </View>

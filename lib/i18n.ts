@@ -758,18 +758,14 @@ const translations = {
     de: "Erinnerung vor Termin",
     vi: "Nhắc trước sự kiện",
   },
-  profile_notif_events_30m: { en: "30 min", de: "30 Min", vi: "30 phút" },
-  profile_notif_events_1h: { en: "1 hour", de: "1 Std", vi: "1 giờ" },
   profile_notif_events_1d: { en: "1 day", de: "1 Tag", vi: "1 ngày" },
+  profile_notif_events_2d: { en: "2 days", de: "2 Tage", vi: "2 ngày" },
+  profile_notif_events_1w: { en: "1 week", de: "1 Woche", vi: "1 tuần" },
+  profile_notif_events_1mo: { en: "1 month", de: "1 Monat", vi: "1 tháng" },
   profile_notif_tasks: {
     en: "Task reminders",
     de: "Aufgabenerinnerungen",
     vi: "Nhắc công việc",
-  },
-  profile_notif_quest: {
-    en: "New quest questions",
-    de: "Neue Quest-Fragen",
-    vi: "Câu hỏi mới",
   },
   profile_notif_bible: {
     en: "Daily Bible reminder",

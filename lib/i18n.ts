@@ -1425,6 +1425,12 @@ const translations = {
   },
   quest_next: { en: "Next", de: "Weiter", vi: "Tiếp theo" },
   quest_finish: { en: "Finish", de: "Beenden", vi: "Kết thúc" },
+  quest_skip: { en: "Skip", de: "Überspringen", vi: "Bỏ qua" },
+  quest_reference_label: {
+    en: "Reference",
+    de: "Verweis",
+    vi: "Tham khảo",
+  },
   qq_answers_title: {
     en: "Answers",
     de: "Antworten",

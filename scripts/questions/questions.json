@@ -1,33 +1,401 @@
 [
     {
-        "answer": 2,
+        "answer": 0,
+        "reference": {
+            "vi": "Sáng Thế Ký 2:7",
+            "de": "1. Mose 2,7",
+            "en": "Genesis 2:7"
+        },
         "translations": {
             "vi": {
-                "q": "Đức Chúa Trời dựng nên mặt trời vào ngày thứ mấy trong tuần lễ sáng tạo?",
+                "q": "Ai là người đầu tiên Đức Chúa Trời dựng nên?",
                 "choices": [
-                    "Thứ hai.",
-                    "Thứ ba.",
-                    "Thứ tư.",
-                    "Thứ năm."
-                ]
+                    "A-đam.",
+                    "Ê-va.",
+                    "Ca-in.",
+                    "A-bên."
+                ],
+                "hint": "Người này được dựng nên từ bụi đất, và Đức Chúa Trời hà sanh khí vào lỗ mũi."
             },
             "de": {
-                "q": "An welchem Tag der Schöpfungswoche hat Gott die Sonne erschaffen?",
+                "q": "Wen hat Gott als ersten Menschen erschaffen?",
                 "choices": [
-                    "Am zweiten Tag.",
-                    "Am dritten Tag.",
-                    "Am vierten Tag.",
-                    "Am fünften Tag."
-                ]
+                    "Adam.",
+                    "Eva.",
+                    "Kain.",
+                    "Abel."
+                ],
+                "hint": "Diese Person wurde aus dem Staub der Erde geformt, und Gott blies ihm den Lebensodem in die Nase."
             },
             "en": {
-                "q": "On which day of the creation week did God create the sun?",
+                "q": "Who was the first person God created?",
                 "choices": [
-                    "Second day.",
-                    "Third day.",
-                    "Fourth day.",
-                    "Fifth day."
-                ]
+                    "Adam.",
+                    "Eve.",
+                    "Cain.",
+                    "Abel."
+                ],
+                "hint": "This person was formed from the dust of the ground, and God breathed the breath of life into his nostrils."
+            }
+        }
+    },
+    {
+        "answer": 2,
+        "reference": {
+            "vi": "Sáng Thế Ký 2:21-22",
+            "de": "1. Mose 2,21-22",
+            "en": "Genesis 2:21-22"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã dựng nên người nữ từ bộ phận nào của A-đam?",
+                "choices": [
+                    "Từ bụi đất.",
+                    "Từ máu của A-đam.",
+                    "Từ xương sườn của A-đam.",
+                    "Từ hơi thở của A-đam."
+                ],
+                "hint": "Đức Chúa Trời khiến A-đam ngủ mê, rồi lấy một phần bên hông ông để dựng nên người nữ."
+            },
+            "de": {
+                "q": "Aus welchem Teil Adams hat Gott die Frau erschaffen?",
+                "choices": [
+                    "Aus dem Staub der Erde.",
+                    "Aus dem Blut Adams.",
+                    "Aus der Rippe Adams.",
+                    "Aus dem Atem Adams."
+                ],
+                "hint": "Gott ließ Adam in einen tiefen Schlaf fallen und nahm einen Teil aus seiner Seite, um die Frau zu erschaffen."
+            },
+            "en": {
+                "q": "From which part of Adam did God create the woman?",
+                "choices": [
+                    "From the dust of the ground.",
+                    "From Adam's blood.",
+                    "From Adam's rib.",
+                    "From Adam's breath."
+                ],
+                "hint": "God caused Adam to fall into a deep sleep and took a part from his side to create the woman."
+            }
+        }
+    },
+    {
+        "answer": 1,
+        "reference": {
+            "vi": "Sáng Thế Ký 2:17",
+            "de": "1. Mose 2,17",
+            "en": "Genesis 2:17"
+        },
+        "translations": {
+            "vi": {
+                "q": "Trong vườn Ê-đen, Đức Chúa Trời cấm A-đam và Ê-va ăn trái của cây nào?",
+                "choices": [
+                    "Cây sự sống.",
+                    "Cây biết điều thiện và điều ác.",
+                    "Cây vả.",
+                    "Cây ô-li-ve."
+                ],
+                "hint": "Đức Chúa Trời phán rằng ngày nào ăn trái cây đó, chắc chắn sẽ chết."
+            },
+            "de": {
+                "q": "Von welchem Baum im Garten Eden hat Gott Adam und Eva verboten zu essen?",
+                "choices": [
+                    "Vom Baum des Lebens.",
+                    "Vom Baum der Erkenntnis von Gut und Böse.",
+                    "Vom Feigenbaum.",
+                    "Vom Olivenbaum."
+                ],
+                "hint": "Gott sagte, dass sie an dem Tag, an dem sie davon essen, gewiss sterben würden."
+            },
+            "en": {
+                "q": "Which tree in the Garden of Eden did God forbid Adam and Eve to eat from?",
+                "choices": [
+                    "The tree of life.",
+                    "The tree of the knowledge of good and evil.",
+                    "The fig tree.",
+                    "The olive tree."
+                ],
+                "hint": "God said that on the day they ate from it, they would surely die."
+            }
+        }
+    },
+    {
+        "answer": 2,
+        "reference": {
+            "vi": "Sáng Thế Ký 3:1-6",
+            "de": "1. Mose 3,1-6",
+            "en": "Genesis 3:1-6"
+        },
+        "translations": {
+            "vi": {
+                "q": "Ai đã cám dỗ Ê-va ăn trái cấm?",
+                "choices": [
+                    "A-đam.",
+                    "Một thiên sứ.",
+                    "Con rắn.",
+                    "Ca-in."
+                ],
+                "hint": "Kinh Thánh mô tả nó là loài quỷ quyệt hơn mọi loài thú đồng mà Đức Chúa Trời đã dựng nên."
+            },
+            "de": {
+                "q": "Wer hat Eva verführt, von der verbotenen Frucht zu essen?",
+                "choices": [
+                    "Adam.",
+                    "Ein Engel.",
+                    "Die Schlange.",
+                    "Kain."
+                ],
+                "hint": "Die Bibel beschreibt es als listiger als alle Tiere des Feldes, die Gott geschaffen hatte."
+            },
+            "en": {
+                "q": "Who tempted Eve to eat the forbidden fruit?",
+                "choices": [
+                    "Adam.",
+                    "An angel.",
+                    "The serpent.",
+                    "Cain."
+                ],
+                "hint": "The Bible describes it as more crafty than any other beast of the field that God had made."
+            }
+        }
+    },
+    {
+        "answer": 1,
+        "reference": {
+            "vi": "Sáng Thế Ký 4:8",
+            "de": "1. Mose 4,8",
+            "en": "Genesis 4:8"
+        },
+        "translations": {
+            "vi": {
+                "q": "Ca-in đã giết em mình tên là gì?",
+                "choices": [
+                    "Sết.",
+                    "A-bên.",
+                    "Ê-nót.",
+                    "Hê-nóc."
+                ],
+                "hint": "Người em này là kẻ chăn chiên, và của lễ của ông đã được Đức Chúa Trời đoái nhận."
+            },
+            "de": {
+                "q": "Wie hieß der Bruder, den Kain getötet hat?",
+                "choices": [
+                    "Set.",
+                    "Abel.",
+                    "Enosch.",
+                    "Henoch."
+                ],
+                "hint": "Dieser Bruder war ein Schafhirte, und Gott sah sein Opfer gnädig an."
+            },
+            "en": {
+                "q": "What was the name of the brother whom Cain killed?",
+                "choices": [
+                    "Seth.",
+                    "Abel.",
+                    "Enosh.",
+                    "Enoch."
+                ],
+                "hint": "This brother was a shepherd, and the Lord looked with favor on his offering."
+            }
+        }
+    },
+    {
+        "answer": 3,
+        "reference": {
+            "vi": "Sáng Thế Ký 7:12",
+            "de": "1. Mose 7,12",
+            "en": "Genesis 7:12"
+        },
+        "translations": {
+            "vi": {
+                "q": "Cơn nước lụt thời Nô-ê kéo dài bao nhiêu ngày đêm?",
+                "choices": [
+                    "7 ngày 7 đêm.",
+                    "12 ngày 12 đêm.",
+                    "30 ngày 30 đêm.",
+                    "40 ngày 40 đêm."
+                ],
+                "hint": "Đây cũng là số ngày Môi-se ở trên núi Si-na-i và Chúa Giê-xu kiêng ăn trong đồng vắng."
+            },
+            "de": {
+                "q": "Wie viele Tage und Nächte dauerte die Sintflut zur Zeit Noahs?",
+                "choices": [
+                    "7 Tage und 7 Nächte.",
+                    "12 Tage und 12 Nächte.",
+                    "30 Tage und 30 Nächte.",
+                    "40 Tage und 40 Nächte."
+                ],
+                "hint": "Das ist auch die Anzahl der Tage, die Mose auf dem Berg Sinai war und Jesus in der Wüste fastete."
+            },
+            "en": {
+                "q": "How many days and nights did the flood in Noah's time last?",
+                "choices": [
+                    "7 days and 7 nights.",
+                    "12 days and 12 nights.",
+                    "30 days and 30 nights.",
+                    "40 days and 40 nights."
+                ],
+                "hint": "This is also the number of days Moses spent on Mount Sinai and Jesus fasted in the wilderness."
+            }
+        }
+    },
+    {
+        "answer": 2,
+        "reference": {
+            "vi": "Sáng Thế Ký 9:13",
+            "de": "1. Mose 9,13",
+            "en": "Genesis 9:13"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã dùng dấu hiệu gì để lập giao ước với Nô-ê sau cơn nước lụt?",
+                "choices": [
+                    "Mặt trời.",
+                    "Ngôi sao.",
+                    "Cầu vồng.",
+                    "Đám mây."
+                ],
+                "hint": "Dấu hiệu này có bảy màu và xuất hiện trên trời sau cơn mưa."
+            },
+            "de": {
+                "q": "Welches Zeichen hat Gott nach der Sintflut als Bund mit Noah gegeben?",
+                "choices": [
+                    "Die Sonne.",
+                    "Einen Stern.",
+                    "Den Regenbogen.",
+                    "Eine Wolke."
+                ],
+                "hint": "Dieses Zeichen hat sieben Farben und erscheint nach dem Regen am Himmel."
+            },
+            "en": {
+                "q": "What sign did God give as a covenant with Noah after the flood?",
+                "choices": [
+                    "The sun.",
+                    "A star.",
+                    "The rainbow.",
+                    "A cloud."
+                ],
+                "hint": "This sign has seven colors and appears in the sky after the rain."
+            }
+        }
+    },
+    {
+        "answer": 1,
+        "reference": {
+            "vi": "Sáng Thế Ký 11:31; 12:1",
+            "de": "1. Mose 11,31; 12,1",
+            "en": "Genesis 11:31; 12:1"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã gọi Áp-ra-ham rời khỏi xứ nào để đi đến đất hứa?",
+                "choices": [
+                    "Ai Cập.",
+                    "U-rơ thuộc xứ Canh-đê.",
+                    "Ca-na-an.",
+                    "Ba-by-lôn."
+                ],
+                "hint": "Đây là quê hương của Áp-ra-ham trước khi ông cùng cha là Tha-rê đi đến Cha-ran."
+            },
+            "de": {
+                "q": "Aus welchem Land hat Gott Abraham gerufen, um ins verheißene Land zu gehen?",
+                "choices": [
+                    "Aus Ägypten.",
+                    "Aus Ur in Chaldäa.",
+                    "Aus Kanaan.",
+                    "Aus Babylon."
+                ],
+                "hint": "Das war Abrahams Heimat, bevor er mit seinem Vater Terach nach Haran zog."
+            },
+            "en": {
+                "q": "From which land did God call Abraham to go to the promised land?",
+                "choices": [
+                    "Egypt.",
+                    "Ur of the Chaldeans.",
+                    "Canaan.",
+                    "Babylon."
+                ],
+                "hint": "This was Abraham's homeland before he went with his father Terah to Haran."
+            }
+        }
+    },
+    {
+        "answer": 0,
+        "reference": {
+            "vi": "Sáng Thế Ký 22:2",
+            "de": "1. Mose 22,2",
+            "en": "Genesis 22:2"
+        },
+        "translations": {
+            "vi": {
+                "q": "Đức Chúa Trời đã thử thách Áp-ra-ham bằng cách bảo ông dâng ai làm của lễ?",
+                "choices": [
+                    "Y-sác.",
+                    "Ích-ma-ên.",
+                    "Gia-cốp.",
+                    "Ê-sau."
+                ],
+                "hint": "Đó là con trai của lời hứa, được Sa-ra sinh ra khi bà đã già, và là cha của Gia-cốp."
+            },
+            "de": {
+                "q": "Wen sollte Abraham auf Gottes Befehl als Opfer darbringen, um seinen Glauben zu prüfen?",
+                "choices": [
+                    "Isaak.",
+                    "Ismael.",
+                    "Jakob.",
+                    "Esau."
+                ],
+                "hint": "Es war der Sohn der Verheißung, den Sara im hohen Alter gebar, und der Vater Jakobs."
+            },
+            "en": {
+                "q": "Whom did God command Abraham to offer as a sacrifice to test his faith?",
+                "choices": [
+                    "Isaac.",
+                    "Ishmael.",
+                    "Jacob.",
+                    "Esau."
+                ],
+                "hint": "He was the son of promise, born to Sarah in her old age, and the father of Jacob."
+            }
+        }
+    },
+    {
+        "answer": 3,
+        "reference": {
+            "vi": "Sáng Thế Ký 37:28",
+            "de": "1. Mose 37,28",
+            "en": "Genesis 37:28"
+        },
+        "translations": {
+            "vi": {
+                "q": "Giô-sép đã bị bán làm nô lệ ở xứ nào?",
+                "choices": [
+                    "Ba-by-lôn.",
+                    "Ca-na-an.",
+                    "A-si-ri.",
+                    "Ai Cập."
+                ],
+                "hint": "Đây là xứ có sông Ni-lơ, nơi sau này dân Y-sơ-ra-ên bị làm nô lệ trước khi được Môi-se dẫn ra."
+            },
+            "de": {
+                "q": "In welches Land wurde Josef als Sklave verkauft?",
+                "choices": [
+                    "Nach Babylon.",
+                    "Nach Kanaan.",
+                    "Nach Assyrien.",
+                    "Nach Ägypten."
+                ],
+                "hint": "Das ist das Land mit dem Nil, wo Israel später versklavt wurde, bevor Mose sie herausführte."
+            },
+            "en": {
+                "q": "To which country was Joseph sold as a slave?",
+                "choices": [
+                    "Babylon.",
+                    "Canaan.",
+                    "Assyria.",
+                    "Egypt."
+                ],
+                "hint": "This is the land of the Nile river, where Israel was later enslaved before Moses led them out."
             }
         }
     }

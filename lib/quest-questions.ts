@@ -20,7 +20,7 @@ export type QuestionTranslation = {
 export type Question = {
   id?: string;
   answer: number;
-  ref?: string;
+  reference?: Partial<Record<Language, string>>;
   translations: Partial<Record<Language, QuestionTranslation>>;
   answeredUsers?: Record<string, boolean>;
 };
@@ -50,6 +50,24 @@ export function resolveTranslation(
     if (isValidTranslation(t)) return t;
   }
   return { q: "", choices: [] };
+}
+
+/**
+ * Resolve the localized scripture reference for a question.
+ * Falls back to the first available reference if the requested language
+ * has no entry. Returns undefined when no reference is set.
+ */
+export function resolveReference(
+  q: Question,
+  lang: Language,
+): string | undefined {
+  const requested = q.reference?.[lang];
+  if (typeof requested === "string" && requested.trim()) return requested;
+  for (const l of ALL_LANGS) {
+    const r = q.reference?.[l];
+    if (typeof r === "string" && r.trim()) return r;
+  }
+  return undefined;
 }
 
 /**

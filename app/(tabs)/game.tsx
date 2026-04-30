@@ -10,6 +10,7 @@ import { useOrg } from "@/lib/org-context";
 import {
   addToLeaderboard,
   availableLanguages,
+  resolveReference,
   resolveTranslation,
   type CommunityQuestion,
   type Question,
@@ -39,7 +40,7 @@ import {
 
 // ===== Game constants =====
 const QUESTIONS_PER_ROUND = 10;
-const TIME_PER_QUESTION_MS = 20000;
+const TIME_PER_QUESTION_MS = 3 * 60 * 1000;
 // Scoring — all balances are in Shekel, the in-game currency:
 //   +5 Shekel per correct answer
 //   +2 Shekel per question authored
@@ -324,7 +325,7 @@ export default function GameScreen() {
               return {
                 id: d.id,
                 answer: typeof data.answer === "number" ? data.answer : -1,
-                ref: data.ref || undefined,
+                reference: (data.reference as CommunityQuestion["reference"]) || undefined,
                 translations: (data.translations as CommunityQuestion["translations"]) || {},
                 answeredUsers: (data.answeredUsers as Record<string, boolean>) || undefined,
               } satisfies CommunityQuestion;
@@ -593,6 +594,7 @@ export default function GameScreen() {
           onTimeout={handleTimeout}
           onQuit={() => setShowQuitConfirm(true)}
           onNext={advance}
+          onSkip={advance}
           isLast={qIndex + 1 >= round.length}
           lang={lang}
         />
@@ -1076,6 +1078,7 @@ function PlayView({
   onTimeout,
   onQuit,
   onNext,
+  onSkip,
   isLast,
   lang,
 }: {
@@ -1091,6 +1094,7 @@ function PlayView({
   onTimeout: () => void;
   onQuit: () => void;
   onNext: () => void;
+  onSkip: () => void;
   isLast: boolean;
   lang: Language;
 }) {
@@ -1319,12 +1323,6 @@ function PlayView({
               ))}
             </View>
           )}
-          {question.ref && (
-            <View style={styles.refPill}>
-              <Ionicons name="book-outline" size={12} color={C.primary} />
-              <Text style={styles.refPillText}>{question.ref}</Text>
-            </View>
-          )}
         </Animated.View>
 
         {/* Result snackbar — appears above the choices once the answer is locked */}
@@ -1394,6 +1392,19 @@ function PlayView({
             );
           })()}
 
+        {locked && (() => {
+          const refText = resolveReference(question, displayLang);
+          if (!refText) return null;
+          return (
+            <View style={styles.refPill}>
+              <Ionicons name="book-outline" size={12} color={C.primary} />
+              <Text style={styles.refPillText}>
+                {t("quest_reference_label", lang)}: {refText}
+              </Text>
+            </View>
+          );
+        })()}
+
         <View style={styles.choicesWrap}>
           {translated.choices.map((choice, idx) => {
             const isSelected = selected === idx;
@@ -1449,19 +1460,30 @@ function PlayView({
 
       </ScrollView>
 
-      {/* Bottom-docked Next button — hidden when keyboard is open */}
-      {locked && !keyboardVisible && (
+      {/* Bottom-docked Skip / Next button — hidden when keyboard is open */}
+      {!keyboardVisible && (
         <View style={styles.bottomBar}>
-          <Pressable onPress={onNext} style={styles.playBtn}>
-            <Text style={styles.playBtnText}>
-              {isLast ? t("quest_finish", lang) : t("quest_next", lang)}
-            </Text>
-            <Ionicons
-              name={isLast ? "flag" : "arrow-forward"}
-              size={18}
-              color="#FFFFFF"
-            />
-          </Pressable>
+          {locked ? (
+            <Pressable onPress={onNext} style={styles.playBtn}>
+              <Text style={styles.playBtnText}>
+                {isLast ? t("quest_finish", lang) : t("quest_next", lang)}
+              </Text>
+              <Ionicons
+                name={isLast ? "flag" : "arrow-forward"}
+                size={18}
+                color="#FFFFFF"
+              />
+            </Pressable>
+          ) : (
+            <Pressable onPress={onSkip} style={styles.skipBtn}>
+              <Ionicons
+                name="play-skip-forward"
+                size={18}
+                color={C.textMuted}
+              />
+              <Text style={styles.skipBtnText}>{t("quest_skip", lang)}</Text>
+            </Pressable>
+          )}
         </View>
       )}
     </View>
@@ -2347,6 +2369,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   playBtnText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+  skipBtn: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  skipBtnText: { color: C.textMuted, fontSize: 15, fontWeight: "600" },
 
   playRoot: { flex: 1, padding: 20, paddingTop: 56, gap: 14 },
   // Same look as playRoot but shaped for ScrollView's contentContainerStyle

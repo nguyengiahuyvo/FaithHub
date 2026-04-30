@@ -33,7 +33,9 @@ function mapDocToQuestion(doc, { includeIds, includeAnsweredUsers }) {
 		translations: data.translations || {},
 	};
 	if (includeIds) out.id = doc.id;
-	if (typeof data.ref === 'string' && data.ref.trim()) out.ref = data.ref;
+	if (data.reference && typeof data.reference === 'object') {
+		out.reference = data.reference;
+	}
 	if (includeAnsweredUsers && data.answeredUsers) {
 		out.answeredUsers = data.answeredUsers;
 	}

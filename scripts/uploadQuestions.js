@@ -109,6 +109,17 @@ function buildTranslations(rawTranslations) {
 	return out;
 }
 
+function buildReference(rawReference) {
+	if (!rawReference || typeof rawReference !== 'object') return null;
+	const out = {};
+	for (const [l, r] of Object.entries(rawReference)) {
+		if (typeof r === 'string' && r.trim()) {
+			out[l] = r.trim();
+		}
+	}
+	return Object.keys(out).length > 0 ? out : null;
+}
+
 function toFirestorePayload(question) {
 	const payload = {
 		answer: question.answer,
@@ -117,9 +128,8 @@ function toFirestorePayload(question) {
 		createdAt: admin.firestore.FieldValue.serverTimestamp(),
 	};
 
-	if (typeof question.ref === 'string' && question.ref.trim()) {
-		payload.ref = question.ref.trim();
-	}
+	const reference = buildReference(question.reference);
+	if (reference) payload.reference = reference;
 
 	return payload;
 }

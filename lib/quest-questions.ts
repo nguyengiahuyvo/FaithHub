@@ -15,6 +15,7 @@ export type QuestionTranslation = {
   choices: string[];
   successMsg?: string;
   failMsg?: string;
+  hint?: string;
 };
 
 export type Question = {

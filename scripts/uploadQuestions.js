@@ -104,6 +104,9 @@ function buildTranslations(rawTranslations) {
 		if (typeof t.failMsg === 'string' && t.failMsg.trim()) {
 			entry.failMsg = t.failMsg.trim();
 		}
+		if (typeof t.hint === 'string' && t.hint.trim()) {
+			entry.hint = t.hint.trim();
+		}
 		out[l] = entry;
 	}
 	return out;

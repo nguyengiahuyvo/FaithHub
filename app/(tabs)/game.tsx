@@ -47,7 +47,8 @@ const TIME_PER_QUESTION_MS = 3 * 60 * 1000;
 //   -10 Shekel cost to start a round
 const POINTS_PER_CORRECT = 5;
 const PLAY_COST_SHEKEL = 10;
-const STARTING_HEARTS = 3;
+const HINT_COST_SHEKEL = 1;
+const STARTING_HEARTS = 5;
 
 // Flag emojis used for the language chips.
 const LANG_FLAGS: Record<Language, string> = {
@@ -483,6 +484,26 @@ export default function GameScreen() {
     }).catch((e) => console.error("Answer stat update failed:", e));
   }
 
+  async function chargeForHint(): Promise<boolean> {
+    if (totalScore < HINT_COST_SHEKEL) return false;
+    if (org && user) {
+      await addToLeaderboard(
+        org.orgId,
+        user.uid,
+        user.displayName ?? null,
+        -HINT_COST_SHEKEL,
+      );
+    } else {
+      const next = Math.max(0, totalScore - HINT_COST_SHEKEL);
+      setTotalScore(next);
+      try {
+        await AsyncStorage.setItem(LOCAL_SCORE_KEY, String(next));
+      } catch {}
+    }
+    snack.show(`−${HINT_COST_SHEKEL} ✡ · ${t("quest_hint_unlocked", lang)}`);
+    return true;
+  }
+
   function handleAnswer(choiceIdx: number, _remainingMs: number) {
     if (locked) return;
     setLocked(true);
@@ -502,6 +523,7 @@ export default function GameScreen() {
         return ns;
       });
       setCorrectCount((c) => c + 1);
+      snack.show(`+${POINTS_PER_CORRECT} ✡`);
     } else {
       setStreak(0);
       setHearts((h) => {
@@ -595,6 +617,9 @@ export default function GameScreen() {
           onQuit={() => setShowQuitConfirm(true)}
           onNext={advance}
           onSkip={advance}
+          onUseHint={chargeForHint}
+          totalShekel={totalScore}
+          hintCost={HINT_COST_SHEKEL}
           isLast={qIndex + 1 >= round.length}
           lang={lang}
         />
@@ -1079,6 +1104,9 @@ function PlayView({
   onQuit,
   onNext,
   onSkip,
+  onUseHint,
+  totalShekel,
+  hintCost,
   isLast,
   lang,
 }: {
@@ -1095,6 +1123,9 @@ function PlayView({
   onQuit: () => void;
   onNext: () => void;
   onSkip: () => void;
+  onUseHint: () => Promise<boolean>;
+  totalShekel: number;
+  hintCost: number;
   isLast: boolean;
   lang: Language;
 }) {
@@ -1115,6 +1146,33 @@ function PlayView({
   useEffect(() => {
     setDisplayLang(lang);
   }, [qIndex, lang]);
+
+  // `hintPaid` tracks whether the current question's hint has already been
+  // unlocked — once paid, re-opening the modal is free.
+  const [hintPaid, setHintPaid] = useState(false);
+  const [hintCharging, setHintCharging] = useState(false);
+  const [showHintModal, setShowHintModal] = useState(false);
+  useEffect(() => {
+    setHintPaid(false);
+    setShowHintModal(false);
+  }, [qIndex]);
+
+  function openHintModal() {
+    if (!translated.hint) return;
+    setShowHintModal(true);
+  }
+
+  async function payForHint() {
+    if (hintPaid || hintCharging) return;
+    if (totalShekel < hintCost) return;
+    setHintCharging(true);
+    try {
+      const ok = await onUseHint();
+      if (ok) setHintPaid(true);
+    } finally {
+      setHintCharging(false);
+    }
+  }
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", () =>
@@ -1298,6 +1356,20 @@ function PlayView({
             <Text style={styles.questionIndex}>
               {qIndex + 1} / {total}
             </Text>
+            {translated.hint && (
+              <Pressable onPress={openHintModal} style={styles.hintBtn}>
+                <Ionicons
+                  name={hintPaid ? "bulb" : "bulb-outline"}
+                  size={14}
+                  color={C.accent}
+                />
+                <Text style={styles.hintBtnText}>
+                  {hintPaid
+                    ? t("quest_hint", lang)
+                    : `${t("quest_hint", lang)} · ${hintCost} ✡`}
+                </Text>
+              </Pressable>
+            )}
           </View>
           <Text style={styles.questionText}>{translated.q}</Text>
           {langs.length > 1 && (
@@ -1486,9 +1558,161 @@ function PlayView({
           )}
         </View>
       )}
+
+      <HintModal
+        visible={showHintModal}
+        hint={translated.hint ?? null}
+        paid={hintPaid}
+        paying={hintCharging}
+        canAfford={totalShekel >= hintCost}
+        hintCost={hintCost}
+        lang={lang}
+        onPay={payForHint}
+        onDismiss={() => setShowHintModal(false)}
+      />
     </View>
   );
 }
+
+function HintModal({
+  visible,
+  hint,
+  paid,
+  paying,
+  canAfford,
+  hintCost,
+  lang,
+  onPay,
+  onDismiss,
+}: {
+  visible: boolean;
+  hint: string | null;
+  paid: boolean;
+  paying: boolean;
+  canAfford: boolean;
+  hintCost: number;
+  lang: Language;
+  onPay: () => void;
+  onDismiss: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+  useEffect(() => {
+    if (!visible) return;
+    opacity.setValue(0);
+    scale.setValue(0.9);
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        damping: 20,
+        stiffness: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [visible, opacity, scale]);
+
+  if (!visible) return null;
+
+  const showHint = paid && hint;
+
+  return (
+    <Modal transparent visible animationType="fade" onRequestClose={onDismiss}>
+      <Animated.View style={[confirmStyles.backdrop, { opacity }]}>
+        <Animated.View
+          style={[confirmStyles.card, { opacity, transform: [{ scale }] }]}
+        >
+          <View style={hintModalStyles.iconCircle}>
+            <Ionicons
+              name={showHint ? "bulb" : "lock-closed"}
+              size={28}
+              color={C.accent}
+            />
+          </View>
+          <Text style={confirmStyles.title}>{t("quest_hint", lang)}</Text>
+
+          {showHint ? (
+            <Text style={hintModalStyles.body}>{hint}</Text>
+          ) : (
+            <Text style={confirmStyles.message}>
+              {t("quest_hint_modal_msg", lang)}
+            </Text>
+          )}
+
+          {!showHint && !canAfford && (
+            <Text style={hintModalStyles.warning}>
+              {t("quest_hint_insufficient", lang)}
+            </Text>
+          )}
+
+          {showHint ? (
+            <Pressable
+              onPress={onDismiss}
+              style={[confirmStyles.confirmBtn, { backgroundColor: C.primary }]}
+            >
+              <Text style={confirmStyles.confirmText}>{t("close", lang)}</Text>
+            </Pressable>
+          ) : (
+            <View style={confirmStyles.actions}>
+              <Pressable onPress={onDismiss} style={confirmStyles.cancelBtn}>
+                <Text style={confirmStyles.cancelText}>
+                  {t("cancel", lang)}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={onPay}
+                disabled={!canAfford || paying}
+                style={[
+                  confirmStyles.confirmBtn,
+                  { backgroundColor: C.accent },
+                  (!canAfford || paying) && { opacity: 0.5 },
+                ]}
+              >
+                {paying ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={confirmStyles.confirmText}>
+                    {t("quest_hint_pay", lang)} {hintCost} ✡
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const hintModalStyles = StyleSheet.create({
+  iconCircle: {
+    alignSelf: "center",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(192,149,108,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  body: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: C.text,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  warning: {
+    fontSize: 12,
+    color: C.wrong,
+    textAlign: "center",
+    marginTop: -4,
+  },
+});
 
 function DoneView({
   score,
@@ -2521,6 +2745,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0FDF4",
   },
   refPillText: { fontSize: 11, color: C.primary, fontWeight: "600" },
+  hintBtn: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(192,149,108,0.15)",
+  },
+  hintBtnText: { fontSize: 12, color: C.accent, fontWeight: "700" },
 
   snackbar: {
     flexDirection: "row",

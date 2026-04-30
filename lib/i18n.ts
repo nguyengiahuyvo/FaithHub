@@ -1431,6 +1431,23 @@ const translations = {
     de: "Verweis",
     vi: "Tham khảo",
   },
+  quest_hint: { en: "Hint", de: "Tipp", vi: "Gợi ý" },
+  quest_hint_modal_msg: {
+    en: "Stuck on this question? Spend 1 Shekel to reveal a hint.",
+    de: "Steckst du fest? Gib 1 Schekel aus, um einen Tipp zu sehen.",
+    vi: "Câu này khó? Trả 1 Shekel để xem gợi ý.",
+  },
+  quest_hint_pay: { en: "Pay", de: "Bezahlen", vi: "Trả" },
+  quest_hint_insufficient: {
+    en: "Not enough Shekel to unlock this hint.",
+    de: "Nicht genug Schekel, um diesen Tipp freizuschalten.",
+    vi: "Không đủ Shekel để mở gợi ý này.",
+  },
+  quest_hint_unlocked: {
+    en: "Hint unlocked",
+    de: "Tipp freigeschaltet",
+    vi: "Đã mở gợi ý",
+  },
   qq_answers_title: {
     en: "Answers",
     de: "Antworten",

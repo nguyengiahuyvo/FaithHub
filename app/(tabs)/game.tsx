@@ -321,33 +321,20 @@ export default function GameScreen() {
           snap.docs
             .map((d) => {
               const data = d.data();
-              const choices = Array.isArray(data.choices) ? data.choices : [];
               return {
                 id: d.id,
-                q: data.q || "",
-                choices,
-                answer: typeof data.answer === "number" ? data.answer : 0,
+                answer: typeof data.answer === "number" ? data.answer : -1,
                 ref: data.ref || undefined,
-                successMsg: data.successMsg || undefined,
-                failMsg: data.failMsg || undefined,
-                language: (data.language as Language) || undefined,
-                translations: data.translations || undefined,
+                translations: (data.translations as CommunityQuestion["translations"]) || {},
                 answeredUsers: (data.answeredUsers as Record<string, boolean>) || undefined,
-                createdBy: data.createdBy || "",
-                createdByName: data.createdByName || null,
-              };
+              } satisfies CommunityQuestion;
             })
-            // Ignore malformed documents (need 4 non-empty choices).
-            .filter(
-              (c) =>
-                c.q.trim().length > 0 &&
-                c.choices.length === 4 &&
-                c.choices.every(
-                  (x: unknown) => typeof x === "string" && x.trim().length > 0,
-                ) &&
-                c.answer >= 0 &&
-                c.answer <= 3,
-            ),
+            .filter((c) => {
+              const langs = availableLanguages(c);
+              if (langs.length === 0) return false;
+              const sample = c.translations[langs[0]]!;
+              return c.answer >= 0 && c.answer < sample.choices.length;
+            }),
         );
       },
       () => {},
@@ -1307,14 +1294,6 @@ function PlayView({
             <Text style={styles.questionIndex}>
               {qIndex + 1} / {total}
             </Text>
-            {question.createdByName && (
-              <View style={styles.byPill}>
-                <Ionicons name="person" size={10} color={C.accent} />
-                <Text style={styles.byPillText}>
-                  {t("game_by", lang)} {question.createdByName}
-                </Text>
-              </View>
-            )}
           </View>
           <Text style={styles.questionText}>{translated.q}</Text>
           {langs.length > 1 && (
@@ -1396,9 +1375,6 @@ function PlayView({
                     ]}
                   >
                     {defaultMsg}
-                    {question.createdByName && customMsg
-                      ? ` · ${question.createdByName}`
-                      : ""}
                   </Text>
                   {customMsg && (
                     <Text

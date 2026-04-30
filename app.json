@@ -2,7 +2,7 @@
   "expo": {
     "name": "FaithHub",
     "slug": "FaithHub",
-    "version": "1.5.3",
+    "version": "1.6.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon/ios/AppIcon~ios-marketing.png",
     "scheme": "faithhub",

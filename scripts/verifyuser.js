@@ -1,0 +1,12 @@
+const admin = require('firebase-admin');
+const serviceAccount = require('./adminkey.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+admin.auth().updateUser('ncd7dhljN2My53DTPbp41gOgTQ62', {
+  emailVerified: true,
+}).then(() => {
+  console.log('Email verified successfully');
+});

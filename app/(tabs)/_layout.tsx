@@ -36,6 +36,7 @@ export default function TabLayout() {
         name="game"
         options={{
           title: t("tab_game", lang),
+          href: hasOrg ? "/(tabs)/game" : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="game-controller" size={size} color={color} />
           ),

@@ -2,7 +2,7 @@
   "expo": {
     "name": "FaithHub",
     "slug": "FaithHub",
-    "version": "1.5.1",
+    "version": "1.6.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon/ios/AppIcon~ios-marketing.png",
     "scheme": "faithhub",
@@ -25,7 +25,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.nguyengiahuy.vo.FaithHub",
-      "versionCode": 4,
+      "versionCode": 5,
       "googleServicesFile": "./google-services.json"
     },
     "web": {

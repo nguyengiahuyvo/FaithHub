@@ -139,7 +139,7 @@ type PushPayload = {
   data?: Record<string, string>;
 };
 
-export type NotifType = "events" | "tasks" | "quest" | "bible";
+export type NotifType = "events" | "tasks" | "bible";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 // Expo accepts up to 100 messages per request.

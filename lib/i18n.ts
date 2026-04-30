@@ -706,6 +706,38 @@ const translations = {
     de: "Einstellungen",
     vi: "Cài đặt",
   },
+  profile_support: { en: "Support", de: "Support", vi: "Hỗ trợ" },
+  profile_send_feedback: {
+    en: "Send feedback",
+    de: "Feedback senden",
+    vi: "Gửi phản hồi",
+  },
+  feedback_modal_title: {
+    en: "Send feedback",
+    de: "Feedback senden",
+    vi: "Gửi phản hồi",
+  },
+  feedback_modal_msg: {
+    en: "Tell us what's working, what's broken, or what you'd like to see.",
+    de: "Erzähl uns, was gut läuft, was kaputt ist oder was du dir wünschst.",
+    vi: "Hãy cho chúng tôi biết điều gì hoạt động tốt, điều gì bị lỗi hoặc bạn muốn thấy gì.",
+  },
+  feedback_placeholder: {
+    en: "Your feedback…",
+    de: "Dein Feedback…",
+    vi: "Phản hồi của bạn…",
+  },
+  feedback_send: { en: "Send", de: "Senden", vi: "Gửi" },
+  feedback_sent_msg: {
+    en: "Thanks! Your feedback has been sent.",
+    de: "Danke! Dein Feedback wurde gesendet.",
+    vi: "Cảm ơn! Phản hồi của bạn đã được gửi.",
+  },
+  feedback_error: {
+    en: "Failed to send feedback. Please try again.",
+    de: "Feedback konnte nicht gesendet werden. Bitte erneut versuchen.",
+    vi: "Không thể gửi phản hồi. Vui lòng thử lại.",
+  },
   profile_notifications: {
     en: "Notifications",
     de: "Benachrichtigungen",
@@ -726,18 +758,14 @@ const translations = {
     de: "Erinnerung vor Termin",
     vi: "Nhắc trước sự kiện",
   },
-  profile_notif_events_30m: { en: "30 min", de: "30 Min", vi: "30 phút" },
-  profile_notif_events_1h: { en: "1 hour", de: "1 Std", vi: "1 giờ" },
   profile_notif_events_1d: { en: "1 day", de: "1 Tag", vi: "1 ngày" },
+  profile_notif_events_2d: { en: "2 days", de: "2 Tage", vi: "2 ngày" },
+  profile_notif_events_1w: { en: "1 week", de: "1 Woche", vi: "1 tuần" },
+  profile_notif_events_1mo: { en: "1 month", de: "1 Monat", vi: "1 tháng" },
   profile_notif_tasks: {
     en: "Task reminders",
     de: "Aufgabenerinnerungen",
     vi: "Nhắc công việc",
-  },
-  profile_notif_quest: {
-    en: "New quest questions",
-    de: "Neue Quest-Fragen",
-    vi: "Câu hỏi mới",
   },
   profile_notif_bible: {
     en: "Daily Bible reminder",
@@ -1016,16 +1044,6 @@ const translations = {
     de: "Du hast 10 Gratis-Runden pro Tag. Weiterspielen? Zahle 10 Schekel für eine Extrarunde. Die besten Spieler werden auf der Bestenliste geehrt.",
     vi: "Bạn có 10 lượt miễn phí mỗi ngày. Muốn chơi tiếp? Trả 10 Shekel để mua thêm một lượt. Người chơi điểm cao nhất được vinh danh trên bảng xếp hạng.",
   },
-  onboard_4_title: {
-    en: "Challenge Back",
-    de: "Fordere zurück heraus",
-    vi: "Thách thức ngược lại",
-  },
-  onboard_4_desc: {
-    en: "Create your own questions to challenge other members. You earn 2 Shekel per question — and your own questions won't appear in your rounds.",
-    de: "Erstelle eigene Fragen, um andere herauszufordern. Du bekommst 2 Schekel pro Frage — und deine eigenen Fragen erscheinen nicht in deinen Runden.",
-    vi: "Tạo câu hỏi của riêng bạn để thách thức người khác. Bạn nhận 2 Shekel mỗi câu — và câu hỏi của bạn sẽ không xuất hiện trong vòng chơi của bạn.",
-  },
   onboard_5_title: {
     en: "Send Shekel Gifts",
     de: "Schekel verschenken",
@@ -1042,9 +1060,9 @@ const translations = {
     vi: "Câu hỏi đa ngôn ngữ",
   },
   onboard_6_desc: {
-    en: "Add translations when creating questions so everyone can play in their language. During gameplay, tap the flag icons to switch languages on any question.",
-    de: "Füge beim Erstellen von Fragen Übersetzungen hinzu, damit alle in ihrer Sprache spielen können. Während des Spiels kannst du mit den Flaggen die Sprache wechseln.",
-    vi: "Thêm bản dịch khi tạo câu hỏi để mọi người chơi bằng ngôn ngữ của mình. Trong lúc chơi, chạm vào cờ để chuyển ngôn ngữ.",
+    en: "Questions are available in multiple languages. During gameplay, tap the flag icons to switch languages on any question.",
+    de: "Fragen sind in mehreren Sprachen verfügbar. Während des Spiels kannst du mit den Flaggen die Sprache wechseln.",
+    vi: "Câu hỏi có sẵn bằng nhiều ngôn ngữ. Trong lúc chơi, chạm vào cờ để chuyển ngôn ngữ.",
   },
 
   // Verse Quest — community-authored questions (Challenge Mode)
@@ -1176,6 +1194,21 @@ const translations = {
     en: "Questions",
     de: "Fragen",
     vi: "Câu hỏi",
+  },
+  game_revision: {
+    en: "Revision",
+    de: "Wiederholung",
+    vi: "Ôn tập",
+  },
+  game_quit_revision_msg: {
+    en: "Do you want to quit this revision round?",
+    de: "Möchtest du diese Wiederholungsrunde beenden?",
+    vi: "Bạn muốn thoát vòng ôn tập này?",
+  },
+  game_quit_revision_yes: {
+    en: "Quit",
+    de: "Beenden",
+    vi: "Thoát",
   },
   game_play_cost: {
     en: "Override cost",
@@ -1392,6 +1425,29 @@ const translations = {
   },
   quest_next: { en: "Next", de: "Weiter", vi: "Tiếp theo" },
   quest_finish: { en: "Finish", de: "Beenden", vi: "Kết thúc" },
+  quest_skip: { en: "Skip", de: "Überspringen", vi: "Bỏ qua" },
+  quest_reference_label: {
+    en: "Reference",
+    de: "Verweis",
+    vi: "Tham khảo",
+  },
+  quest_hint: { en: "Hint", de: "Tipp", vi: "Gợi ý" },
+  quest_hint_modal_msg: {
+    en: "Stuck on this question? Spend 1 Shekel to reveal a hint.",
+    de: "Steckst du fest? Gib 1 Schekel aus, um einen Tipp zu sehen.",
+    vi: "Câu này khó? Trả 1 Shekel để xem gợi ý.",
+  },
+  quest_hint_pay: { en: "Pay", de: "Bezahlen", vi: "Trả" },
+  quest_hint_insufficient: {
+    en: "Not enough Shekel to unlock this hint.",
+    de: "Nicht genug Schekel, um diesen Tipp freizuschalten.",
+    vi: "Không đủ Shekel để mở gợi ý này.",
+  },
+  quest_hint_unlocked: {
+    en: "Hint unlocked",
+    de: "Tipp freigeschaltet",
+    vi: "Đã mở gợi ý",
+  },
   qq_answers_title: {
     en: "Answers",
     de: "Antworten",

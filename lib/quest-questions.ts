@@ -1,6 +1,4 @@
-// Shared types + helpers for Verse Quest community questions and the
-// org leaderboard. Used by both the game screen and the dedicated
-// quest-questions management page.
+// Shared types + helpers for Verse Quest questions and the org leaderboard.
 
 import {
   doc,
@@ -10,44 +8,67 @@ import {
 import { db } from "./firebase";
 import type { Language } from "./i18n";
 
-// Per the rules:
-//   +5 points per correct answer
-//   +2 points per question authored
-export const POINTS_PER_QUESTION_CREATED = 2;
+const ALL_LANGS: Language[] = ["en", "de", "vi"];
 
 export type QuestionTranslation = {
   q: string;
   choices: string[];
   successMsg?: string;
   failMsg?: string;
+  hint?: string;
 };
 
 export type Question = {
-  q: string;
-  choices: string[];
-  answer: number;
-  ref?: string;
-  language?: Language;
-  // Per-language translations (keyed by Language code).
-  translations?: Partial<Record<Language, QuestionTranslation>>;
   id?: string;
-  createdBy?: string;
-  createdByName?: string | null;
-  successMsg?: string;
-  failMsg?: string;
+  answer: number;
+  reference?: Partial<Record<Language, string>>;
+  translations: Partial<Record<Language, QuestionTranslation>>;
+  answeredUsers?: Record<string, boolean>;
 };
+
+export type CommunityQuestion = Question & { id: string };
+
+function isValidTranslation(t: QuestionTranslation | undefined): t is QuestionTranslation {
+  if (!t) return false;
+  if (typeof t.q !== "string" || !t.q.trim()) return false;
+  if (!Array.isArray(t.choices) || t.choices.length === 0) return false;
+  return t.choices.every((c) => typeof c === "string" && c.trim().length > 0);
+}
 
 /**
  * Resolve the display content of a question for a given language.
- * Falls back to the primary fields if no translation exists.
+ * Falls back to the first available translation if the requested
+ * language has no entry.
  */
 export function resolveTranslation(
   q: Question,
   lang: Language,
-): { q: string; choices: string[]; successMsg?: string; failMsg?: string } {
-  const t = q.translations?.[lang];
-  if (t && t.q && t.choices?.length === q.choices.length) return t;
-  return { q: q.q, choices: q.choices, successMsg: q.successMsg, failMsg: q.failMsg };
+): QuestionTranslation {
+  const requested = q.translations?.[lang];
+  if (isValidTranslation(requested)) return requested;
+  for (const l of ALL_LANGS) {
+    const t = q.translations?.[l];
+    if (isValidTranslation(t)) return t;
+  }
+  return { q: "", choices: [] };
+}
+
+/**
+ * Resolve the localized scripture reference for a question.
+ * Falls back to the first available reference if the requested language
+ * has no entry. Returns undefined when no reference is set.
+ */
+export function resolveReference(
+  q: Question,
+  lang: Language,
+): string | undefined {
+  const requested = q.reference?.[lang];
+  if (typeof requested === "string" && requested.trim()) return requested;
+  for (const l of ALL_LANGS) {
+    const r = q.reference?.[l];
+    if (typeof r === "string" && r.trim()) return r;
+  }
+  return undefined;
 }
 
 /**
@@ -55,21 +76,11 @@ export function resolveTranslation(
  */
 export function availableLanguages(q: Question): Language[] {
   const langs: Language[] = [];
-  const primary = q.language || "en";
-  if (q.q) langs.push(primary as Language);
-  for (const l of ["en", "de", "vi"] as Language[]) {
-    if (l === primary) continue;
-    const t = q.translations?.[l];
-    if (t && t.q && t.choices?.length === q.choices.length) langs.push(l);
+  for (const l of ALL_LANGS) {
+    if (isValidTranslation(q.translations?.[l])) langs.push(l);
   }
   return langs;
 }
-
-export type CommunityQuestion = Question & {
-  id: string;
-  createdBy: string;
-  createdByName: string | null;
-};
 
 /**
  * Increment a player's Shekel balance on their org member document.

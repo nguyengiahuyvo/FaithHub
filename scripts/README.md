@@ -288,6 +288,10 @@ node sendNotification.js --orgId YOUR_ORG_ID --title "Ping" --body "FCM V1 test"
 node sendNotification.js --orgId E5zdzqfh0zeBxGoXdPa9 --title "Update 1.5.3 verfügbar" --body "Öffne den App Store und aktualisiere FaithHub." --url "https://apps.apple.com/de/app/faithhub-we-celebrate-together/id6760612509"
 node sendNotification.js --orgId E5zdzqfh0zeBxGoXdPa9 --title "✞ Gottes Segen für deinen Sonntag" --body "Und der Friede Gottes, der alles Verstehen übersteigt, wird eure Herzen bewahren. (Phil 4,7)" --url "https://apps.apple.com/de/app/faithhub-we-celebrate-together/id6760612509"
 
+node sendNotification.js --orgId TFIjBsn6bklpBJkv1JmI --title "🎉Lieber Đạt, alles Gute zum Geburtstag" --body "Möge Gott dich segnen und dir Frieden und Freude schenken!"
+
+node sendNotification.js --orgId TFIjBsn6bklpBJkv1JmI --title "🎉Chúc mừng sinh nhật Đạt" --body "Xin Chúa luôn ban phước lành, bình an và niềm vui cho bạn!"
+
 ```
 
 ### Troubleshooting
